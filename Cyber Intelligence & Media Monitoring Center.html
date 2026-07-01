@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>PCS-AI · Cyber Intelligence & Media Monitoring Center</title>
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0e1a;
+            color: #d0f0ff;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* ===== Background ===== */
+        #canvas-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: radial-gradient(ellipse at 30% 40%, #0d1f33 0%, #060b12 70%, #020408 100%);
+        }
+        .grid-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background-image:
+                linear-gradient(rgba(0, 200, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 200, 255, 0.02) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+        .glow-orbs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.06;
+            animation: orbFloat 20s infinite alternate ease-in-out;
+        }
+        .glow-orb:nth-child(1) {
+            width: 500px;
+            height: 500px;
+            background: #00d4ff;
+            top: -150px;
+            left: -150px;
+        }
+        .glow-orb:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: #4ade80;
+            bottom: -80px;
+            right: -80px;
+            animation-delay: 6s;
+        }
+        .glow-orb:nth-child(3) {
+            width: 300px;
+            height: 300px;
+            background: #00ffc8;
+            top: 40%;
+            left: 40%;
+            animation-delay: 12s;
+        }
+        @keyframes orbFloat {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(30px, -50px) scale(1.1);
+            }
+            66% {
+                transform: translate(-20px, 30px) scale(0.9);
+            }
+            100% {
+                transform: translate(40px, 20px) scale(1.05);
+            }
+        }
+
+        /* ===== Crime Tape ===== */
+        .crime-tape,
+        .crime-tape-bottom {
+            position: fixed;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            z-index: 20;
+            background: repeating-linear-gradient(90deg, #ffd700 0px, #ffd700 20px, #000 20px, #000 40px);
+            animation: tapeMove 3s linear infinite;
+        }
+        .crime-tape {
+            top: 0;
+        }
+        .crime-tape-bottom {
+            bottom: 0;
+            animation-direction: reverse;
+        }
+        @keyframes tapeMove {
+            0% {
+                background-position: 0 0;
+            }
+            100% {
+                background-position: 60px 0;
+            }
+        }
+        .crime-tape-label {
+            position: fixed;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 21;
+            font-size: 0.5rem;
+            font-weight: 800;
+            color: #ffd700;
+            letter-spacing: 3px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 0.05rem 1.2rem;
+            border-radius: 0 0 8px 8px;
+            border-bottom: 2px solid #ffd700;
+            text-transform: uppercase;
+        }
+        .crime-tape-label-bottom {
+            position: fixed;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 21;
+            font-size: 0.5rem;
+            font-weight: 800;
+            color: #ffd700;
+            letter-spacing: 3px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 0.05rem 1.2rem;
+            border-radius: 8px 8px 0 0;
+            border-top: 2px solid #ffd700;
+            text-transform: uppercase;
+        }
+
+        /* ===== App Wrapper ===== */
+        .app-wrapper {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ===== Sidebar ===== */
+        .sidebar {
+            width: 220px;
+            background: rgba(10, 14, 26, 0.85);
+            backdrop-filter: blur(20px);
+            border-right: 2px solid rgba(0, 212, 255, 0.06);
+            padding: 0.8rem 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 3px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #00d4ff;
+            border-radius: 4px;
+        }
+        .sidebar-logo {
+            text-align: center;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.06);
+            margin-bottom: 0.4rem;
+        }
+        .sidebar-logo i {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #00d4ff, #4ade80);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: floatLogo 3s infinite ease-in-out;
+        }
+        @keyframes floatLogo {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-4px);
+            }
+        }
+        .sidebar-logo h3 {
+            font-size: 0.7rem;
+            background: linear-gradient(135deg, #00d4ff, #4ade80);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.5rem;
+            color: #80c8e8;
+            font-weight: 500;
+            font-size: 0.55rem;
+            cursor: pointer;
+            transition: 0.3s;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(0, 212, 255, 0.03);
+        }
+        .nav-item i {
+            width: 18px;
+            font-size: 0.7rem;
+            color: #00d4ff;
+        }
+        .nav-item:hover {
+            background: linear-gradient(95deg, #00d4ff, #4ade80);
+            color: #0a0e1a;
+            transform: translateX(3px);
+        }
+        .nav-item:hover i {
+            color: #0a0e1a;
+        }
+        .nav-item.active {
+            background: linear-gradient(95deg, rgba(0, 212, 255, 0.08), rgba(74, 222, 128, 0.03));
+            border-color: rgba(0, 212, 255, 0.1);
+        }
+        .nav-item.logout {
+            margin-top: auto;
+            border-color: rgba(255, 68, 68, 0.05);
+        }
+        .nav-item.logout:hover {
+            background: #ff4444;
+        }
+
+        /* ===== Main Content ===== */
+        .main-content {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .top-bar h1 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d4ff, #4ade80, #00ffc8);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .top-bar p {
+            font-size: 0.5rem;
+            color: #4a8aaa;
+        }
+        .user-btn {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 212, 255, 0.06);
+            border-radius: 2rem;
+            padding: 0.15rem 0.6rem 0.15rem 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        .user-btn i {
+            font-size: 1rem;
+            color: #00d4ff;
+            animation: userIconPulse 2s infinite;
+        }
+        @keyframes userIconPulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.4;
+            }
+        }
+        .user-btn span {
+            font-size: 0.55rem;
+            font-weight: 600;
+            color: #80c8e8;
+        }
+
+        /* ===== Status Ribbon ===== */
+        .status-ribbon {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.6rem 1.2rem;
+            background: rgba(0, 20, 40, 0.3);
+            backdrop-filter: blur(8px);
+            border-radius: 0.8rem;
+            padding: 0.4rem 1rem;
+            border: 1px solid rgba(0, 212, 255, 0.04);
+            margin-bottom: 0.8rem;
+        }
+        .status-ribbon .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            font-size: 0.65rem;
+        }
+        .status-ribbon .ai-status .badge {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+            padding: 0.1rem 0.6rem;
+            border-radius: 2rem;
+            font-size: 0.5rem;
+            animation: pulseBadge 2s infinite;
+        }
+        @keyframes pulseBadge {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+        .status-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem 1.5rem;
+            margin-left: auto;
+        }
+        .stat-mini {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.5rem;
+            color: #80c8e8;
+        }
+        .stat-mini strong {
+            color: #d0f0ff;
+            font-size: 0.6rem;
+        }
+        .stat-mini i {
+            color: #00d4ff;
+            animation: statIconPulse 2s infinite;
+        }
+        @keyframes statIconPulse {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.15);
+            }
+        }
+
+        /* ===== Monitor Wall (Grid of Intelligence Screens) ===== */
+        .monitor-wall {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .monitor-card {
+            background: rgba(0, 20, 40, 0.25);
+            backdrop-filter: blur(10px);
+            border-radius: 0.8rem;
+            border: 1px solid rgba(0, 212, 255, 0.04);
+            padding: 0.6rem;
+            min-height: 140px;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .monitor-card:hover {
+            border-color: rgba(0, 212, 255, 0.15);
+            transform: translateY(-2px);
+        }
+        .monitor-card .card-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: #80c8e8;
+            margin-bottom: 0.3rem;
+        }
+        .monitor-card .card-header i {
+            font-size: 0.7rem;
+            animation: headerIconPulse 2s infinite;
+        }
+        .monitor-card:nth-child(1) .card-header i {
+            animation-delay: 0s;
+        }
+        .monitor-card:nth-child(2) .card-header i {
+            animation-delay: 0.4s;
+        }
+        .monitor-card:nth-child(3) .card-header i {
+            animation-delay: 0.8s;
+        }
+        .monitor-card:nth-child(4) .card-header i {
+            animation-delay: 1.2s;
+        }
+        .monitor-card:nth-child(5) .card-header i {
+            animation-delay: 1.6s;
+        }
+        .monitor-card:nth-child(6) .card-header i {
+            animation-delay: 2.0s;
+        }
+        @keyframes headerIconPulse {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .monitor-card .card-content {
+            font-size: 0.5rem;
+            color: #4a8aaa;
+            line-height: 1.5;
+        }
+        .monitor-card .card-content .alert-item {
+            padding: 0.15rem 0;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.02);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideInAlert 0.5s ease;
+        }
+        @keyframes slideInAlert {
+            0% {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .monitor-card .card-content .alert-item .risk {
+            font-weight: 700;
+            font-size: 0.45rem;
+            padding: 0.05rem 0.4rem;
+            border-radius: 1rem;
+        }
+        .risk.critical {
+            background: rgba(255, 68, 68, 0.15);
+            color: #ff4444;
+            animation: riskPulse 1s infinite;
+        }
+        .risk.high {
+            background: rgba(255, 68, 68, 0.1);
+            color: #ff6666;
+        }
+        .risk.medium {
+            background: rgba(255, 215, 0, 0.1);
+            color: #ffd700;
+        }
+        .risk.low {
+            background: rgba(74, 222, 128, 0.1);
+            color: #4ade80;
+        }
+        @keyframes riskPulse {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .monitor-card .card-footer {
+            margin-top: 0.3rem;
+            font-size: 0.4rem;
+            color: #2a5a7a;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* ===== Attack Simulation Flow ===== */
+        .attack-simulation {
+            background: rgba(0, 20, 40, 0.25);
+            backdrop-filter: blur(10px);
+            border-radius: 0.8rem;
+            border: 1px solid rgba(0, 212, 255, 0.04);
+            padding: 0.6rem 1rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .attack-simulation .sim-title {
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: #80c8e8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .attack-simulation .sim-title i {
+            color: #ffd700;
+            animation: simIconSpin 3s infinite linear;
+        }
+        @keyframes simIconSpin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .attack-flow {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.45rem;
+            flex-wrap: wrap;
+            color: #4a8aaa;
+        }
+        .attack-flow .step {
+            padding: 0.1rem 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 1rem;
+            border: 1px solid rgba(0, 212, 255, 0.04);
+            color: #80c8e8;
+            animation: stepPulse 2s infinite;
+        }
+        .attack-flow .step:nth-child(1) {
+            animation-delay: 0s;
+        }
+        .attack-flow .step:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+        .attack-flow .step:nth-child(3) {
+            animation-delay: 1s;
+        }
+        .attack-flow .step:nth-child(4) {
+            animation-delay: 1.5s;
+        }
+        .attack-flow .step:nth-child(5) {
+            animation-delay: 2s;
+        }
+        .attack-flow .step:nth-child(6) {
+            animation-delay: 2.5s;
+        }
+        .attack-flow .step:nth-child(7) {
+            animation-delay: 3s;
+        }
+        @keyframes stepPulse {
+            0%,
+            100% {
+                opacity: 0.7;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+                border-color: rgba(0, 212, 255, 0.2);
+            }
+        }
+        .attack-flow .arrow {
+            color: #00d4ff;
+            font-size: 0.5rem;
+            animation: arrowMove 1s infinite alternate;
+        }
+        @keyframes arrowMove {
+            0% {
+                transform: translateX(0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateX(4px);
+                opacity: 1;
+            }
+        }
+        .attack-flow .step.detected {
+            border-color: #4ade80;
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.05);
+        }
+        .attack-flow .step.blocked {
+            border-color: #ff4444;
+            color: #ff4444;
+            background: rgba(255, 68, 68, 0.05);
+            animation: blockedPulse 0.5s infinite alternate;
+        }
+        @keyframes blockedPulse {
+            0% {
+                box-shadow: 0 0 5px rgba(255, 68, 68, 0.1);
+            }
+            100% {
+                box-shadow: 0 0 20px rgba(255, 68, 68, 0.3);
+            }
+        }
+
+        /* ===== Threat Intelligence Feed ===== */
+        .threat-feed {
+            background: rgba(0, 20, 40, 0.25);
+            backdrop-filter: blur(10px);
+            border-radius: 0.8rem;
+            border: 1px solid rgba(0, 212, 255, 0.04);
+            padding: 0.6rem;
+            margin-bottom: 0.8rem;
+        }
+        .threat-feed .feed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.3rem;
+        }
+        .threat-feed .feed-header .title {
+            font-size: 0.55rem;
+            font-weight: 700;
+            color: #80c8e8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .threat-feed .feed-header .title i {
+            color: #ffd700;
+            animation: feedIconPulse 1.5s infinite;
+        }
+        @keyframes feedIconPulse {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+        }
+        .feed-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .feed-items::-webkit-scrollbar {
+            width: 3px;
+        }
+        .feed-items::-webkit-scrollbar-thumb {
+            background: #00d4ff;
+            border-radius: 4px;
+        }
+        .feed-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.15rem 0.3rem;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.02);
+            font-size: 0.5rem;
+            animation: feedSlide 0.4s ease;
+        }
+        @keyframes feedSlide {
+            0% {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .feed-item .feed-time {
+            color: #4a8aaa;
+            font-family: monospace;
+            font-size: 0.4rem;
+        }
+        .feed-item .feed-msg {
+            color: #d0f0ff;
+        }
+        .feed-item .feed-tag {
+            font-size: 0.4rem;
+            padding: 0.05rem 0.4rem;
+            border-radius: 1rem;
+            font-weight: 600;
+        }
+        .feed-tag.critical {
+            background: rgba(255, 68, 68, 0.15);
+            color: #ff4444;
+        }
+        .feed-tag.high {
+            background: rgba(255, 68, 68, 0.1);
+            color: #ff6666;
+        }
+        .feed-tag.medium {
+            background: rgba(255, 215, 0, 0.1);
+            color: #ffd700;
+        }
+        .feed-tag.low {
+            background: rgba(74, 222, 128, 0.1);
+            color: #4ade80;
+        }
+
+        /* ===== Alert Banner ===== */
+        .alert-banner {
+            display: none;
+            padding: 0.25rem 0.8rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.6rem;
+            font-weight: 600;
+            font-size: 0.55rem;
+            animation: alertPulse 0.5s ease;
+        }
+        .alert-banner.show {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .alert-banner.danger {
+            background: rgba(255, 68, 68, 0.05);
+            border: 1px solid rgba(255, 68, 68, 0.08);
+            color: #ff4444;
+        }
+        .alert-banner.success {
+            background: rgba(74, 222, 128, 0.05);
+            border: 1px solid rgba(74, 222, 128, 0.06);
+            color: #4ade80;
+        }
+        .alert-banner.warning {
+            background: rgba(255, 215, 0, 0.05);
+            border: 1px solid rgba(255, 215, 0, 0.06);
+            color: #ffd700;
+        }
+        @keyframes alertPulse {
+            0% {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* ===== Actions ===== */
+        .action-row {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.4rem;
+        }
+        .btn {
+            padding: 0.25rem 0.9rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.5rem;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(95deg, #00d4ff, #4ade80);
+            color: #0a0e1a;
+        }
+        .btn-primary:hover {
+            transform: scale(1.03);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+        }
+        .btn-primary i {
+            animation: btnIconSpin 3s infinite linear;
+        }
+        @keyframes btnIconSpin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .btn-success {
+            background: linear-gradient(95deg, rgba(74, 222, 128, 0.15), rgba(74, 222, 128, 0.05));
+            border: 1px solid rgba(74, 222, 128, 0.1);
+            color: #4ade80;
+        }
+        .btn-success:hover {
+            transform: scale(1.03);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+            color: #4a8aaa;
+        }
+        .btn-outline:hover {
+            border-color: #00d4ff;
+            color: #80c8e8;
+        }
+        .btn-danger {
+            background: linear-gradient(95deg, rgba(255, 68, 68, 0.15), rgba(255, 68, 68, 0.05));
+            border: 1px solid rgba(255, 68, 68, 0.1);
+            color: #ff4444;
+        }
+        .btn-danger:hover {
+            transform: scale(1.03);
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.4rem;
+            color: #2a5a7a;
+            margin-top: 0.4rem;
+            padding-top: 0.3rem;
+            border-top: 1px solid rgba(0, 212, 255, 0.02);
+        }
+
+        @media (max-width: 900px) {
+            .monitor-wall {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 600px) {
+            .monitor-wall {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                width: 160px;
+            }
+            .status-ribbon {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .status-stats {
+                margin-left: 0;
+            }
+            .attack-flow {
+                font-size: 0.4rem;
+            }
+        }
+        @media (max-width: 500px) {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas-bg"></canvas>
+    <div class="grid-overlay"></div>
+    <div class="glow-orbs">
+        <div class="glow-orb"></div>
+        <div class="glow-orb"></div>
+        <div class="glow-orb"></div>
+    </div>
+
+    <div class="crime-tape"></div>
+    <div class="crime-tape-label">📡 CYBER INTELLIGENCE & MEDIA MONITORING CENTER 📡</div>
+    <div class="crime-tape-bottom"></div>
+    <div class="crime-tape-label-bottom">🛡️ AI-POWERED THREAT DETECTION · REAL-TIME ANALYSIS 🛡️</div>
+
+    <div class="app-wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-logo">
+                <i class="fas fa-shield-haltered"></i>
+                <h3>PCS-AI Core</h3>
+            </div>
+            <div class="nav-item"><i class="fas fa-home"></i> Dashboard</div>
+            <div class="nav-item"><i class="fas fa-camera"></i> Camera Shield</div>
+            <div class="nav-item"><i class="fas fa-globe"></i> Attack Map</div>
+            <div class="nav-item active"><i class="fas fa-tv"></i> Intel Center</div>
+            <div class="nav-item"><i class="fas fa-ship"></i> Naval Systems</div>
+            <div class="nav-item"><i class="fas fa-plane"></i> Aircraft Systems</div>
+            <div class="nav-item"><i class="fas fa-cloud"></i> Cloud Systems</div>
+            <div class="nav-item"><i class="fas fa-shield-virus"></i> Active Defense</div>
+            <div class="nav-item logout"><i class="fas fa-sign-out-alt"></i> Logout</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div>
+                    <h1>📺 Cyber Intelligence & Media Monitoring Center</h1>
+                    <p>AI-Powered Threat Detection · News · Ads · Social Media · Deepfake · Phishing · Threat Feed</p>
+                </div>
+                <div class="user-btn"><i class="fas fa-user-circle"></i><span id="userNameDisplay">Intelligence Officer</span></div>
+            </div>
+
+            <!-- Status Ribbon -->
+            <div class="status-ribbon">
+                <div class="ai-status">
+                    <i class="fas fa-robot" style="color:#00d4ff; animation: iconRotatePulse 2s infinite;"></i> AI Intelligence Status:
+                    <span class="badge"><i class="fas fa-circle" style="color:#4ade80; font-size:0.4rem;"></i> ACTIVE</span>
+                </div>
+                <div class="status-stats">
+                    <span class="stat-mini"><i class="fas fa-database"></i> Sources: <strong id="sourceCount">12,458</strong></span>
+                    <span class="stat-mini"><i class="fas fa-exclamation-triangle" style="color:#ffd700;"></i> Threats: <strong id="threatCount">37</strong></span>
+                    <span class="stat-mini"><i class="fas fa-ban" style="color:#4ade80;"></i> Blocked: <strong id="blockedCount">15</strong></span>
+                </div>
+            </div>
+
+            <!-- Monitor Wall -->
+            <div class="monitor-wall" id="monitorWall">
+                <!-- News Monitoring -->
+                <div class="monitor-card">
+                    <div class="card-header"><i class="fas fa-newspaper" style="color:#00d4ff;"></i> News Monitoring</div>
+                    <div class="card-content" id="newsContent">
+                        <div class="alert-item"><span>📰 Fake Investment Campaign Detected</span><span class="risk high">HIGH</span></div>
+                        <div class="alert-item"><span>📰 Data Breach Reported in Finance Sector</span><span class="risk medium">MEDIUM</span></div>
+                    </div>
+                    <div class="card-footer">Last scan: <span id="newsTime">Just now</span></div>
+                </div>
+
+                <!-- Advertisement Monitoring -->
+                <div class="monitor-card">
+                    <div class="card-header"><i class="fas fa-ad" style="color:#ffd700;"></i> Advertisement Monitoring</div>
+                    <div class="card-content" id="adContent">
+                        <div class="alert-item"><span>📢 Suspicious Domain Identified</span><span class="risk medium">MEDIUM</span></div>
+                        <div class="alert-item"><span>📢 Potential Phishing Advertisement</span><span class="risk critical">CRITICAL</span></div>
+                    </div>
+                    <div class="card-footer">Last scan: <span id="adTime">Just now</span></div>
+                </div>
+
+                <!-- Social Media Monitoring -->
+                <div class="monitor-card">
+                    <div class="card-header"><i class="fab fa-twitter" style="color:#1DA1F2;"></i> Social Media Monitoring</div>
+                    <div class="card-content" id="socialContent">
+                        <div class="alert-item"><span>🐦 Coordinated Disinformation Campaign</span><span class="risk high">HIGH</span></div>
+                        <div class="alert-item"><span>🐦 Bot Network Detected</span><span class="risk medium">MEDIUM</span></div>
+                    </div>
+                    <div class="card-footer">Last scan: <span id="socialTime">Just now</span></div>
+                </div>
+
+                <!-- Deepfake Detection -->
+                <div class="monitor-card">
+                    <div class="card-header"><i class="fas fa-mask" style="color:#ff6b6b;"></i> Deepfake Detection</div>
+                    <div class="card-content" id="deepfakeContent">
+                        <div class="alert-item"><span>🎭 Synthetic Video Detected</span><span class="risk high">HIGH</span></div>
+                        <div class="alert-item"><span>🎭 AI-Generated Voice Clone</span><span class="risk medium">MEDIUM</span></div>
+                    </div>
+                    <div class="card-footer">Last scan: <span id="deepfakeTime">Just now</span></div>
+                </div>
+
+                <!-- Phishing Campaign Detection -->
+                <div class="monitor-card">
+                    <div class="card-header"><i class="fas fa-fish" style="color:#ff9f43;"></i> Phishing Campaign Detection</div>
+                    <div class="card-content" id="phishingContent">
+                        <div class="alert-item"><span>🎣 Credential Harvesting Site</span><span class="risk critical">CRITICAL</span></div>
+                        <div class="alert-item"><span>🎣 Fake Login Page Detected</span><span class="risk high">HIGH</span></div>
+                    </div>
+                    <div class="card-footer">Last scan: <span id="phishingTime">Just now</span></div>
+                </div>
+
+                <!-- Threat Intelligence Feed -->
+                <div class="monitor-card">
+                    <div class="card-header"><i class="fas fa-shield-virus" style="color:#a29bfe;"></i> Threat Intelligence Feed</div>
+                    <div class="card-content" id="threatFeedContent">
+                        <div class="alert-item"><span>⚠️ New Ransomware Variant Detected</span><span class="risk critical">CRITICAL</span></div>
+                        <div class="alert-item"><span>⚠️ APT Group Activity Spike</span><span class="risk high">HIGH</span></div>
+                    </div>
+                    <div class="card-footer">Last update: <span id="feedTime">Just now</span></div>
+                </div>
+            </div>
+
+            <!-- Attack Simulation -->
+            <div class="attack-simulation">
+                <div class="sim-title"><i class="fas fa-play-circle"></i> Attack Simulation</div>
+                <div class="attack-flow" id="attackFlow">
+                    <span class="step">📢 Fake Ad</span>
+                    <span class="arrow">➜</span>
+                    <span class="step">🖱️ User Click</span>
+                    <span class="arrow">➜</span>
+                    <span class="step">🌐 Malicious Site</span>
+                    <span class="arrow">➜</span>
+                    <span class="step">🔑 Credential Theft</span>
+                    <span class="arrow">➜</span>
+                    <span class="step detected">🛡️ PCS-AI Detection</span>
+                    <span class="arrow">➜</span>
+                    <span class="step blocked">🚫 Connection Blocked</span>
+                    <span class="arrow">➜</span>
+                    <span class="step" style="border-color:#ffd700; color:#ffd700;">🔔 Security Alert</span>
+                </div>
+            </div>
+
+            <!-- Alert Banner -->
+            <div id="alertBanner" class="alert-banner"><i class="fas fa-exclamation-triangle"></i><span id="alertText">System nominal</span></div>
+
+            <!-- Threat Feed Detailed -->
+            <div class="threat-feed">
+                <div class="feed-header">
+                    <div class="title"><i class="fas fa-bolt"></i> Live Threat Intelligence Feed</div>
+                    <span style="font-size:0.4rem; color:#4a8aaa;">Auto-updating</span>
+                </div>
+                <div class="feed-items" id="feedItems">
+                    <div class="feed-item"><span class="feed-time">12:00:01</span><span class="feed-msg">🔍 Scanning News Sources...</span><span class="feed-tag low">INFO</span></div>
+                    <div class="feed-item"><span class="feed-time">12:00:05</span><span class="feed-msg">⚠️ Suspicious Domain: fake-investment.xyz</span><span class="feed-tag high">HIGH</span></div>
+                    <div class="feed-item"><span class="feed-time">12:00:12</span><span class="feed-msg">🚨 Phishing Campaign: credential-harvesting.net</span><span class="feed-tag critical">CRITICAL</span></div>
+                    <div class="feed-item"><span class="feed-time">12:00:18</span><span class="feed-msg">🛡️ Threat Blocked: Malicious Ad</span><span class="feed-tag low">BLOCKED</span></div>
+                    <div class="feed-item"><span class="feed-time">12:00:25</span><span class="feed-msg">📊 Deepfake Detection: Synthetic Video</span><span class="feed-tag high">HIGH</span></div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="action-row">
+                <button class="btn btn-primary" id="triggerScan"><i class="fas fa-sync-alt"></i> SCAN ALL SOURCES</button>
+                <button class="btn btn-danger" id="simulateThreat"><i class="fas fa-bolt"></i> SIMULATE THREAT</button>
+                <button class="btn btn-success" id="clearAlerts"><i class="fas fa-check-double"></i> CLEAR ALERTS</button>
+            </div>
+            <footer><i class="fas fa-shield-haltered"></i> PCS-AI · Cyber Intelligence & Media Monitoring Center · All Threats Analyzed</footer>
+        </div>
+    </div>
+
+    <audio id="alertSound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="restoreSound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // ===== DATA =====
+        const threatCategories = [
+            { name: 'News', icon: '📰', alerts: ['Fake Investment Campaign Detected', 'Data Breach Reported', 'Misinformation Spread', 'Stock Manipulation Alert'] },
+            { name: 'Ads', icon: '📢', alerts: ['Suspicious Domain Identified', 'Potential Phishing Advertisement', 'Fake Crypto Promotion', 'Malicious Redirect Detected'] },
+            { name: 'Social', icon: '🐦', alerts: ['Coordinated Disinformation Campaign', 'Bot Network Detected', 'Hate Speech Spike', 'Fake Influencer Profile'] },
+            { name: 'Deepfake', icon: '🎭', alerts: ['Synthetic Video Detected', 'AI-Generated Voice Clone', 'Manipulated Image', 'Fake Celebrity Endorsement'] },
+            { name: 'Phishing', icon: '🎣', alerts: ['Credential Harvesting Site', 'Fake Login Page Detected', 'Banking Scam', 'Fake Invoice Campaign'] },
+            { name: 'Threat Feed', icon: '⚠️', alerts: ['New Ransomware Variant', 'APT Group Activity Spike', 'Zero-Day Exploit', 'DNS Tunneling Detected'] }
+        ];
+
+        const riskLevels = ['low', 'medium', 'high', 'critical'];
+        const riskLabels = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+
+        const feedMessages = [
+            '🔍 Scanning News Sources...',
+            '⚠️ Suspicious Domain: fake-investment.xyz',
+            '🚨 Phishing Campaign: credential-harvesting.net',
+            '🛡️ Threat Blocked: Malicious Ad',
+            '📊 Deepfake Detection: Synthetic Video',
+            '🔎 Analyzing Social Media Patterns...',
+            '🚫 Blocked Connection: 192.168.1.45',
+            '📈 Threat Intelligence Updated',
+            '🎯 Targeted Attack Attempt Detected',
+            '✅ System Integrity Verified'
+        ];
+
+        let threatCount = 37;
+        let blockedCount = 15;
+        let sourceCount = 12458;
+        let alertTimeout;
+
+        // ===== DOM REFS =====
+        const newsContent = document.getElementById('newsContent');
+        const adContent = document.getElementById('adContent');
+        const socialContent = document.getElementById('socialContent');
+        const deepfakeContent = document.getElementById('deepfakeContent');
+        const phishingContent = document.getElementById('phishingContent');
+        const threatFeedContent = document.getElementById('threatFeedContent');
+        const feedItems = document.getElementById('feedItems');
+        const alertBanner = document.getElementById('alertBanner');
+        const alertText = document.getElementById('alertText');
+
+        // ===== FUNCTIONS =====
+        function getRandomRisk() {
+            const idx = Math.floor(Math.random() * riskLevels.length);
+            return { level: riskLevels[idx], label: riskLabels[idx] };
+        }
+
+        function getRandomAlert(category) {
+            const alerts = category.alerts;
+            return alerts[Math.floor(Math.random() * alerts.length)];
+        }
+
+        function updateMonitorCard(contentEl, category, timeEl) {
+            const alertText = getRandomAlert(category);
+            const risk = getRandomRisk();
+            const now = new Date();
+            const time = now.toLocaleTimeString();
+
+            // Keep only last 2 alerts
+            const items = contentEl.querySelectorAll('.alert-item');
+            if (items.length >= 2) {
+                items[items.length - 1].remove();
+            }
+
+            const newItem = document.createElement('div');
+            newItem.className = 'alert-item';
+            newItem.innerHTML = `<span>${category.icon} ${alertText}</span><span class="risk ${risk.level}">${risk.label}</span>`;
+            contentEl.prepend(newItem);
+
+            if (timeEl) {
+                timeEl.textContent = time;
+            }
+
+            // Update stats
+            if (risk.level === 'critical' || risk.level === 'high') {
+                threatCount++;
+                document.getElementById('threatCount').textContent = threatCount;
+                showAlert(`🚨 ${category.icon} ${alertText} - Risk: ${risk.label}`, 'danger');
+            }
+        }
+
+        function updateFeed() {
+            const msg = feedMessages[Math.floor(Math.random() * feedMessages.length)];
+            const now = new Date();
+            const time = now.toLocaleTimeString();
+            const risk = getRandomRisk();
+
+            const item = document.createElement('div');
+            item.className = 'feed-item';
+            const tagClass = risk.level === 'critical' ? 'critical' : (risk.level === 'high' ? 'high' : (risk.level === 'medium' ? 'medium' : 'low'));
+            const tagLabel = risk.label;
+            item.innerHTML = `<span class="feed-time">${time}</span><span class="feed-msg">${msg}</span><span class="feed-tag ${tagClass}">${tagLabel}</span>`;
+            feedItems.prepend(item);
+
+            while (feedItems.children.length > 8) {
+                feedItems.removeChild(feedItems.lastChild);
+            }
+
+            // Update source count periodically
+            sourceCount += Math.floor(Math.random() * 5);
+            document.getElementById('sourceCount').textContent = sourceCount.toLocaleString();
+        }
+
+        function showAlert(message, type = 'success') {
+            alertBanner.className = 'alert-banner show ' + type;
+            alertText.innerText = message;
+            clearTimeout(alertTimeout);
+            alertTimeout = setTimeout(() => alertBanner.classList.remove('show'), 5000);
+            const sound = document.getElementById(type === 'danger' ? 'alertSound' : 'restoreSound');
+            if (sound) { sound.currentTime = 0;
+                sound.play().catch(() => {}); }
+        }
+
+        function scanAllSources() {
+            showAlert('🔍 Scanning all intelligence sources...', 'warning');
+            const categories = [
+                { el: newsContent, cat: threatCategories[0], timeEl: document.getElementById('newsTime') },
+                { el: adContent, cat: threatCategories[1], timeEl: document.getElementById('adTime') },
+                { el: socialContent, cat: threatCategories[2], timeEl: document.getElementById('socialTime') },
+                { el: deepfakeContent, cat: threatCategories[3], timeEl: document.getElementById('deepfakeTime') },
+                { el: phishingContent, cat: threatCategories[4], timeEl: document.getElementById('phishingTime') },
+                { el: threatFeedContent, cat: threatCategories[5], timeEl: document.getElementById('feedTime') }
+            ];
+
+            categories.forEach((c, idx) => {
+                setTimeout(() => {
+                    updateMonitorCard(c.el, c.cat, c.timeEl);
+                }, idx * 400);
+            });
+
+            setTimeout(() => {
+                showAlert('✅ All sources scanned · ' + threatCount + ' threats identified', 'success');
+            }, categories.length * 400 + 500);
+        }
+
+        function simulateThreat() {
+            const categories = [
+                { el: newsContent, cat: threatCategories[0], timeEl: document.getElementById('newsTime') },
+                { el: adContent, cat: threatCategories[1], timeEl: document.getElementById('adTime') },
+                { el: socialContent, cat: threatCategories[2], timeEl: document.getElementById('socialTime') },
+                { el: deepfakeContent, cat: threatCategories[3], timeEl: document.getElementById('deepfakeTime') },
+                { el: phishingContent, cat: threatCategories[4], timeEl: document.getElementById('phishingTime') },
+                { el: threatFeedContent, cat: threatCategories[5], timeEl: document.getElementById('feedTime') }
+            ];
+
+            const randomCat = categories[Math.floor(Math.random() * categories.length)];
+            updateMonitorCard(randomCat.el, randomCat.cat, randomCat.timeEl);
+
+            // Update attack flow
+            const steps = document.querySelectorAll('.attack-flow .step');
+            steps.forEach((step, idx) => {
+                if (idx === 5) { // PCS-AI Detection
+                    step.className = 'step detected';
+                } else if (idx === 6) { // Connection Blocked
+                    step.className = 'step blocked';
+                } else if (idx === 7) { // Security Alert
+                    step.style.borderColor = '#ffd700';
+                    step.style.color = '#ffd700';
+                }
+                setTimeout(() => {
+                    if (idx < steps.length - 1) {
+                        // Reset after animation
+                    }
+                }, 3000);
+            });
+
+            showAlert('🚨 Simulated threat detected and blocked!', 'danger');
+            blockedCount++;
+            document.getElementById('blockedCount').textContent = blockedCount;
+        }
+
+        function clearAlerts() {
+            document.querySelectorAll('.monitor-card .card-content .alert-item').forEach(el => el.remove());
+            const categories = [
+                { el: newsContent, cat: threatCategories[0] },
+                { el: adContent, cat: threatCategories[1] },
+                { el: socialContent, cat: threatCategories[2] },
+                { el: deepfakeContent, cat: threatCategories[3] },
+                { el: phishingContent, cat: threatCategories[4] },
+                { el: threatFeedContent, cat: threatCategories[5] }
+            ];
+
+            categories.forEach(c => {
+                const alertText = getRandomAlert(c.cat);
+                const risk = getRandomRisk();
+                const item = document.createElement('div');
+                item.className = 'alert-item';
+                item.innerHTML = `<span>${c.cat.icon} ${alertText}</span><span class="risk ${risk.level}">${risk.label}</span>`;
+                c.el.appendChild(item);
+            });
+
+            showAlert('🧹 All alerts cleared · System reset', 'success');
+        }
+
+        // ===== EVENT LISTENERS =====
+        document.getElementById('triggerScan').addEventListener('click', scanAllSources);
+        document.getElementById('simulateThreat').addEventListener('click', simulateThreat);
+        document.getElementById('clearAlerts').addEventListener('click', clearAlerts);
+
+        document.getElementById('userNameDisplay').textContent = localStorage.getItem('pcs_ai_current_user') || 'Intelligence Officer';
+
+        // ===== AUTO-UPDATE =====
+        setInterval(() => {
+            // Update one random monitor card
+            const categories = [
+                { el: newsContent, cat: threatCategories[0], timeEl: document.getElementById('newsTime') },
+                { el: adContent, cat: threatCategories[1], timeEl: document.getElementById('adTime') },
+                { el: socialContent, cat: threatCategories[2], timeEl: document.getElementById('socialTime') },
+                { el: deepfakeContent, cat: threatCategories[3], timeEl: document.getElementById('deepfakeTime') },
+                { el: phishingContent, cat: threatCategories[4], timeEl: document.getElementById('phishingTime') },
+                { el: threatFeedContent, cat: threatCategories[5], timeEl: document.getElementById('feedTime') }
+            ];
+            const randomCat = categories[Math.floor(Math.random() * categories.length)];
+            updateMonitorCard(randomCat.el, randomCat.cat, randomCat.timeEl);
+
+            // Update feed
+            updateFeed();
+
+        }, 6000);
+
+        // ===== INIT =====
+        document.getElementById('threatCount').textContent = threatCount;
+        document.getElementById('blockedCount').textContent = blockedCount;
+        document.getElementById('sourceCount').textContent = sourceCount.toLocaleString();
+
+        // Initial feed entries
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => updateFeed(), i * 800);
+        }
+
+        // Initial scan after 2 seconds
+        setTimeout(scanAllSources, 2000);
+
+        console.log('📺 Cyber Intelligence & Media Monitoring Center initialized');
+    </script>
+</body>
+</html>

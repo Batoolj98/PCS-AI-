@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Phoenix Core · Digital Nexus</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2340c4ff'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #e0f2fe;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    
+    /* ===== Blue Forensic Background ===== */
+    #cubeCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+      background: radial-gradient(ellipse at 20% 50%, #0a1a2e 0%, #050a14 70%, #020408 100%);
+    }
+    .glow-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 40%, rgba(64,196,255,0.04), rgba(100,160,255,0.04), transparent 75%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.015) 2px,
+        rgba(0, 200, 255, 0.015) 4px
+      );
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 25;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #0a0e1a 20px,
+        #0a0e1a 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 25;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #0a0e1a 20px,
+        #0a0e1a 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 26;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(10, 14, 26, 0.85);
+      padding: 0.1rem 1.2rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      border-bottom: 2px solid #ffd700;
+      backdrop-filter: blur(8px);
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 26;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(10, 14, 26, 0.85);
+      padding: 0.1rem 1.2rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      border-top: 2px solid #ffd700;
+      backdrop-filter: blur(8px);
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      z-index: 5;
+      opacity: 0.12;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.08; transform: scale(1); }
+      50% { opacity: 0.2; transform: scale(1.05); }
+    }
+    
+    /* ===== Main Container ===== */
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding: 0.5rem 1.5rem 1.5rem;
+    }
+    
+    /* ===== HEADER ===== */
+    .holo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0 0.8rem;
+      border-bottom: 1px solid rgba(64,196,255,0.08);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .holo-header .status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .holo-header .status .indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 20px rgba(74,222,128,0.5);
+      animation: pulseDot 2s infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+    .holo-header .status .label {
+      font-size: 0.6rem;
+      color: #4a8aaa;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .holo-header .status .label strong {
+      color: #7dd3fc;
+      font-weight: 800;
+    }
+    .holo-header .time {
+      font-size: 0.55rem;
+      color: #4a8aaa;
+      font-family: monospace;
+      letter-spacing: 1px;
+    }
+    .holo-header .back-btn {
+      background: rgba(64,196,255,0.06);
+      border: 1px solid rgba(64,196,255,0.1);
+      padding: 0.3rem 0.8rem;
+      border-radius: 2rem;
+      color: #7ab8d4;
+      cursor: pointer;
+      font-size: 0.55rem;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .holo-header .back-btn:hover {
+      background: rgba(64,196,255,0.12);
+      border-color: rgba(64,196,255,0.25);
+      color: #e0f2fe;
+    }
+    
+    /* ===== Phoenix Core Container ===== */
+    .phoenix-container {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 500px;
+      margin: 1rem 0;
+    }
+    
+    /* ===== Phoenix Core Center ===== */
+    .phoenix-core {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(64,196,255,0.15), rgba(64,196,255,0.02));
+      border: 2px solid rgba(64,196,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      animation: corePulse 3s ease-in-out infinite;
+      cursor: pointer;
+      box-shadow: 0 0 60px rgba(64,196,255,0.1);
+    }
+    @keyframes corePulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(64,196,255,0.1); }
+      50% { transform: scale(1.04); box-shadow: 0 0 80px rgba(64,196,255,0.2); }
+    }
+    .phoenix-core .core-icon {
+      font-size: 4rem;
+      color: #40c4ff;
+      animation: iconPulse 2s ease-in-out infinite;
+      text-shadow: 0 0 40px rgba(64,196,255,0.3);
+    }
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .phoenix-core .core-ring {
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      border: 1px solid rgba(64,196,255,0.1);
+      animation: ringSpin 8s linear infinite;
+    }
+    .phoenix-core .core-ring:nth-child(2) {
+      inset: -16px;
+      border-color: rgba(125,211,252,0.06);
+      animation-duration: 12s;
+      animation-direction: reverse;
+    }
+    .phoenix-core .core-ring:nth-child(3) {
+      inset: -24px;
+      border-color: rgba(64,196,255,0.04);
+      animation-duration: 16s;
+    }
+    @keyframes ringSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .phoenix-core .core-label {
+      position: absolute;
+      bottom: -30px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #7dd3fc;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    
+    /* ===== Nodes ===== */
+    .node {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+      transition: 0.3s;
+      z-index: 3;
+    }
+    .node:hover {
+      transform: scale(1.12);
+      filter: drop-shadow(0 0 20px rgba(64,196,255,0.3));
+    }
+    .node .node-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(10, 14, 26, 0.7);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid rgba(64,196,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #40c4ff;
+      transition: 0.3s;
+    }
+    .node:hover .node-icon {
+      border-color: rgba(64,196,255,0.4);
+      color: #7dd3fc;
+      box-shadow: 0 0 30px rgba(64,196,255,0.1);
+    }
+    .node .node-label {
+      font-size: 0.5rem;
+      font-weight: 600;
+      color: #6a8aaa;
+      text-align: center;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 10px rgba(0,0,0,0.5);
+      white-space: nowrap;
+    }
+    .node .node-status {
+      font-size: 0.35rem;
+      color: #4a8aaa;
+    }
+    .node .node-status .dot {
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      margin-right: 4px;
+    }
+    .node .node-status .dot.online { background: #4ade80; }
+    .node .node-status .dot.warning { background: #f59e0b; }
+    .node .node-status .dot.critical { background: #ef4444; animation: pulseRed 1s infinite; }
+    @keyframes pulseRed { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+    
+    /* ===== Laser Lines (SVG) ===== */
+    .laser-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .laser-svg line {
+      stroke: rgba(64,196,255,0.15);
+      stroke-width: 1.5;
+      stroke-dasharray: 4 6;
+      animation: laserDash 3s linear infinite;
+    }
+    .laser-svg line.thick {
+      stroke: rgba(64,196,255,0.25);
+      stroke-width: 2.5;
+    }
+    @keyframes laserDash {
+      0% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -10; }
+    }
+    
+    /* ===== Node Positions ===== */
+    .node-1 { top: 5%; left: 10%; }
+    .node-2 { top: 5%; right: 10%; }
+    .node-3 { top: 25%; left: 3%; }
+    .node-4 { top: 25%; right: 3%; }
+    .node-5 { bottom: 25%; left: 3%; }
+    .node-6 { bottom: 25%; right: 3%; }
+    .node-7 { bottom: 5%; left: 10%; }
+    .node-8 { bottom: 5%; right: 10%; }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) {
+      .node .node-icon { width: 40px; height: 40px; font-size: 1rem; }
+      .node .node-label { font-size: 0.4rem; }
+      .phoenix-core { width: 120px; height: 120px; }
+      .phoenix-core .core-icon { font-size: 3rem; }
+      .phoenix-core .core-label { font-size: 0.5rem; bottom: -24px; }
+      .app-wrapper { padding: 0.5rem 1rem; }
+    }
+    @media (max-width: 700px) {
+      .node .node-icon { width: 34px; height: 34px; font-size: 0.8rem; }
+      .node .node-label { font-size: 0.35rem; }
+      .node-1 { top: 3%; left: 5%; }
+      .node-2 { top: 3%; right: 5%; }
+      .node-3 { top: 18%; left: 2%; }
+      .node-4 { top: 18%; right: 2%; }
+      .node-5 { bottom: 18%; left: 2%; }
+      .node-6 { bottom: 18%; right: 2%; }
+      .node-7 { bottom: 3%; left: 5%; }
+      .node-8 { bottom: 3%; right: 5%; }
+      .phoenix-core { width: 90px; height: 90px; }
+      .phoenix-core .core-icon { font-size: 2.2rem; }
+      .phoenix-core .core-label { font-size: 0.4rem; bottom: -20px; }
+      .holo-header .status .label { font-size: 0.45rem; }
+      .phoenix-container { min-height: 350px; }
+    }
+    @media (max-width: 480px) {
+      .node .node-icon { width: 28px; height: 28px; font-size: 0.65rem; }
+      .node .node-label { font-size: 0.3rem; }
+      .node .node-status { font-size: 0.3rem; }
+      .phoenix-core { width: 70px; height: 70px; }
+      .phoenix-core .core-icon { font-size: 1.8rem; }
+      .phoenix-core .core-label { font-size: 0.35rem; bottom: -16px; }
+      .phoenix-container { min-height: 280px; }
+    }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(10, 14, 26, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #4ade80;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #e0f2fe;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(64,196,255,0.1);
+    }
+    .toast-notification.error { border-left-color: #ef4444; }
+    @keyframes slideToast { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  </style>
+</head>
+<body>
+  <canvas id="cubeCanvas"></canvas>
+  <div class="glow-overlay"></div>
+  <div class="grid-overlay"></div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 PHOENIX CORE · DIGITAL NEXUS · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 ZERO-TRUST · QUANTUM LINK · ACTIVE DEFENSE 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#40c4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#7dd3fc" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#40c4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#7dd3fc" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#40c4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#7dd3fc" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#40c4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <div class="app-wrapper">
+    
+    <!-- ===== HEADER ===== -->
+    <header class="holo-header">
+      <div class="status">
+        <span class="indicator"></span>
+        <span class="label"><strong>PHOENIX CORE:</strong> ACTIVE · QUANTUM LINK ESTABLISHED</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.8rem;flex-wrap:wrap;">
+        <span class="time"><i class="far fa-clock"></i> <span id="liveTime">00:00:00</span> UTC</span>
+        <button class="back-btn" onclick="window.location.href='Security-Operations-Center.html'">
+          <i class="fas fa-arrow-left"></i> BACK TO SOC
+        </button>
+      </div>
+    </header>
+    
+    <!-- ===== PHOENIX CORE CONTAINER ===== -->
+    <div class="phoenix-container" id="phoenixContainer">
+      
+      <!-- ===== LASER LINES (SVG) ===== -->
+      <svg class="laser-svg" id="laserSvg" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <!-- Lines from core to nodes (will be updated by JS) -->
+      </svg>
+      
+      <!-- ===== NODES ===== -->
+      <div class="node node-1" data-node="aircraft" onclick="showToast('🛩️ Aircraft Systems · Online · All wings operational', false)">
+        <div class="node-icon"><i class="fas fa-plane"></i></div>
+        <div class="node-label">Aircraft Systems</div>
+        <div class="node-status"><span class="dot online"></span> 12 Active</div>
+      </div>
+      
+      <div class="node node-2" data-node="marine" onclick="showToast('🚢 Marine & Naval Systems · Fleet deployed · Secure', false)">
+        <div class="node-icon"><i class="fas fa-ship"></i></div>
+        <div class="node-label">Marine Systems</div>
+        <div class="node-status"><span class="dot online"></span> 8 Active</div>
+      </div>
+      
+      <div class="node node-3" data-node="cloud" onclick="showToast('☁️ Cloud Infrastructure · 98% Uptime · Protected', false)">
+        <div class="node-icon"><i class="fas fa-cloud"></i></div>
+        <div class="node-label">Cloud Infrastructure</div>
+        <div class="node-status"><span class="dot online"></span> Secure</div>
+      </div>
+      
+      <div class="node node-4" data-node="devices" onclick="showToast('📱 Smart Devices · 2,341 devices · All secure', false)">
+        <div class="node-icon"><i class="fas fa-mobile-alt"></i></div>
+        <div class="node-label">Smart Devices</div>
+        <div class="node-status"><span class="dot warning"></span> 2 Anomalies</div>
+      </div>
+      
+      <div class="node node-5" data-node="shield" onclick="showToast('🛡️ Cyber Shield · Active · 98.7% Block Rate', false)">
+        <div class="node-icon"><i class="fas fa-shield-alt"></i></div>
+        <div class="node-label">Cyber Shield</div>
+        <div class="node-status"><span class="dot online"></span> Active</div>
+      </div>
+      
+      <div class="node node-6" data-node="zero-trust" onclick="showToast('🔐 Zero Trust Gate · All access verified · Secure', false)">
+        <div class="node-icon"><i class="fas fa-fingerprint"></i></div>
+        <div class="node-label">Zero Trust Gate</div>
+        <div class="node-status"><span class="dot online"></span> Enforced</div>
+      </div>
+      
+      <div class="node node-7" data-node="threat-intel" onclick="showToast('🎯 Threat Intelligence · 12 new threats analyzed · 0 critical', false)">
+        <div class="node-icon"><i class="fas fa-bullseye"></i></div>
+        <div class="node-label">Threat Intelligence</div>
+        <div class="node-status"><span class="dot warning"></span> 3 Medium</div>
+      </div>
+      
+      <div class="node node-8" data-node="ai-agents" onclick="showToast('🤖 AI Agents · 47 agents active · Neural mesh online', false)">
+        <div class="node-icon"><i class="fas fa-robot"></i></div>
+        <div class="node-label">AI Agents</div>
+        <div class="node-status"><span class="dot online"></span> 47 Active</div>
+      </div>
+      
+      <!-- ===== PHOENIX CORE CENTER ===== -->
+      <div class="phoenix-core" onclick="showToast('🔥 Phoenix Core · AI Self-Healing Engine · Active', false)">
+        <div class="core-ring"></div>
+        <div class="core-ring"></div>
+        <div class="core-ring"></div>
+        <div class="core-icon"><i class="fas fa-dragon"></i></div>
+        <div class="core-label">⚡ Phoenix Core</div>
+      </div>
+      
+    </div>
+    
+    <!-- ===== FOOTER ===== -->
+    <div style="text-align:center;font-size:0.4rem;color:#2a5a7a;padding-top:0.3rem;border-top:1px solid rgba(64,196,255,0.05);margin-top:0.2rem;">
+      <i class="fas fa-shield-haltered"></i> PCS-AI · Phoenix Core · Digital Nexus · Quantum-Linked Ecosystem
+    </div>
+  </div>
+  
+  <!-- ===== AUDIO ===== -->
+  <audio id="successSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="alertSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }</script>
+  <script type="module">
+    import * as THREE from 'three';
+    const canvas = document.getElementById('cubeCanvas');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0e1a);
+    scene.fog = new THREE.FogExp2(0x0a0e1a, 0.004);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(3, 2.5, 14);
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    const ambient = new THREE.AmbientLight(0x112244, 0.4);
+    scene.add(ambient);
+    const cyanLight = new THREE.PointLight(0x40c4ff, 0.6);
+    cyanLight.position.set(3, 4, 3);
+    scene.add(cyanLight);
+    const blueLight = new THREE.PointLight(0x60a5fa, 0.4);
+    blueLight.position.set(-2, 3, 4);
+    scene.add(blueLight);
+    const fillLight = new THREE.DirectionalLight(0x4488aa, 0.2);
+    fillLight.position.set(1,2,2);
+    scene.add(fillLight);
+    
+    // Phoenix Core 3D representation
+    const coreGroup = new THREE.Group();
+    const coreMat = new THREE.MeshStandardMaterial({ color: 0x40c4ff, emissive: 0x7dd3fc, emissiveIntensity: 0.3 });
+    const coreMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(0.6, 1), coreMat);
+    coreGroup.add(coreMesh);
+    scene.add(coreGroup);
+    
+    // Orbiting nodes (3D)
+    const nodeGroup = new THREE.Group();
+    const nodeColors = [0x40c4ff, 0x7dd3fc, 0x60a5fa, 0x38bdf8, 0x8892ff, 0x4ade80, 0xf59e0b, 0xef4444];
+    for (let i=0; i<8; i++) {
+      const size = 0.04 + Math.random() * 0.04;
+      const mat = new THREE.MeshStandardMaterial({ color: nodeColors[i % nodeColors.length], emissive: 0x40c4ff, emissiveIntensity: 0.2 });
+      const sphere = new THREE.Mesh(new THREE.SphereGeometry(size, 8, 8), mat);
+      const angle = (i / 8) * Math.PI * 2;
+      const radius = 1.6 + Math.random() * 0.3;
+      sphere.position.set(Math.cos(angle) * radius, Math.sin(angle) * 0.3, Math.sin(angle) * radius);
+      sphere.userData = { angle: angle, radius: radius, speed: 0.005 + Math.random() * 0.003 };
+      nodeGroup.add(sphere);
+    }
+    scene.add(nodeGroup);
+    
+    // Background cubes
+    const cubeGroup = new THREE.Group();
+    const colors = [0x40c4ff, 0x7dd3fc, 0x60a5fa, 0x38bdf8];
+    for (let i=0; i<80; i++) {
+      const size = 0.04 + Math.random() * 0.1;
+      const mat = new THREE.MeshStandardMaterial({ color: colors[Math.floor(Math.random()*colors.length)], emissive: 0x2266aa, emissiveIntensity: 0.05, transparent: true, opacity: 0.15+Math.random()*0.2 });
+      const cube = new THREE.Mesh(new THREE.BoxGeometry(size,size,size), mat);
+      const radius = 4.5 + Math.random() * 3;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2*Math.random() -1);
+      cube.position.set(radius * Math.sin(phi) * Math.cos(theta), radius * Math.sin(phi) * Math.sin(theta)*0.5, radius * Math.cos(phi) - 0.5);
+      cube.userData = { speedX: (Math.random()-0.5)*0.003, speedY: (Math.random()-0.5)*0.003 };
+      cubeGroup.add(cube);
+    }
+    scene.add(cubeGroup);
+    
+    // Stars
+    const starCount = 2000;
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(starCount * 3);
+    for (let i=0; i<starCount; i++) {
+      starPos[i*3] = (Math.random() - 0.5) * 180;
+      starPos[i*3+1] = (Math.random() - 0.5) * 100;
+      starPos[i*3+2] = (Math.random() - 0.5) * 70 - 30;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0x7dd3fc, size: 0.03, transparent: true, opacity: 0.4 }));
+    scene.add(stars);
+    
+    let t = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      t += 0.012;
+      
+      coreGroup.rotation.x += 0.005;
+      coreGroup.rotation.y += 0.008;
+      const s = 1 + Math.sin(t * 5) * 0.05;
+      coreGroup.scale.set(s, s, s);
+      
+      nodeGroup.children.forEach((node, i) => {
+        node.userData.angle += node.userData.speed;
+        const r = node.userData.radius;
+        node.position.x = Math.cos(node.userData.angle) * r;
+        node.position.z = Math.sin(node.userData.angle) * r;
+        node.position.y = Math.sin(node.userData.angle * 0.5) * 0.2;
+      });
+      
+      cubeGroup.rotation.y += 0.001;
+      cubeGroup.children.forEach(cube => {
+        cube.position.x += cube.userData.speedX;
+        cube.position.y += cube.userData.speedY;
+        if (Math.abs(cube.position.x) > 8) cube.userData.speedX *= -1;
+        if (Math.abs(cube.position.y) > 5) cube.userData.speedY *= -1;
+      });
+      
+      stars.rotation.y += 0.0003;
+      renderer.render(scene, camera);
+    }
+    animate();
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+  </script>
+  
+  <script>
+    // ===== UPDATE LASER LINES =====
+    function updateLaserLines() {
+      const svg = document.getElementById('laserSvg');
+      const container = document.getElementById('phoenixContainer');
+      const rect = container.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      
+      // Core position (center)
+      const cx = 50;
+      const cy = 50;
+      
+      // Node positions (percentage based on layout)
+      const nodes = [
+        { x: 10, y: 8 },   // node-1 top-left
+        { x: 90, y: 8 },   // node-2 top-right
+        { x: 3, y: 28 },   // node-3 left-mid
+        { x: 97, y: 28 },  // node-4 right-mid
+        { x: 3, y: 72 },   // node-5 left-bottom
+        { x: 97, y: 72 },  // node-6 right-bottom
+        { x: 10, y: 92 },  // node-7 bottom-left
+        { x: 90, y: 92 }   // node-8 bottom-right
+      ];
+      
+      let lines = '';
+      nodes.forEach(node => {
+        lines += `<line x1="${cx}%" y1="${cy}%" x2="${node.x}%" y2="${node.y}%" class="thick"/>`;
+        lines += `<line x1="${cx}%" y1="${cy}%" x2="${node.x}%" y2="${node.y}%"/>`;
+      });
+      svg.innerHTML = lines;
+    }
+    
+    // ===== UPDATE ON RESIZE =====
+    window.addEventListener('resize', updateLaserLines);
+    setTimeout(updateLaserLines, 100);
+    
+    // ===== LIVE TIME =====
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('liveTime').textContent = now.toTimeString().slice(0,8);
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+    
+    // ===== TOAST =====
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+      if (isError) {
+        document.getElementById('alertSound')?.play().catch(()=>{});
+      } else {
+        document.getElementById('successSound')?.play().catch(()=>{});
+      }
+    }
+    
+    // ===== NODE STATUS ROTATION =====
+    const statuses = ['online', 'online', 'online', 'online', 'online', 'warning', 'critical'];
+    const nodeStatusElements = document.querySelectorAll('.node-status .dot');
+    setInterval(() => {
+      nodeStatusElements.forEach((dot, i) => {
+        const newStatus = statuses[Math.floor(Math.random() * statuses.length)];
+        dot.className = `dot ${newStatus}`;
+        // Update parent text
+        const parent = dot.closest('.node-status');
+        const texts = ['Active', 'Secure', 'Operational', 'Online', 'Protected', 'Enforced', 'Analyzing'];
+        const warningTexts = ['Anomaly', 'Unusual', 'Warning', 'Under Review'];
+        const criticalTexts = ['⚠️ Critical', '🔴 Alert', 'Urgent'];
+        if (newStatus === 'online') {
+          parent.textContent = ` ${texts[Math.floor(Math.random() * texts.length)]}`;
+          parent.prepend(dot);
+        } else if (newStatus === 'warning') {
+          parent.textContent = ` ${warningTexts[Math.floor(Math.random() * warningTexts.length)]}`;
+          parent.prepend(dot);
+        } else {
+          parent.textContent = ` ${criticalTexts[Math.floor(Math.random() * criticalTexts.length)]}`;
+          parent.prepend(dot);
+        }
+      });
+    }, 8000);
+  </script>
+</body>
+</html>

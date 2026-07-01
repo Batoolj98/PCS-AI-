@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Phoenix Core · Neural Engine & Self-Healing System</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00d4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #0088ff; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== App Wrapper ===== */
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3rem;
+      min-height: 100vh;
+    }
+    
+    /* ===== Header ===== */
+    .header {
+      text-align: center;
+      padding: 1rem 0 1.5rem;
+      position: relative;
+    }
+    .header .logo-icon {
+      font-size: 3rem;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8, #0088ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: logoPulse 3s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes logoPulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0,212,255,0.3)); }
+      50% { transform: scale(1.05); filter: drop-shadow(0 0 30px rgba(0,212,255,0.6)); }
+    }
+    .header h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8, #0088ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: 2px;
+      margin-top: 4px;
+    }
+    .header .sub {
+      font-size: 0.65rem;
+      color: #4a8aaa;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .header .badge {
+      display: inline-block;
+      border: 1px solid rgba(0,212,255,0.2);
+      padding: 0.15rem 1rem;
+      border-radius: 30px;
+      font-size: 0.45rem;
+      color: #00d4ff;
+      background: rgba(0,212,255,0.05);
+      margin-top: 6px;
+      letter-spacing: 2px;
+      animation: badgePulse 2s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; box-shadow: 0 0 20px rgba(0,212,255,0.1); }
+    }
+    
+    /* ===== Divider ===== */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #00d4ff, #00ffc8, #00d4ff, transparent);
+      margin: 0.5rem 0 1.5rem;
+      opacity: 0.3;
+    }
+    
+    /* ===== Cards Grid ===== */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .glass-card {
+      background: rgba(0, 20, 40, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 1.5rem;
+      padding: 1.2rem;
+      border: 1px solid rgba(0,212,255,0.06);
+      transition: 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .glass-card:hover { border-color: rgba(0,212,255,0.15); box-shadow: 0 0 40px rgba(0,212,255,0.02); }
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(0,212,255,0.08);
+      padding-bottom: 0.5rem;
+      color: #80c8e8;
+    }
+    .card-title i { 
+      font-size: 1.2rem; 
+      color: #00d4ff;
+      animation: iconFloat 3s ease-in-out infinite;
+    }
+    @keyframes iconFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-3px) scale(1.1); }
+    }
+    
+    /* ===== Power Meter ===== */
+    .power-meter {
+      background: rgba(0,0,0,0.2);
+      border-radius: 1rem;
+      padding: 1rem;
+      text-align: center;
+    }
+    .power-gauge {
+      width: 180px;
+      height: 180px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .power-gauge svg { width: 100%; height: 100%; }
+    .power-value {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    .power-label { 
+      margin-top: 1rem; 
+      font-size: 0.7rem; 
+      color: #4a8aaa;
+      animation: labelPulse 3s ease-in-out infinite;
+    }
+    @keyframes labelPulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+    .injection-animation {
+      width: 100%;
+      height: 4px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      margin: 1rem 0;
+      overflow: hidden;
+    }
+    .injection-wave {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #00d4ff, #00ffc8, #0088ff);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    
+    /* ===== Clone Status ===== */
+    .clone-status { display: flex; flex-direction: column; gap: 0.8rem; }
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.7rem;
+      color: #80c8e8;
+    }
+    .status-row i {
+      animation: iconFloat 2.5s ease-in-out infinite;
+    }
+    .progress-bar-small {
+      width: 60%;
+      height: 6px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill-small {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #00d4ff, #00ffc8);
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+    .clone-icon { 
+      font-size: 1rem; 
+      animation: iconFloat 2s ease-in-out infinite;
+    }
+    .clone-icon.active { color: #4ade80; }
+    .clone-icon.inactive { color: #4a8aaa; }
+    .clone-icon.idle { color: #4a8aaa; }
+    
+    /* ===== Emergency Panel ===== */
+    .emergency-panel {
+      background: rgba(0, 212, 255, 0.05);
+      border: 2px solid #00d4ff;
+      border-radius: 1.2rem;
+      padding: 1rem;
+      margin-top: 0.5rem;
+      transition: 0.3s;
+      display: none;
+    }
+    .emergency-panel.active {
+      display: block;
+      animation: emergencyBlink 0.8s ease-in-out;
+      border-color: #ff4444;
+    }
+    @keyframes emergencyBlink {
+      0% { background: rgba(0,212,255,0.05); border-color: #00d4ff; }
+      50% { background: rgba(255,68,68,0.15); border-color: #ff4444; box-shadow: 0 0 30px rgba(255,68,68,0.2); }
+      100% { background: rgba(0,212,255,0.05); border-color: #00d4ff; }
+    }
+    .emergency-title { 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+      font-weight: 800; 
+      color: #ff4444; 
+      margin-bottom: 0.8rem;
+      animation: emergencyPulse 0.5s ease-in-out infinite alternate;
+    }
+    @keyframes emergencyPulse {
+      0% { opacity: 0.8; }
+      100% { opacity: 1; }
+    }
+    .emergency-stats { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .emergency-stat { 
+      background: rgba(0,0,0,0.2); 
+      border-radius: 0.8rem; 
+      padding: 0.5rem; 
+      flex: 1; 
+      text-align: center;
+      animation: statPulse 3s ease-in-out infinite;
+    }
+    .emergency-stat:nth-child(2) { animation-delay: 0.5s; }
+    .emergency-stat:nth-child(3) { animation-delay: 1s; }
+    @keyframes statPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+    .emergency-stat .value { font-size: 1.2rem; font-weight: 800; color: #00d4ff; }
+    .emergency-stat .label { font-size: 0.5rem; color: #4a8aaa; }
+    
+    /* ===== Devices Tags ===== */
+    .devices-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.8rem 0; }
+    .device-tag {
+      background: rgba(0, 212, 255, 0.05);
+      border-radius: 20px;
+      padding: 0.2rem 0.8rem;
+      font-size: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid rgba(0,212,255,0.08);
+      color: #80c8e8;
+      animation: tagPulse 2.5s ease-in-out infinite;
+    }
+    .device-tag:nth-child(2) { animation-delay: 0.3s; }
+    .device-tag:nth-child(3) { animation-delay: 0.6s; }
+    .device-tag:nth-child(4) { animation-delay: 0.9s; }
+    .device-tag:nth-child(5) { animation-delay: 1.2s; }
+    @keyframes tagPulse {
+      0%, 100% { opacity: 0.8; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+    .device-tag.critical { background: rgba(255,68,68,0.1); border-color: rgba(255,68,68,0.2); color: #ff4444; }
+    .device-tag .tag-icon { font-size: 0.6rem; }
+    
+    /* ===== System Log ===== */
+    .system-log {
+      background: rgba(0,0,0,0.2);
+      border-radius: 1rem;
+      padding: 0.8rem;
+      margin-top: 1rem;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.6rem;
+    }
+    .system-log::-webkit-scrollbar { width: 3px; }
+    .system-log::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 10px; }
+    .log-entry { 
+      padding: 0.2rem 0; 
+      border-bottom: 1px solid rgba(0,212,255,0.03);
+      animation: logFade 0.3s ease-in;
+    }
+    @keyframes logFade {
+      0% { opacity: 0; transform: translateX(-10px); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+    .log-entry.info { color: #4a8aaa; }
+    .log-entry.healing { color: #4ade80; }
+    .log-entry.critical { color: #ff4444; }
+    .log-entry.emergency { color: #ffd700; }
+    
+    /* ===== Animated Core (Enhanced - Fully Visible) ===== */
+    .core-section {
+      margin-bottom: 1.5rem;
+    }
+    .core-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0.8rem 0 0.3rem;
+      position: relative;
+    }
+    .animated-core {
+      position: relative;
+      width: 160px;
+      height: 160px;
+    }
+    /* Outer ring - most visible */
+    .animated-core .ring-outer {
+      position: absolute;
+      border-radius: 50%;
+      border: 3px solid rgba(0, 212, 255, 0.35);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      animation: spinRing 6s linear infinite;
+      box-shadow: 0 0 40px rgba(0, 212, 255, 0.15), inset 0 0 40px rgba(0, 212, 255, 0.05);
+    }
+    /* Middle ring */
+    .animated-core .ring-middle {
+      position: absolute;
+      border-radius: 50%;
+      border: 2.5px solid rgba(0, 255, 200, 0.25);
+      top: 18px;
+      left: 18px;
+      width: 124px;
+      height: 124px;
+      animation: spinRing 10s linear infinite reverse;
+      box-shadow: 0 0 25px rgba(0, 255, 200, 0.1);
+    }
+    /* Inner ring */
+    .animated-core .ring-inner {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid rgba(0, 136, 255, 0.2);
+      top: 36px;
+      left: 36px;
+      width: 88px;
+      height: 88px;
+      animation: spinRing 14s linear infinite;
+      box-shadow: 0 0 20px rgba(0, 136, 255, 0.08);
+    }
+    /* Core dot - bright and pulsing */
+    .animated-core .core-dot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 22px;
+      height: 22px;
+      background: radial-gradient(circle, #00d4ff, #0088ff, #0044aa);
+      border-radius: 50%;
+      box-shadow: 0 0 60px rgba(0, 212, 255, 0.6), 0 0 120px rgba(0, 212, 255, 0.3);
+      animation: pulseDot 1.5s ease-in-out infinite;
+    }
+    /* Extra glow ring around dot */
+    .animated-core .core-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 212, 255, 0.15), transparent 70%);
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+    @keyframes spinRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes pulseDot {
+      0%, 100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+      50% { transform: translate(-50%,-50%) scale(1.35); opacity: 0.9; }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { transform: translate(-50%,-50%) scale(1); opacity: 0.5; }
+      50% { transform: translate(-50%,-50%) scale(1.6); opacity: 1; }
+    }
+    /* Core icon overlay */
+    .core-icon-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2rem;
+      color: rgba(255, 215, 0, 0.4);
+      z-index: 2;
+      pointer-events: none;
+      animation: iconPulse 3s ease-in-out infinite;
+      text-shadow: 0 0 30px rgba(255, 215, 0, 0.1);
+    }
+    @keyframes iconPulse {
+      0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+    }
+    .core-label {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #4a8aaa;
+      margin-top: 0.5rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      animation: labelPulse 2s ease-in-out infinite;
+    }
+    .core-label i {
+      color: #00d4ff;
+      margin-right: 6px;
+      animation: fa-spin 2s linear infinite;
+    }
+    .core-status-text {
+      text-align: center;
+      font-size: 0.55rem;
+      color: #2a6a8a;
+      letter-spacing: 2px;
+      margin-top: 0.2rem;
+    }
+    .core-status-text .highlight {
+      color: #4ade80;
+      animation: highlightPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes highlightPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      font-size: 0.4rem;
+      color: #2a5a7a;
+      padding-top: 0.8rem;
+      border-top: 1px solid rgba(0,212,255,0.05);
+      margin-top: 0.5rem;
+      letter-spacing: 2px;
+    }
+    .footer i { 
+      color: #00d4ff;
+      animation: iconFloat 2s ease-in-out infinite;
+    }
+    .footer .highlight { color: #00d4ff; }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #00d4ff;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(0,212,255,0.1);
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    @keyframes slideToast { from { transform: translateX(100%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) { .cards-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { 
+      .app-wrapper { padding: 1rem; } 
+      .emergency-stats { flex-direction: column; }
+      .animated-core { width: 120px; height: 120px; }
+      .animated-core .ring-middle { width: 92px; height: 92px; top: 14px; left: 14px; }
+      .animated-core .ring-inner { width: 64px; height: 64px; top: 28px; left: 28px; }
+      .animated-core .core-dot { width: 18px; height: 18px; }
+      .animated-core .core-icon-overlay { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <div class="bg-canvas"></div>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 PHOENIX CORE · NEURAL ENGINE & SELF-HEALING · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">⚡ POWER INJECTION · CLONE RECONSTRUCTION · AUTONOMOUS REGENERATION ⚡</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00d4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#00d4ff" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00d4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#00d4ff" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Main Content ===== -->
+  <div class="app-wrapper">
+    
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-icon"><i class="fas fa-dragon"></i></div>
+      <h1>Phoenix Core AI · Neural Engine & Self-Healing System</h1>
+      <div class="sub">Power Injection | Clone Reconstruction | Emergency Mode | Autonomous Self-Healing</div>
+      <div class="badge"><i class="fas fa-shield-alt"></i> SELF-HEALING · QUANTUM-READY · ZERO DOWNTIME</div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <!-- ===== ANIMATED CORE - FULLY VISIBLE ===== -->
+    <div class="glass-card core-section" style="text-align:center; padding:1.5rem 1.2rem;">
+      <div class="card-title" style="justify-content:center; border-bottom-color:rgba(0,212,255,0.15);">
+        <i class="fas fa-microchip" style="color:#00ffc8;"></i> Phoenix Core · Neural Engine <i class="fas fa-brain" style="color:#00d4ff; margin-left:8px;"></i>
+      </div>
+      
+      <div class="core-container">
+        <div class="animated-core">
+          <!-- 3 rotating rings -->
+          <div class="ring-outer"></div>
+          <div class="ring-middle"></div>
+          <div class="ring-inner"></div>
+          <!-- Glow effect -->
+          <div class="core-glow"></div>
+          <!-- Central dot -->
+          <div class="core-dot"></div>
+          <!-- Icon overlay (Fire icon) -->
+          <div class="core-icon-overlay">
+            <i class="fas fa-fire"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="core-label">
+        <i class="fas fa-sync-alt"></i> ACTIVE · SELF-HEALING PROTOCOL
+      </div>
+      <div class="core-status-text">
+        <span class="highlight">● ONLINE</span> · Neural Grid Stable · <span id="coreHealthDisplay">100%</span> Integrity
+      </div>
+    </div>
+    
+    <!-- Cards Grid -->
+    <div class="cards-grid">
+      
+      <!-- Card 1: Power Injection Monitor -->
+      <div class="glass-card">
+        <div class="card-title"><i class="fas fa-bolt"></i> Power Injection Monitor</div>
+        <div class="power-meter">
+          <div class="power-gauge">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8"/>
+              <circle id="powerCircle" cx="50" cy="50" r="45" fill="none" stroke="url(#powerGrad)" stroke-width="8" stroke-dasharray="283" stroke-dashoffset="283" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+              <defs>
+                <linearGradient id="powerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color:#00d4ff"/>
+                  <stop offset="50%" style="stop-color:#00ffc8"/>
+                  <stop offset="100%" style="stop-color:#0088ff"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="power-value" id="powerPercent">0%</div>
+          </div>
+          <div class="injection-animation"><div class="injection-wave" id="injectionWave"></div></div>
+          <div class="power-label"><i class="fas fa-microchip"></i> Emergency Power Injection to Damaged Processors</div>
+        </div>
+      </div>
+      
+      <!-- Card 2: Clone Reconstruction -->
+      <div class="glass-card">
+        <div class="card-title"><i class="fas fa-clone"></i> Clone Reconstruction</div>
+        <div class="clone-status">
+          <div class="status-row">
+            <span><i class="fas fa-database"></i> Safe Circle Master Copy</span>
+            <span class="clone-icon active" id="masterIcon"><i class="fas fa-check-circle"></i> STORED</span>
+          </div>
+          <div class="status-row">
+            <span><i class="fas fa-copy"></i> Clone Extraction Status</span>
+            <div class="progress-bar-small"><div class="progress-fill-small" id="cloneProgress" style="width: 0%;"></div></div>
+          </div>
+          <div class="status-row">
+            <span><i class="fas fa-sync-alt"></i> Background Execution</span>
+            <span class="clone-icon idle" id="bgIcon"><i class="fas fa-circle-notch"></i> IDLE</span>
+          </div>
+          <div class="status-row">
+            <span><i class="fas fa-shield-alt"></i> Offline Backup Ready</span>
+            <span class="clone-icon active" id="backupIcon"><i class="fas fa-check-circle"></i> ACTIVE</span>
+          </div>
+        </div>
+        <div style="margin-top:0.8rem; font-size:0.6rem; background:rgba(0,0,0,0.2); border-radius:0.5rem; padding:0.5rem; color:#4a8aaa;">
+          <i class="fas fa-info-circle"></i> At 1% damage: Automatic clone extraction & deployment
+        </div>
+      </div>
+      
+      <!-- Card 3: Emergency Mode -->
+      <div class="glass-card">
+        <div class="card-title"><i class="fas fa-exclamation-triangle"></i> Emergency Mode · Alternative Operations</div>
+        <div id="emergencyPanel" class="emergency-panel">
+          <div class="emergency-title"><i class="fas fa-bell"></i> 🚨 EMERGENCY MODE ACTIVATED (20-30% Damage)</div>
+          <div class="emergency-stats">
+            <div class="emergency-stat"><div class="value" id="emergencyPercent">0%</div><div class="label">System Damage</div></div>
+            <div class="emergency-stat"><div class="value" id="operationalCapacity">100%</div><div class="label">Operational Capacity</div></div>
+            <div class="emergency-stat"><div class="value" id="offlineMode">ONLINE</div><div class="label">Connection Mode</div></div>
+          </div>
+          <div class="devices-list" id="emergencyDevices"></div>
+          <div style="font-size:0.6rem; margin-top:0.5rem; color:#4a8aaa;">
+            <i class="fas fa-plane"></i> <span id="emergencyMsg">Running 50% critical operations until full recovery</span>
+          </div>
+        </div>
+        <div id="emergencyInactive" style="text-align:center; padding:1rem; color:#4a8aaa;">
+          <i class="fas fa-shield-alt"></i> System Stable · Emergency Mode Standby
+        </div>
+      </div>
+    </div>
+    
+    <!-- System Log -->
+    <div class="glass-card" style="margin-bottom:1rem;">
+      <div class="card-title"><i class="fas fa-list"></i> Phoenix Core · System Activity Log</div>
+      <div class="system-log" id="systemLog">
+        <div class="log-entry healing"><i class="fas fa-check-circle"></i> Phoenix Core AI initialized · Neural engine ready</div>
+        <div class="log-entry info"><i class="fas fa-info-circle"></i> Monitoring systems for anomalies (threshold: 1%)</div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <i class="fas fa-shield-haltered"></i> PCS-AI · Phoenix Core Engine · 
+      <span class="highlight">Offline/Online Self-Healing · Power Injection Protocol · Autonomous Regeneration</span>
+    </div>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="criticalSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="healSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="emergencySound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script>
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError) {
+        const sound = document.getElementById('criticalSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('healSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    function playSound(sound) {
+      if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+    }
+    
+    // ========== PHOENIX CORE STATE ==========
+    let systemHealth = 100;
+    let powerInjection = 0;
+    let cloneExtractionProgress = 0;
+    let emergencyActive = false;
+    let anomalyInterval;
+    
+    const devices = [
+      { id: 'bank_servers', name: 'Banking Servers', critical: true },
+      { id: 'aviation', name: 'Aviation Systems', critical: true },
+      { id: 'medical', name: 'Medical Infrastructure', critical: true },
+      { id: 'marine', name: 'Marine Navigation', critical: false },
+      { id: 'power_grid', name: 'Power Grid', critical: true }
+    ];
+    
+    // ========== DOM REFS ==========
+    const powerPercentSpan = document.getElementById('powerPercent');
+    const powerCircle = document.getElementById('powerCircle');
+    const injectionWave = document.getElementById('injectionWave');
+    const cloneProgressBar = document.getElementById('cloneProgress');
+    const masterIcon = document.getElementById('masterIcon');
+    const bgIcon = document.getElementById('bgIcon');
+    const backupIcon = document.getElementById('backupIcon');
+    const emergencyPanel = document.getElementById('emergencyPanel');
+    const emergencyInactive = document.getElementById('emergencyInactive');
+    const emergencyPercentSpan = document.getElementById('emergencyPercent');
+    const operationalCapacitySpan = document.getElementById('operationalCapacity');
+    const offlineModeSpan = document.getElementById('offlineMode');
+    const emergencyMsgSpan = document.getElementById('emergencyMsg');
+    const emergencyDevicesDiv = document.getElementById('emergencyDevices');
+    const systemLog = document.getElementById('systemLog');
+    const coreHealthDisplay = document.getElementById('coreHealthDisplay');
+    
+    const circumference = 2 * Math.PI * 45;
+    
+    // ========== FUNCTIONS ==========
+    function addLogEntry(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      const icons = { info: 'ℹ️', healing: '🔧', critical: '⚠️', emergency: '🚨' };
+      entry.innerHTML = `${icons[type] || 'ℹ️'} ${new Date().toLocaleTimeString()} · ${message}`;
+      systemLog.insertBefore(entry, systemLog.firstChild);
+      if (systemLog.children.length > 20) systemLog.removeChild(systemLog.lastChild);
+    }
+    
+    function updatePowerInjection(percent) {
+      powerPercentSpan.textContent = Math.floor(percent) + '%';
+      const offset = circumference - (percent / 100) * circumference;
+      powerCircle.setAttribute('stroke-dashoffset', offset);
+      injectionWave.style.width = percent + '%';
+    }
+    
+    function updateCloneProgress(percent) {
+      cloneProgressBar.style.width = percent + '%';
+      if (percent >= 100) {
+        masterIcon.innerHTML = '<i class="fas fa-check-circle"></i> DEPLOYED';
+        masterIcon.className = 'clone-icon active';
+        bgIcon.innerHTML = '<i class="fas fa-check-circle"></i> ACTIVE';
+        bgIcon.className = 'clone-icon active';
+        addLogEntry("Clone reconstruction complete · Safe circle master copy deployed", "healing");
+        showToast("✅ Clone deployment complete · Damaged cells reconstructed", false);
+      } else if (percent > 0) {
+        bgIcon.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> EXTRACTING';
+        bgIcon.className = 'clone-icon active';
+      }
+    }
+    
+    function updateEmergencyMode(damagePercent) {
+      if (damagePercent >= 20 && !emergencyActive) {
+        emergencyActive = true;
+        emergencyPanel.classList.add('active');
+        emergencyInactive.style.display = 'none';
+        addLogEntry(`🚨 EMERGENCY MODE ACTIVATED at ${damagePercent}% damage!`, "emergency");
+        playSound(document.getElementById('emergencySound'));
+        showToast(`🚨 EMERGENCY MODE ACTIVATED at ${damagePercent}% damage`, true);
+        
+        emergencyDevicesDiv.innerHTML = '';
+        devices.forEach(device => {
+          const tag = document.createElement('div');
+          tag.className = `device-tag ${device.critical ? 'critical' : ''}`;
+          tag.innerHTML = `<span class="tag-icon">${device.critical ? '🔴' : '🟢'}</span> ${device.name}`;
+          emergencyDevicesDiv.appendChild(tag);
+        });
+        
+        try {
+          const utterance = new SpeechSynthesisUtterance(`Emergency mode activated at ${damagePercent} percent system damage. Running at 50 percent operational capacity.`);
+          utterance.lang = 'en-US';
+          utterance.rate = 0.9;
+          window.speechSynthesis.speak(utterance);
+        } catch(e) {}
+        
+      } else if (damagePercent < 20 && emergencyActive) {
+        emergencyActive = false;
+        emergencyPanel.classList.remove('active');
+        emergencyInactive.style.display = 'block';
+        addLogEntry(`✅ Emergency mode deactivated · System recovery in progress`, "healing");
+        emergencyDevicesDiv.innerHTML = '<div style="font-size:0.6rem;color:#4a8aaa;">All systems returning to normal operation</div>';
+      }
+      
+      if (emergencyActive) {
+        emergencyPercentSpan.textContent = damagePercent + '%';
+        const operationalCapacity = Math.max(50, 100 - damagePercent);
+        operationalCapacitySpan.textContent = operationalCapacity + '%';
+        offlineModeSpan.textContent = damagePercent >= 25 ? 'OFFLINE MODE' : 'ONLINE';
+        offlineModeSpan.style.color = damagePercent >= 25 ? '#ff4444' : '#4ade80';
+        emergencyMsgSpan.textContent = damagePercent >= 25 ? 
+          'Running 50% critical operations until full recovery · Offline backup active' :
+          `Running at ${Math.floor(operationalCapacity)}% capacity · Monitoring degradation`;
+      }
+    }
+    
+    function simulateSystemAnomaly() {
+      if (systemHealth <= 0) return;
+      
+      const damage = Math.random() * 8 + 1;
+      const newHealth = Math.max(0, systemHealth - damage);
+      const actualDamage = systemHealth - newHealth;
+      systemHealth = newHealth;
+      
+      // Update core health display
+      if (coreHealthDisplay) {
+        coreHealthDisplay.textContent = Math.floor(systemHealth) + '%';
+        coreHealthDisplay.style.color = systemHealth > 70 ? '#4ade80' : systemHealth > 40 ? '#ffd700' : '#ff4444';
+      }
+      
+      powerInjection = Math.min(100, powerInjection + actualDamage * 1.2);
+      updatePowerInjection(powerInjection);
+      
+      addLogEntry(`⚠️ Anomaly detected! System damage: -${actualDamage.toFixed(1)}% (Health: ${systemHealth.toFixed(1)}%)`, "critical");
+      
+      if (actualDamage >= 1 || systemHealth <= 99) {
+        addLogEntry(`🔬 Damage threshold reached (1%+) · Initiating clone extraction`, "healing");
+        
+        let extraction = 0;
+        const extractionInterval = setInterval(() => {
+          extraction += Math.random() * 15 + 10;
+          if (extraction >= 100) {
+            extraction = 100;
+            clearInterval(extractionInterval);
+            updateCloneProgress(100);
+            addLogEntry(`✅ Clone deployment complete · Damaged cells being reconstructed`, "healing");
+            
+            setTimeout(() => {
+              if (systemHealth < 100) {
+                const healAmount = Math.min(actualDamage * 1.5, 100 - systemHealth);
+                systemHealth = Math.min(100, systemHealth + healAmount);
+                if (coreHealthDisplay) {
+                  coreHealthDisplay.textContent = Math.floor(systemHealth) + '%';
+                  coreHealthDisplay.style.color = '#4ade80';
+                }
+                addLogEntry(`🏥 Phoenix Core healing: +${healAmount.toFixed(1)}% system recovery`, "healing");
+                showToast(`🏥 Healing: +${healAmount.toFixed(1)}% system recovery`, false);
+                if (systemHealth >= 99) {
+                  addLogEntry(`✨ System fully restored! Phoenix Core regeneration complete`, "healing");
+                  showToast(`✨ System fully restored! Phoenix Core complete`, false);
+                  powerInjection = 0;
+                  updatePowerInjection(0);
+                }
+              }
+            }, 2000);
+          }
+          updateCloneProgress(extraction);
+        }, 200);
+      }
+      
+      const damagePercent = 100 - systemHealth;
+      updateEmergencyMode(damagePercent);
+      
+      setTimeout(() => {
+        if (systemHealth < 100 && systemHealth > 0) {
+          const passiveHeal = Math.random() * 3 + 1;
+          systemHealth = Math.min(100, systemHealth + passiveHeal);
+          if (coreHealthDisplay) {
+            coreHealthDisplay.textContent = Math.floor(systemHealth) + '%';
+          }
+          addLogEntry(`🌿 Passive regeneration: +${passiveHeal.toFixed(1)}% system health`, "healing");
+          if (systemHealth >= 99) {
+            addLogEntry(`✨ System fully restored!`, "healing");
+            updateEmergencyMode(0);
+          }
+        }
+      }, 4000);
+    }
+    
+    function fullSystemReset() {
+      systemHealth = 100;
+      powerInjection = 0;
+      cloneExtractionProgress = 0;
+      if (coreHealthDisplay) {
+        coreHealthDisplay.textContent = '100%';
+        coreHealthDisplay.style.color = '#4ade80';
+      }
+      updatePowerInjection(0);
+      updateCloneProgress(0);
+      updateEmergencyMode(0);
+      emergencyActive = false;
+      emergencyPanel.classList.remove('active');
+      emergencyInactive.style.display = 'block';
+      masterIcon.innerHTML = '<i class="fas fa-check-circle"></i> STORED';
+      masterIcon.className = 'clone-icon active';
+      bgIcon.innerHTML = '<i class="fas fa-circle-notch"></i> IDLE';
+      bgIcon.className = 'clone-icon idle';
+      backupIcon.innerHTML = '<i class="fas fa-check-circle"></i> ACTIVE';
+      backupIcon.className = 'clone-icon active';
+      addLogEntry("🔄 SYSTEM RESET: All systems restored to 100% health", "healing");
+      showToast("🔄 System reset · All systems restored", false);
+    }
+    
+    // ========== INITIALIZATION ==========
+    addLogEntry("🔥 Phoenix Core AI Engine active · Neural engine ready", "healing");
+    addLogEntry("⚡ 1% damage threshold activates clone extraction & self-healing", "info");
+    addLogEntry("🛡️ Emergency mode triggers at 20-30% damage · 50% critical ops", "info");
+    
+    // Start anomaly simulation
+    anomalyInterval = setInterval(simulateSystemAnomaly, 8000);
+    
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'r' || e.key === 'R') {
+        fullSystemReset();
+      }
+      if (e.key === 's' || e.key === 'S') {
+        simulateSystemAnomaly();
+      }
+    });
+    
+    // Expose for console testing
+    window.resetPhoenixCore = fullSystemReset;
+    window.triggerAnomaly = simulateSystemAnomaly;
+  </script>
+</body>
+</html>

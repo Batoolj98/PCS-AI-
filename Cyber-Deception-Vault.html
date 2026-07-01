@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Cyber Deception Vault · QR Code Dual Auth</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00d4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #0088ff; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== Deception Overlay ===== */
+    .deception-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: repeating-linear-gradient(45deg, rgba(0, 212, 255, 0.03) 0px, rgba(0, 212, 255, 0.03) 2px, transparent 2px, transparent 10px);
+      pointer-events: none;
+      z-index: 1;
+    }
+    
+    /* ===== Main Container ===== */
+    .vault-container {
+      position: relative;
+      z-index: 10;
+      max-width: 1400px;
+      margin: 1.5rem auto;
+      padding: 1.5rem;
+    }
+    
+    /* ===== Alert Banner ===== */
+    .alert-banner {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 255, 200, 0.05));
+      border: 2px solid #00d4ff;
+      border-radius: 1rem;
+      padding: 1rem 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      animation: alertPulse 1.5s infinite;
+    }
+    @keyframes alertPulse {
+      0%,100% { border-color: #00d4ff; box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.2); }
+      50% { border-color: #00ffc8; box-shadow: 0 0 0 8px rgba(0, 212, 255, 0.1); }
+    }
+    .alert-icon { font-size: 2.5rem; color: #00d4ff; animation: iconShake 0.6s infinite; }
+    @keyframes iconShake {
+      0%,100% { transform: rotate(0deg); }
+      25% { transform: rotate(10deg); }
+      75% { transform: rotate(-10deg); }
+    }
+    .alert-text h3 { color: #00d4ff; font-size: 1.1rem; margin-bottom: 0.2rem; }
+    .alert-text p { font-size: 0.65rem; color: #4a8aaa; }
+    .command-buttons { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+    .cmd-btn {
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid #00d4ff;
+      padding: 0.35rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.6rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      color: #80c8e8;
+    }
+    .cmd-btn:hover { background: #00d4ff; color: #0a0e1a; transform: scale(1.02); }
+    
+    /* ===== Vault Grid ===== */
+    .vault-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    
+    /* ===== Forensics Section ===== */
+    .forensics-section {
+      background: rgba(0, 20, 40, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      border: 1px solid rgba(0, 212, 255, 0.06);
+    }
+    .section-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: #80c8e8;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-left: 3px solid #00d4ff;
+      padding-left: 12px;
+    }
+    .section-title i { color: #00d4ff; }
+    .forensics-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.65rem;
+    }
+    .forensics-table th {
+      text-align: left;
+      padding: 0.5rem 0.4rem;
+      background: rgba(0, 212, 255, 0.06);
+      color: #00d4ff;
+      font-weight: 700;
+    }
+    .forensics-table td {
+      padding: 0.4rem 0.4rem;
+      border-bottom: 1px solid rgba(0, 212, 255, 0.05);
+      font-family: monospace;
+      color: #80c8e8;
+    }
+    .confidence-100 { color: #4ade80; font-weight: 800; }
+    .fingerprint-data { font-size: 0.55rem; }
+    
+    /* ===== QR Section ===== */
+    .qr-section {
+      background: rgba(0, 20, 40, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      border: 1px solid rgba(0, 212, 255, 0.06);
+      text-align: center;
+    }
+    .qr-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: #80c8e8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .qr-title i { color: #00d4ff; }
+    .qr-container {
+      background: white;
+      padding: 1rem;
+      border-radius: 1rem;
+      display: inline-block;
+      margin: 0.5rem auto;
+    }
+    #qrcode { display: flex; justify-content: center; }
+    
+    /* ===== QR Input ===== */
+    .qr-input-section {
+      margin-top: 1rem;
+      padding: 0.8rem;
+      background: rgba(0, 212, 255, 0.05);
+      border-radius: 1rem;
+      border: 1px solid rgba(0, 212, 255, 0.1);
+    }
+    .qr-input-section label {
+      font-size: 0.6rem;
+      color: #4a8aaa;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .qr-input-field {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .qr-input-field input {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(0, 212, 255, 0.15);
+      border-radius: 2rem;
+      padding: 0.35rem 1rem;
+      color: #d0f0ff;
+      font-size: 0.75rem;
+      text-align: center;
+      font-family: monospace;
+      width: 180px;
+    }
+    .qr-input-field input:focus { border-color: #00d4ff; outline: none; }
+    .qr-input-field button {
+      background: linear-gradient(95deg, #00d4ff, #0088ff);
+      border: none;
+      padding: 0.35rem 1rem;
+      border-radius: 2rem;
+      color: white;
+      cursor: pointer;
+      font-size: 0.6rem;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+    .qr-input-field button:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0, 212, 255, 0.3); }
+    
+    .qr-note { font-size: 0.55rem; color: #4a8aaa; margin-top: 0.5rem; }
+    
+    /* ===== Dual Auth Status ===== */
+    .dual-auth-status { margin-top: 1rem; padding: 0.5rem; background: rgba(0, 212, 255, 0.05); border-radius: 0.8rem; font-size: 0.65rem; }
+    .status-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; margin: 0.2rem; }
+    .status-pending { background: rgba(255, 68, 68, 0.1); color: #ff4444; }
+    .status-approved { background: rgba(74, 222, 128, 0.1); color: #4ade80; }
+    .approval-message { font-size: 0.6rem; margin-top: 0.5rem; color: #4a8aaa; }
+    
+    /* ===== Phoenix Logo ===== */
+    .phoenix-logo { text-align: center; margin-top: 1.5rem; font-size: 0.65rem; color: #4a8aaa; }
+    .phoenix-logo i { color: #00d4ff; }
+    
+    /* ===== Buttons ===== */
+    .control-buttons {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      background: linear-gradient(95deg, #00d4ff, #0088ff);
+      border: none;
+      padding: 0.4rem 1.2rem;
+      border-radius: 2rem;
+      color: white;
+      cursor: pointer;
+      font-size: 0.6rem;
+      font-weight: 600;
+      transition: 0.2s;
+    }
+    .action-btn:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(0, 212, 255, 0.3); }
+    .action-btn.reset { background: rgba(255,255,255,0.05); border: 1px solid rgba(0, 212, 255, 0.15); }
+    .action-btn.reset:hover { background: rgba(0, 212, 255, 0.1); }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #00d4ff;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(0, 212, 255, 0.1);
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    @keyframes slideToast { from { transform: translateX(100%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) {
+      .vault-grid { grid-template-columns: 1fr; gap: 1rem; }
+      .vault-container { padding: 1rem; margin: 0.5rem; }
+    }
+    @media (max-width: 600px) {
+      .alert-banner { flex-direction: column; text-align: center; }
+      .command-buttons { justify-content: center; }
+      .qr-input-field input { width: 140px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <div class="bg-canvas"></div>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  <div class="deception-overlay"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 CYBER DECEPTION VAULT · QR DUAL AUTH · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 HONEYPOT ACTIVE · ATTACKER IN DECEPTION ZONE 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00d4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#00d4ff" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00d4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#00d4ff" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Main Content ===== -->
+  <div class="vault-container">
+    
+    <!-- Alert Banner -->
+    <div class="alert-banner" id="alertBanner">
+      <div class="alert-icon"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="alert-text">
+        <h3>⚠️ ACTIVE DECEPTION DETECTED ⚠️</h3>
+        <p>Honeypot triggered · Unauthorized access in progress · Immediate action required</p>
+      </div>
+      <div class="command-buttons">
+        <button class="cmd-btn" id="isolateCmd"><i class="fas fa-shield-virus"></i> ISOLATE</button>
+        <button class="cmd-btn" id="monitorCmd"><i class="fas fa-eye"></i> STEALTH MONITOR</button>
+      </div>
+    </div>
+    
+    <!-- Vault Grid -->
+    <div class="vault-grid">
+      
+      <!-- Forensics Section -->
+      <div class="forensics-section">
+        <div class="section-title"><i class="fas fa-skull-crosswalk"></i> Extracted Hacker Intelligence</div>
+        <div style="overflow-x: auto;">
+          <table class="forensics-table" id="forensicsTable">
+            <thead><tr><th>Category</th><th>Extracted Data</th><th>Confidence</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+        <div class="phoenix-logo"><i class="fas fa-dragon"></i> PCS-AI · Phoenix Core · Zero False Positives</div>
+      </div>
+      
+      <!-- QR Section -->
+      <div class="qr-section">
+        <div class="qr-title"><i class="fas fa-fingerprint"></i> Dual Auth Gatekeeper · QR Code</div>
+        <div class="qr-container"><div id="qrcode"></div></div>
+        
+        <!-- QR Input -->
+        <div class="qr-input-section">
+          <label><i class="fas fa-edit"></i> CHANGE QR CODE VALUE:</label>
+          <div class="qr-input-field">
+            <input type="text" id="qrNumberInput" value="71101222" maxlength="20" placeholder="Enter number">
+            <button id="generateQRBtn"><i class="fas fa-qrcode"></i> GENERATE QR</button>
+          </div>
+        </div>
+        
+        <div class="qr-note"><i class="fas fa-mobile-alt"></i> Scan with dual devices · Dual approval required</div>
+        
+        <!-- Dual Auth Status -->
+        <div class="dual-auth-status" id="dualAuthStatus">
+          <span class="status-badge status-pending"><i class="fas fa-clock"></i> Officer-01: PENDING</span>
+          <span class="status-badge status-pending"><i class="fas fa-clock"></i> Officer-02: PENDING</span>
+        </div>
+        <div class="approval-message" id="approvalMessage">
+          🔐 Dual biometric verification required. Both officers must scan QR code.
+        </div>
+        
+        <!-- Control Buttons -->
+        <div class="control-buttons">
+          <button id="simulateAuth1Btn" class="action-btn"><i class="fas fa-fingerprint"></i> Simulate Officer-01</button>
+          <button id="simulateAuth2Btn" class="action-btn"><i class="fas fa-fingerprint"></i> Simulate Officer-02</button>
+          <button id="resetAuthBtn" class="action-btn reset"><i class="fas fa-undo-alt"></i> Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="alertSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="authSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="clickSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2124/2124-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script>
+    // ========== FORENSICS DATA ==========
+    const hackerData = [
+      { category: "Source IP", value: "185.234.12.45", confidence: "100%" },
+      { category: "MAC Address", value: "AA:BB:CC:11:22:33", confidence: "100%" },
+      { category: "Device Fingerprint", value: "a7f3e9d2-c8b1-4a6e-9f2d-3k4l5m6n7o8p", confidence: "100%" },
+      { category: "Browser Fingerprint", value: "Chrome/121.0.6167.185 · WebGL Hash: 8f3a9d2c", confidence: "100%" },
+      { category: "OS Detection", value: "Windows 11 · Build 22621", confidence: "100%" },
+      { category: "Attack Vector", value: "SQL Injection · CVE-2024-1234", confidence: "100%" }
+    ];
+    
+    // ========== STATE ==========
+    let auth1 = false;
+    let auth2 = false;
+    
+    // ========== DOM REFS ==========
+    const alertSound = document.getElementById('alertSound');
+    const authSound = document.getElementById('authSound');
+    const clickSound = document.getElementById('clickSound');
+    
+    // ========== FUNCTIONS ==========
+    function playSound(sound) {
+      if(sound) { sound.currentTime = 0; sound.play().catch(e => {}); }
+    }
+    
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+    }
+    
+    function renderForensics() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = hackerData.map(d => `
+        <tr>
+          <td><strong style="color:#80c8e8;">${d.category}</strong></td>
+          <td class="fingerprint-data" style="color:#4a8aaa;">${d.value}</td>
+          <td class="confidence-100">✅ ${d.confidence}</td>
+        </tr>
+      `).join('');
+    }
+    
+    function updateDualAuthStatus() {
+      const container = document.getElementById('dualAuthStatus');
+      container.innerHTML = `
+        <span class="status-badge ${auth1 ? 'status-approved' : 'status-pending'}">
+          <i class="fas ${auth1 ? 'fa-check-circle' : 'fa-clock'}"></i> Officer-01: ${auth1 ? 'VERIFIED' : 'PENDING'}
+        </span>
+        <span class="status-badge ${auth2 ? 'status-approved' : 'status-pending'}">
+          <i class="fas ${auth2 ? 'fa-check-circle' : 'fa-clock'}"></i> Officer-02: ${auth2 ? 'VERIFIED' : 'PENDING'}
+        </span>
+      `;
+      const msg = document.getElementById('approvalMessage');
+      if (auth1 && auth2) {
+        msg.innerHTML = '<span style="color:#4ade80;">✅ DUAL APPROVAL COMPLETE! Vault access granted. Shadow Dashboard unlocked.</span>';
+        playSound(authSound);
+        showToast("🔓 DUAL AUTH APPROVED · Full access granted to Shadow Vault", false);
+      } else if (auth1 || auth2) {
+        msg.innerHTML = '⏳ Waiting for second biometric verification... One more approval required.';
+      } else {
+        msg.innerHTML = '🔐 Dual biometric verification required. Both officers must scan QR code.';
+      }
+    }
+    
+    function generateQRCode(value) {
+      const qrContainer = document.getElementById("qrcode");
+      qrContainer.innerHTML = "";
+      new QRCode(qrContainer, {
+        text: value,
+        width: 180,
+        height: 180,
+        colorDark: "#00d4ff",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    }
+    
+    // ========== INITIALIZE ==========
+    generateQRCode("71101222");
+    renderForensics();
+    updateDualAuthStatus();
+    
+    // ========== EVENT LISTENERS ==========
+    // Generate QR
+    document.getElementById('generateQRBtn').addEventListener('click', () => {
+      const newValue = document.getElementById('qrNumberInput').value.trim();
+      if (newValue === "") {
+        showToast("⚠️ Please enter a value for QR Code", true);
+        return;
+      }
+      generateQRCode(newValue);
+      playSound(clickSound);
+      showToast(`✅ QR Code updated to: ${newValue}`, false);
+    });
+    
+    // Enter key for QR input
+    document.getElementById('qrNumberInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('generateQRBtn').click();
+      }
+    });
+    
+    // Simulate Officer-01 Auth
+    document.getElementById('simulateAuth1Btn').addEventListener('click', () => {
+      playSound(clickSound);
+      auth1 = true;
+      updateDualAuthStatus();
+      showToast("👮 Officer-01: Biometric verification COMPLETED", false);
+    });
+    
+    // Simulate Officer-02 Auth
+    document.getElementById('simulateAuth2Btn').addEventListener('click', () => {
+      playSound(clickSound);
+      auth2 = true;
+      updateDualAuthStatus();
+      showToast("👮 Officer-02: Biometric verification COMPLETED", false);
+    });
+    
+    // Reset Auth
+    document.getElementById('resetAuthBtn').addEventListener('click', () => {
+      playSound(clickSound);
+      auth1 = false;
+      auth2 = false;
+      updateDualAuthStatus();
+      showToast("🔄 Dual auth reset · Verification required again", true);
+    });
+    
+    // Alert Banner Commands
+    document.getElementById('isolateCmd').addEventListener('click', () => {
+      playSound(alertSound);
+      showToast("🔒 DIGITAL ISOLATION ACTIVATED · All suspicious ports blocked", true);
+    });
+    document.getElementById('monitorCmd').addEventListener('click', () => {
+      playSound(clickSound);
+      showToast("👁️ STEALTH MODE ACTIVE · Attacker under surveillance", false);
+    });
+    
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.key === '1') {
+        document.getElementById('simulateAuth1Btn').click();
+      }
+      if (e.key === '2') {
+        document.getElementById('simulateAuth2Btn').click();
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        document.getElementById('resetAuthBtn').click();
+      }
+      if (e.key === 'i' || e.key === 'I') {
+        document.getElementById('isolateCmd').click();
+      }
+      if (e.key === 'm' || e.key === 'M') {
+        document.getElementById('monitorCmd').click();
+      }
+      if (e.key === 'Enter' && document.activeElement === document.getElementById('qrNumberInput')) {
+        document.getElementById('generateQRBtn').click();
+      }
+    });
+    
+    // ========== PAGE LOAD ==========
+    setTimeout(() => {
+      playSound(alertSound);
+      showToast("⚠️ DECEPTION VAULT ACTIVE · Honeypot triggered", true);
+    }, 500);
+  </script>
+</body>
+</html>

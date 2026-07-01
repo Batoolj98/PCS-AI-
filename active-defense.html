@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Active Defense & Bug Hunter · Animated Charts</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00d4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #0088ff; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== App Wrapper ===== */
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3rem;
+      min-height: 100vh;
+    }
+    
+    /* ===== Header ===== */
+    .header {
+      text-align: center;
+      padding: 1rem 0 1.5rem;
+      position: relative;
+    }
+    .header .logo-icon {
+      font-size: 3rem;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8, #0088ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: logoPulse 3s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes logoPulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0,212,255,0.3)); }
+      50% { transform: scale(1.05); filter: drop-shadow(0 0 30px rgba(0,212,255,0.6)); }
+    }
+    .header h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8, #0088ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: 2px;
+      margin-top: 4px;
+    }
+    .header .sub {
+      font-size: 0.65rem;
+      color: #4a8aaa;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .header .badge {
+      display: inline-block;
+      border: 1px solid rgba(0,212,255,0.2);
+      padding: 0.15rem 1rem;
+      border-radius: 30px;
+      font-size: 0.45rem;
+      color: #00d4ff;
+      background: rgba(0,212,255,0.05);
+      margin-top: 6px;
+      letter-spacing: 2px;
+    }
+    
+    /* ===== Divider ===== */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #00d4ff, #00ffc8, #00d4ff, transparent);
+      margin: 0.5rem 0 1.5rem;
+      opacity: 0.3;
+    }
+    
+    /* ===== Charts Grid ===== */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+    .glass-card {
+      background: rgba(0, 20, 40, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 1.2rem;
+      padding: 1rem;
+      text-align: center;
+      border: 1px solid rgba(0,212,255,0.06);
+      transition: 0.3s;
+    }
+    .glass-card:hover { border-color: rgba(0,212,255,0.15); box-shadow: 0 0 40px rgba(0,212,255,0.02); }
+    .chart-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #80c8e8;
+    }
+    .chart-title i { color: #00d4ff; }
+    .chart-container {
+      position: relative;
+      width: 160px;
+      height: 160px;
+      margin: 0 auto;
+    }
+    canvas { max-width: 100%; max-height: 100%; }
+    .chart-value {
+      margin-top: 0.5rem;
+      font-size: 1rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: monospace;
+    }
+    
+    /* ===== Ports Section ===== */
+    .glass-panel {
+      background: rgba(0, 20, 40, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 1.2rem;
+      padding: 1rem;
+      border: 1px solid rgba(0,212,255,0.06);
+      transition: 0.3s;
+      margin-bottom: 1.2rem;
+    }
+    .glass-panel:hover { border-color: rgba(0,212,255,0.15); }
+    .panel-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid #00d4ff;
+      padding-left: 10px;
+      color: #80c8e8;
+    }
+    .panel-title i { color: #00d4ff; }
+    .panel-title .badge-count {
+      font-size: 0.4rem;
+      background: rgba(0,212,255,0.1);
+      padding: 0.1rem 0.5rem;
+      border-radius: 30px;
+      color: #00d4ff;
+      margin-left: auto;
+    }
+    
+    .ports-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 0.4rem;
+    }
+    .port-card {
+      background: rgba(0,0,0,0.2);
+      border-radius: 0.8rem;
+      padding: 0.3rem;
+      text-align: center;
+      border-left: 3px solid #4ade80;
+      cursor: pointer;
+      transition: 0.3s;
+      border: 1px solid rgba(0,212,255,0.04);
+      border-left-width: 3px;
+    }
+    .port-card:hover { border-color: #00d4ff; transform: scale(1.04); }
+    .port-card.closed { border-left-color: #ff4444; opacity: 0.6; }
+    .port-card.attacked { border-left-color: #ffd700; animation: pulseYellow 0.8s infinite; background: rgba(255,68,68,0.1); }
+    @keyframes pulseYellow { 0%,100% { box-shadow: 0 0 0 0 rgba(255,215,0,0.2); } 50% { box-shadow: 0 0 0 8px rgba(255,215,0,0.1); } }
+    .port-number { font-weight: 800; font-size: 0.65rem; color: #80c8e8; }
+    .port-name { font-size: 0.45rem; color: #4a8aaa; }
+    .port-status { font-size: 0.45rem; margin-top: 0.1rem; }
+    .port-status.open { color: #4ade80; }
+    .port-status.closed { color: #ff4444; }
+    .port-status.attacked { color: #ffd700; }
+    
+    /* ===== Buttons ===== */
+    .control-buttons {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      background: linear-gradient(95deg, #00d4ff, #0088ff);
+      border: none;
+      padding: 0.4rem 1.2rem;
+      border-radius: 2rem;
+      color: white;
+      cursor: pointer;
+      font-size: 0.6rem;
+      font-weight: 700;
+      transition: 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .action-btn:hover { transform: scale(1.04); box-shadow: 0 0 30px rgba(0,212,255,0.3); }
+    .action-btn.reset { background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.15); }
+    .action-btn.reset:hover { background: rgba(0,212,255,0.1); }
+    .action-btn.danger { background: linear-gradient(95deg, #ff4444, #dc2626); }
+    .action-btn.danger:hover { box-shadow: 0 0 30px rgba(255,68,68,0.3); }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #00d4ff;
+      border-radius: 1rem;
+      padding: 0.5rem 1.5rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      font-size: 0.65rem;
+      border: 1px solid rgba(0,212,255,0.1);
+      max-width: 90%;
+      text-align: center;
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    @keyframes slideToast { from { transform: translateX(-50%) translateY(20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+    
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      font-size: 0.4rem;
+      color: #2a5a7a;
+      padding-top: 0.8rem;
+      border-top: 1px solid rgba(0,212,255,0.05);
+      margin-top: 0.5rem;
+      letter-spacing: 2px;
+    }
+    .footer i { color: #00d4ff; }
+    .footer .highlight { color: #00d4ff; }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 800px) { .app-wrapper { padding: 1rem; } .ports-grid { grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); } }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <div class="bg-canvas"></div>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 ACTIVE DEFENSE · BUG HUNTER · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 TACTICAL OPERATIONS · ANIMATED CHARTS · AUTO-HEALING 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00d4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#00d4ff" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00d4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#00d4ff" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Main Content ===== -->
+  <div class="app-wrapper">
+    
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-icon"><i class="fas fa-shield-virus"></i></div>
+      <h1 class="glitch-text">Active Defense & Bug Hunter</h1>
+      <div class="sub">Tactical Operations · Animated Charts · Real-time Port Monitoring · Auto-Healing</div>
+      <div class="badge"><i class="fas fa-shield-alt"></i> REAL-TIME · AUTONOMOUS · ZERO-TRUST</div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <!-- Animated Charts Grid -->
+    <div class="charts-grid">
+      <!-- Firewall Efficiency Donut -->
+      <div class="glass-card">
+        <div class="chart-title"><i class="fas fa-firewall"></i> FIREWALL EFFICIENCY</div>
+        <div class="chart-container">
+          <canvas id="firewallChart"></canvas>
+        </div>
+        <div class="chart-value" id="fwValue">100%</div>
+      </div>
+      <!-- Ports Status Donut -->
+      <div class="glass-card">
+        <div class="chart-title"><i class="fas fa-plug"></i> PORTS STATUS</div>
+        <div class="chart-container">
+          <canvas id="portsChart"></canvas>
+        </div>
+        <div class="chart-value" id="portsValue">Open: 10 | Closed: 6</div>
+      </div>
+      <!-- Bug Hunter Progress Donut -->
+      <div class="glass-card">
+        <div class="chart-title"><i class="fas fa-bug"></i> BUG HUNTER PROGRESS</div>
+        <div class="chart-container">
+          <canvas id="bugChart"></canvas>
+        </div>
+        <div class="chart-value" id="bugValue">0% Fixed</div>
+      </div>
+    </div>
+    
+    <!-- Ports Monitor -->
+    <div class="glass-panel">
+      <div class="panel-title">
+        <i class="fas fa-network-wired"></i> Ports Monitor · Open / Closed / Isolated
+        <span class="badge-count">🔴 LIVE</span>
+      </div>
+      <div class="ports-grid" id="portsGrid"></div>
+      <div class="control-buttons">
+        <button class="action-btn" id="scanNowBtn"><i class="fas fa-sync-alt"></i> Force Bug Scan</button>
+        <button class="action-btn" id="autoPatchBtn"><i class="fas fa-syringe"></i> Auto-Patch All</button>
+        <button class="action-btn reset" id="resetSystemBtn"><i class="fas fa-undo-alt"></i> Reset System</button>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <i class="fas fa-shield-haltered"></i> PCS-AI · Active Defense & Bug Hunter · 
+      <span class="highlight">Real-time Charts · Port Blocking · Autonomous Bug Hunter</span>
+    </div>
+  </div>
+  
+  <script>
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+    }
+    
+    // ========== CHART INITIALIZATION ==========
+    let firewallChart, portsChart, bugChart;
+    let firewallEfficiency = 100;
+    let openPorts = 10;
+    let closedPorts = 6;
+    let fixedVulns = 0;
+    let totalVulns = 5;
+    
+    // Ports Data
+    const ports = [
+      { num: 21, name: "FTP", status: "open" }, { num: 22, name: "SSH", status: "open" },
+      { num: 23, name: "Telnet", status: "closed" }, { num: 25, name: "SMTP", status: "open" },
+      { num: 53, name: "DNS", status: "open" }, { num: 80, name: "HTTP", status: "open" },
+      { num: 110, name: "POP3", status: "closed" }, { num: 143, name: "IMAP", status: "closed" },
+      { num: 443, name: "HTTPS", status: "open" }, { num: 445, name: "SMB", status: "open" },
+      { num: 3306, name: "MySQL", status: "open" }, { num: 3389, name: "RDP", status: "open" },
+      { num: 5432, name: "PostgreSQL", status: "closed" }, { num: 6379, name: "Redis", status: "open" },
+      { num: 8080, name: "HTTP-Alt", status: "open" }, { num: 27017, name: "MongoDB", status: "closed" }
+    ];
+    
+    function initCharts() {
+      const ctx1 = document.getElementById('firewallChart').getContext('2d');
+      firewallChart = new Chart(ctx1, {
+        type: 'doughnut',
+        data: { labels: ['Protected', 'Vulnerable'], datasets: [{ data: [firewallEfficiency, 100 - firewallEfficiency], backgroundColor: ['#00d4ff', 'rgba(0,212,255,0.1)'], borderWidth: 0 }] },
+        options: { cutout: '65%', responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#4a8aaa', font: { size: 9 } } } } }
+      });
+      
+      const ctx2 = document.getElementById('portsChart').getContext('2d');
+      portsChart = new Chart(ctx2, {
+        type: 'doughnut',
+        data: { labels: ['Open Ports', 'Closed/Isolated'], datasets: [{ data: [openPorts, closedPorts], backgroundColor: ['#4ade80', '#ff4444'], borderWidth: 0 }] },
+        options: { cutout: '65%', responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#4a8aaa', font: { size: 9 } } } } }
+      });
+      
+      const ctx3 = document.getElementById('bugChart').getContext('2d');
+      bugChart = new Chart(ctx3, {
+        type: 'doughnut',
+        data: { labels: ['Fixed', 'Pending'], datasets: [{ data: [fixedVulns, totalVulns - fixedVulns], backgroundColor: ['#4ade80', '#ffd700'], borderWidth: 0 }] },
+        options: { cutout: '65%', responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#4a8aaa', font: { size: 9 } } } } }
+      });
+    }
+    
+    function updateFirewallChart(value) {
+      firewallEfficiency = Math.min(100, Math.max(0, value));
+      firewallChart.data.datasets[0].data = [firewallEfficiency, 100 - firewallEfficiency];
+      firewallChart.update();
+      document.getElementById('fwValue').textContent = firewallEfficiency + '%';
+    }
+    
+    function updatePortsChart() {
+      openPorts = ports.filter(p => p.status === 'open').length;
+      closedPorts = ports.filter(p => p.status === 'closed').length;
+      portsChart.data.datasets[0].data = [openPorts, closedPorts];
+      portsChart.update();
+      document.getElementById('portsValue').textContent = `Open: ${openPorts} | Closed: ${closedPorts}`;
+    }
+    
+    function updateBugChart() {
+      bugChart.data.datasets[0].data = [fixedVulns, totalVulns - fixedVulns];
+      bugChart.update();
+      document.getElementById('bugValue').textContent = `${Math.round(fixedVulns/totalVulns*100)}% Fixed`;
+    }
+    
+    // ===== RENDER PORTS =====
+    function renderPorts() {
+      const portsGrid = document.getElementById('portsGrid');
+      portsGrid.innerHTML = '';
+      ports.forEach(port => {
+        const card = document.createElement('div');
+        card.className = `port-card ${port.status === 'closed' ? 'closed' : ''}`;
+        card.setAttribute('data-port', port.num);
+        card.innerHTML = `
+          <div class="port-number">${port.num}</div>
+          <div class="port-name">${port.name}</div>
+          <div class="port-status ${port.status}">${port.status === 'open' ? '🔓 OPEN' : '🔒 CLOSED'}</div>
+        `;
+        card.addEventListener('click', () => {
+          showToast(`📡 Port ${port.num} (${port.name}) · Status: ${port.status.toUpperCase()}`, port.status === 'closed');
+        });
+        portsGrid.appendChild(card);
+      });
+    }
+    
+    // ===== ATTACK SIMULATION =====
+    function attackRandomPort() {
+      const openPortsList = ports.filter(p => p.status === 'open');
+      if(openPortsList.length === 0) return;
+      const attacked = openPortsList[Math.floor(Math.random() * openPortsList.length)];
+      const index = ports.findIndex(p => p.num === attacked.num);
+      if(index !== -1) {
+        const card = document.getElementById('portsGrid')?.children[index];
+        if(card) {
+          card.classList.add('attacked');
+          card.querySelector('.port-status').textContent = '⚠️ ATTACK';
+          card.querySelector('.port-status').className = 'port-status attacked';
+        }
+        setTimeout(() => {
+          ports[index].status = 'closed';
+          if(card) {
+            card.classList.remove('attacked');
+            card.classList.add('closed');
+            card.querySelector('.port-status').textContent = '🔒 ISOLATED';
+            card.querySelector('.port-status').className = 'port-status closed';
+          }
+          updatePortsChart();
+          updateFirewallChart(firewallEfficiency - 2);
+          showToast(`🛡️ Port ${attacked.num} (${attacked.name}) automatically isolated!`, true);
+        }, 1000);
+      }
+    }
+    
+    // ===== BUG HUNTER SCAN =====
+    let scanInterval;
+    function startBugScan() {
+      if(scanInterval) clearInterval(scanInterval);
+      let progress = 0;
+      fixedVulns = 0;
+      updateBugChart();
+      showToast("🐞 Bug Hunter: Scanning for vulnerabilities...", false);
+      scanInterval = setInterval(() => {
+        progress += Math.random() * 15 + 5;
+        if(progress >= 100) {
+          clearInterval(scanInterval);
+          fixedVulns = totalVulns;
+          updateBugChart();
+          showToast("🐞 Bug Hunter: Scan complete! All vulnerabilities patched.", false);
+        }
+      }, 400);
+    }
+    
+    function autoPatchAll() {
+      fixedVulns = totalVulns;
+      updateBugChart();
+      showToast("🔒 All vulnerabilities have been patched automatically.", false);
+    }
+    
+    function resetSystem() {
+      ports.forEach(p => { p.status = 'open'; });
+      fixedVulns = 0;
+      firewallEfficiency = 100;
+      renderPorts();
+      updatePortsChart();
+      updateFirewallChart(100);
+      updateBugChart();
+      showToast("✅ System Reset Complete! All ports reopened, efficiency restored to 100%.", false);
+      if(scanInterval) clearInterval(scanInterval);
+      startBugScan();
+    }
+    
+    // ========== EVENT LISTENERS ==========
+    document.getElementById('scanNowBtn').addEventListener('click', startBugScan);
+    document.getElementById('autoPatchBtn').addEventListener('click', autoPatchAll);
+    document.getElementById('resetSystemBtn').addEventListener('click', resetSystem);
+    
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 's' || e.key === 'S') {
+        document.getElementById('scanNowBtn').click();
+      }
+      if (e.key === 'p' || e.key === 'P') {
+        document.getElementById('autoPatchBtn').click();
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        document.getElementById('resetSystemBtn').click();
+      }
+    });
+    
+    // ========== INITIALIZATION ==========
+    initCharts();
+    renderPorts();
+    updatePortsChart();
+    startBugScan();
+    
+    // Simulate random attacks every 10 seconds
+    setInterval(() => { if(Math.random() > 0.5) attackRandomPort(); }, 10000);
+  </script>
+</body>
+</html>

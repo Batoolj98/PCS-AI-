@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Deepfake Detection Center · Digital Identity Shield</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2340c4ff'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Blue Forensic Background ===== */
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0a1a2e 0%, #050a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #40c4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #4ade80; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #0a0e1a 20px,
+        #0a0e1a 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #0a0e1a 20px,
+        #0a0e1a 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(10, 14, 26, 0.85);
+      padding: 0.1rem 1.2rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      border-bottom: 2px solid #ffd700;
+      backdrop-filter: blur(8px);
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(10, 14, 26, 0.85);
+      padding: 0.1rem 1.2rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      border-top: 2px solid #ffd700;
+      backdrop-filter: blur(8px);
+    }
+    
+    #cubeCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+    }
+    .glow-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 40%, rgba(64,196,255,0.05), rgba(100,160,255,0.05), transparent 75%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 280px;
+      background: rgba(10, 14, 26, 0.75);
+      backdrop-filter: blur(18px);
+      border-right: 2px solid rgba(64,196,255,0.15);
+      padding: 1rem 0.7rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      transition: 0.3s;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: rgba(64,196,255,0.05); }
+    .sidebar::-webkit-scrollbar-thumb { background: #40c4ff; border-radius: 4px; }
+    .sidebar-logo {
+      text-align: center;
+      padding-bottom: 0.8rem;
+      border-bottom: 2px solid rgba(64,196,255,0.1);
+      margin-bottom: 0.4rem;
+      cursor: pointer;
+    }
+    .sidebar-logo i {
+      font-size: 2.8rem;
+      background: linear-gradient(135deg, #40c4ff, #7dd3fc, #8892ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: floatLogo 3s infinite ease-in-out;
+    }
+    @keyframes floatLogo { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .sidebar-logo h3 {
+      font-size: 1rem;
+      background: linear-gradient(135deg, #40c4ff, #7a8cff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      margin-top: 2px;
+    }
+    .sidebar-logo .sub {
+      font-size: 0.45rem;
+      color: #4a8aaa;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .section-header {
+      font-size: 0.55rem;
+      font-weight: 800;
+      margin: 0.15rem 0 0.05rem 0;
+      padding: 0.2rem 0.5rem;
+      background: rgba(64,196,255,0.05);
+      border-radius: 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      color: #7ab8d4;
+      border: 1px solid rgba(64,196,255,0.05);
+    }
+    .section-header:hover { background: rgba(64,196,255,0.1); border-color: rgba(64,196,255,0.15); }
+    .section-header .info-icon { font-size: 0.5rem; color: #40c4ff; opacity: 0.5; cursor: help; margin-left: 4px; }
+    .section-header .info-icon:hover { opacity: 1; }
+    .section-arrow { font-size: 0.6rem; color: #4a8aaa; transition: transform 0.25s; }
+    .section-arrow.collapsed { transform: rotate(-90deg); }
+    .section-content {
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      margin-left: 0.3rem;
+      padding-left: 0.2rem;
+    }
+    .section-content.collapsed { display: none; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.3rem 0.7rem;
+      border-radius: 0.7rem;
+      color: #8ab8d4;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.6rem;
+      cursor: pointer;
+      transition: 0.25s;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(64,196,255,0.05);
+    }
+    .nav-item i { width: 20px; font-size: 0.7rem; color: #40c4ff; }
+    .nav-item .page-info {
+      font-size: 0.45rem;
+      color: #4a7a8a;
+      margin-left: auto;
+      opacity: 0.4;
+      cursor: help;
+    }
+    .nav-item .page-info:hover { opacity: 1; color: #40c4ff; }
+    .nav-item:hover {
+      background: linear-gradient(95deg, rgba(64,196,255,0.15), rgba(136,146,255,0.15));
+      color: #e0f2fe;
+      transform: translateX(4px);
+      border-color: rgba(64,196,255,0.2);
+    }
+    .nav-item:hover i { color: #7dd3fc; }
+    .nav-item:hover .page-info { color: #7dd3fc; opacity: 1; }
+    .nav-item.logout { margin-top: 0.4rem; border-color: rgba(239,68,68,0.15); }
+    .nav-item.logout:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); }
+    .nav-item.logout:hover i { color: #ef4444; }
+    .main-content {
+      flex: 1;
+      padding: 1.2rem;
+      overflow-y: auto;
+      max-height: 100vh;
+      background: rgba(10, 14, 26, 0.3);
+    }
+    
+    /* ===== DEEPFAKE DETECTION CENTER ===== */
+    .page-header {
+      text-align: center;
+      margin-bottom: 1.2rem;
+      position: relative;
+    }
+    .page-header h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #40c4ff, #7dd3fc, #8892ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .page-header .subtitle {
+      font-size: 0.65rem;
+      color: #5a8aaa;
+      margin-top: 2px;
+      letter-spacing: 1px;
+    }
+    .page-header .badge {
+      display: inline-block;
+      background: rgba(64,196,255,0.08);
+      border: 1px solid rgba(64,196,255,0.15);
+      padding: 0.15rem 0.8rem;
+      border-radius: 30px;
+      font-size: 0.5rem;
+      color: #7ab8d4;
+      margin-top: 4px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .page-header .badge:hover { transform: scale(1.02); background: rgba(64,196,255,0.15); }
+    
+    .detection-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    .glass-panel {
+      background: rgba(10, 14, 26, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 1.2rem;
+      padding: 1rem;
+      border: 1px solid rgba(64,196,255,0.06);
+      transition: 0.3s;
+    }
+    .glass-panel:hover { border-color: rgba(64,196,255,0.15); box-shadow: 0 0 40px rgba(64,196,255,0.02); }
+    .panel-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid #40c4ff;
+      padding-left: 10px;
+      color: #80c8e8;
+    }
+    .panel-title i { color: #40c4ff; cursor: pointer; transition: 0.3s; }
+    .panel-title i:hover { transform: scale(1.15); color: #7dd3fc; }
+    .panel-title .info-tip {
+      font-size: 0.5rem;
+      color: #4a7a8a;
+      cursor: help;
+      margin-left: auto;
+      opacity: 0.4;
+      transition: 0.3s;
+    }
+    .panel-title .info-tip:hover { opacity: 1; color: #40c4ff; transform: scale(1.1); }
+    
+    /* Upload Area */
+    .upload-area {
+      border: 2px dashed rgba(64,196,255,0.2);
+      border-radius: 1rem;
+      padding: 1.2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s;
+      background: rgba(64,196,255,0.03);
+    }
+    .upload-area:hover {
+      border-color: #40c4ff;
+      background: rgba(64,196,255,0.06);
+    }
+    .upload-area i { font-size: 2rem; color: #40c4ff; margin-bottom: 6px; }
+    .upload-area p { font-size: 0.6rem; color: #5a8aaa; }
+    .upload-area .file-name {
+      font-size: 0.55rem;
+      color: #40c4ff;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    
+    /* Analysis Results */
+    .result-meter {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 0.5rem 0;
+    }
+    .result-meter .label {
+      font-size: 0.55rem;
+      color: #5a8aaa;
+      min-width: 80px;
+    }
+    .result-meter .bar-bg {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 60px;
+      overflow: hidden;
+    }
+    .result-meter .bar-fill {
+      height: 100%;
+      border-radius: 60px;
+      transition: width 1.2s ease;
+      width: 0%;
+    }
+    .result-meter .bar-fill.high { background: linear-gradient(90deg, #40c4ff, #7dd3fc); }
+    .result-meter .bar-fill.medium { background: linear-gradient(90deg, #7dd3fc, #93d5f8); }
+    .result-meter .bar-fill.low { background: linear-gradient(90deg, #4a7a8a, #5a8aaa); }
+    .result-meter .value {
+      font-size: 0.6rem;
+      font-weight: 700;
+      min-width: 40px;
+      text-align: right;
+      color: #d0f0ff;
+    }
+    
+    .verdict {
+      text-align: center;
+      padding: 0.6rem;
+      border-radius: 1rem;
+      margin-top: 0.5rem;
+      font-weight: 700;
+      font-size: 0.7rem;
+      border: 1px solid transparent;
+    }
+    .verdict.real {
+      background: rgba(74,222,128,0.08);
+      border-color: rgba(74,222,128,0.2);
+      color: #4ade80;
+    }
+    .verdict.fake {
+      background: rgba(239,68,68,0.08);
+      border-color: rgba(239,68,68,0.2);
+      color: #dc2626;
+    }
+    .verdict.pending {
+      background: rgba(64,196,255,0.03);
+      border-color: rgba(64,196,255,0.08);
+      color: #5a8aaa;
+    }
+    
+    /* Analysis Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+    .metric-item {
+      background: rgba(255,255,255,0.03);
+      border-radius: 0.8rem;
+      padding: 0.5rem;
+      text-align: center;
+      border: 1px solid rgba(64,196,255,0.04);
+    }
+    .metric-item .icon { font-size: 1rem; color: #40c4ff; margin-bottom: 2px; }
+    .metric-item .m-value {
+      font-size: 0.9rem;
+      font-weight: 800;
+      font-family: monospace;
+      color: #d0f0ff;
+    }
+    .metric-item .m-value.pass { color: #4ade80; }
+    .metric-item .m-value.fail { color: #dc2626; }
+    .metric-item .m-value.warn { color: #f59e0b; }
+    .metric-item .m-label {
+      font-size: 0.45rem;
+      color: #4a7a8a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Action Buttons */
+    .action-row {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-top: 0.8rem;
+    }
+    .btn-primary {
+      background: linear-gradient(95deg, #40c4ff, #7a8cff);
+      border: none;
+      padding: 0.4rem 1.2rem;
+      border-radius: 2rem;
+      color: #0a0e1a;
+      cursor: pointer;
+      font-size: 0.6rem;
+      font-weight: 700;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary:hover { transform: scale(1.04); box-shadow: 0 0 30px rgba(64,196,255,0.2); }
+    .btn-secondary {
+      background: rgba(64,196,255,0.06);
+      border: 1px solid rgba(64,196,255,0.12);
+      padding: 0.4rem 1.2rem;
+      border-radius: 2rem;
+      color: #7ab8d4;
+      cursor: pointer;
+      font-size: 0.6rem;
+      font-weight: 600;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-secondary:hover { background: rgba(64,196,255,0.12); transform: scale(1.02); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(64,196,255,0.12);
+      padding: 0.4rem 1.2rem;
+      border-radius: 2rem;
+      color: #7ab8d4;
+      cursor: pointer;
+      font-size: 0.6rem;
+      font-weight: 600;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-outline:hover { background: rgba(64,196,255,0.04); transform: scale(1.02); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    
+    /* Scan Log */
+    .scan-log {
+      background: rgba(255,255,255,0.02);
+      border-radius: 0.8rem;
+      padding: 0.5rem;
+      height: 80px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.5rem;
+      margin-top: 0.5rem;
+      color: #7ab8d4;
+      border: 1px solid rgba(64,196,255,0.04);
+    }
+    .scan-log::-webkit-scrollbar { width: 3px; }
+    .scan-log::-webkit-scrollbar-thumb { background: #40c4ff; border-radius: 10px; }
+    .scan-log div { padding: 0.1rem 0; border-bottom: 1px solid rgba(64,196,255,0.03); }
+    .scan-log .log-critical { color: #dc2626; }
+    .scan-log .log-success { color: #4ade80; }
+    .scan-log .log-info { color: #40c4ff; }
+    
+    /* Technical Analysis Grid */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      font-size: 0.55rem;
+    }
+    .tech-item {
+      background: rgba(255,255,255,0.03);
+      border-radius: 0.8rem;
+      padding: 0.4rem;
+      text-align: center;
+      border: 1px solid rgba(64,196,255,0.04);
+    }
+    .tech-item i { font-size: 1rem; display: block; margin-bottom: 2px; }
+    .tech-item i.cyan { color: #40c4ff; }
+    .tech-item i.blue { color: #3b82f6; }
+    .tech-item i.green { color: #4ade80; }
+    .tech-item i.gold { color: #f59e0b; }
+    .tech-item strong { color: #80c8e8; }
+    .tech-item p { font-size: 0.45rem; color: #4a7a8a; margin-top: 2px; }
+    
+    /* Footer */
+    .footer {
+      text-align: center;
+      font-size: 0.45rem;
+      color: #4a7a8a;
+      margin-top: 0.6rem;
+      padding-top: 0.3rem;
+      border-top: 1px solid rgba(64,196,255,0.05);
+    }
+    .footer i { color: #40c4ff; cursor: pointer; transition: 0.3s; }
+    .footer i:hover { color: #7dd3fc; transform: scale(1.2); }
+    .footer .highlight { color: #40c4ff; font-weight: 600; }
+    
+    /* Toast */
+    .toast-notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(10, 14, 26, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #4ade80;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(64,196,255,0.1);
+    }
+    .toast-notification.error { border-left-color: #dc2626; }
+    @keyframes slideToast { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    
+    /* Responsive */
+    @media (max-width: 1100px) { .detection-grid { grid-template-columns: 1fr; } .tech-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 768px) { .sidebar { width: 200px; padding: 0.4rem 0.2rem; } .metrics-grid { grid-template-columns: 1fr; } .tech-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <canvas id="cubeCanvas"></canvas>
+  <div class="glow-overlay"></div>
+  <div class="bg-canvas"></div>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 AI DEEPFAKE DETECTION CENTER · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 DIGITAL IDENTITY SHIELD · ADVANCED BIOMETRIC FORENSICS 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#40c4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#40c4ff" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#40c4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#40c4ff" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#40c4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#40c4ff" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#40c4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <div class="app-wrapper">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-logo" onclick="showToast('🛡️ Azure Phoenix · Deepfake Detection Center', false)">
+        <i class="fas fa-shield-haltered"></i>
+        <h3>Azure Phoenix</h3>
+        <div class="sub">Deepfake Detection Center</div>
+      </div>
+      
+      <div class="section-header" data-section="zeroTrust">
+        <span><i class="fas fa-fingerprint"></i> 🔐 ZERO TRUST <i class="fas fa-info-circle info-icon" title="Zero Trust security model"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-zeroTrust"></i>
+      </div>
+      <div class="section-content" id="content-zeroTrust">
+        <div class="nav-item" onclick="showToast('🔐 Login · Secure authentication portal', false)"><i class="fas fa-sign-in-alt"></i> Login <span class="page-info" title="Secure authentication">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📝 Register · Create new account', false)"><i class="fas fa-user-plus"></i> Register <span class="page-info" title="Create account">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('👤 Face Gate · Biometric facial recognition', false)"><i class="fas fa-camera"></i> Face Gate <span class="page-info" title="Biometric verification">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🌐 AirGap · Air-gapped security isolation', false)"><i class="fas fa-globe"></i> AirGap <span class="page-info" title="Air-gapped security">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="cyberShield">
+        <span><i class="fas fa-shield-alt"></i> 📊 CYBER SHIELD <i class="fas fa-info-circle info-icon" title="Cyber defense monitoring"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-cyberShield"></i>
+      </div>
+      <div class="section-content" id="content-cyberShield">
+        <div class="nav-item" onclick="showToast('📊 Dashboard · Main control panel', false)"><i class="fas fa-tachometer-alt"></i> Dashboard <span class="page-info" title="Main control panel">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📹 AI Cyber Camera Shield · Smart surveillance', false)"><i class="fas fa-camera"></i> Camera Shield <span class="page-info" title="AI Cyber Camera Shield">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🗺️ Attack Map · Global threat visualization', false)"><i class="fas fa-globe"></i> Attack Map <span class="page-info" title="Global threats">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🛡️ Active Defense · Proactive threat neutralization', false)"><i class="fas fa-shield-virus"></i> Active Defense <span class="page-info" title="Proactive protection">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🔒 VPN Gateway · Secure encrypted tunnel', false)"><i class="fas fa-lock"></i> VPN Gateway <span class="page-info" title="Secure VPN">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('☁️ Cloud Security · Cloud infrastructure protection', false)"><i class="fas fa-cloud-upload-alt"></i> Cloud Security <span class="page-info" title="Cloud protection">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📡 Network Simulation · Network behavior analysis', false)"><i class="fas fa-chart-network"></i> Network Sim <span class="page-info" title="Network simulation">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('💻 API & SDK · Developer integration tools', false)"><i class="fas fa-code"></i> API & SDK <span class="page-info" title="Developer tools">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📱 Device Management · Device inventory control', false)"><i class="fas fa-laptop"></i> Device Mgmt <span class="page-info" title="Device control">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('👥 Users & Permissions · Role management', false)"><i class="fas fa-users"></i> Users & Permissions <span class="page-info" title="Role management">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="phoenixCore">
+        <span><i class="fas fa-dragon"></i> 🧬 PHOENIX CORE <i class="fas fa-info-circle info-icon" title="Self-healing AI engine"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-phoenixCore"></i>
+      </div>
+      <div class="section-content" id="content-phoenixCore">
+        <div class="nav-item" onclick="showToast('🧠 Phoenix Core Unit · Central AI processing', false)"><i class="fas fa-archive"></i> Core Unit <span class="page-info" title="AI processing">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🔬 Hardware Unit · Security modules', false)"><i class="fas fa-microchip"></i> Hardware Unit <span class="page-info" title="Security modules">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📀 Systems Clone · System replication and backup', false)"><i class="fas fa-clone"></i> Systems Clone <span class="page-info" title="System backup">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🛡️ DMZ Isolation · Demilitarized zone isolation', false)"><i class="fas fa-shield-virus"></i> DMZ Isolation <span class="page-info" title="Isolation zone">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('💾 Backup & Recovery · Data restoration', false)"><i class="fas fa-database"></i> Backup & Recovery <span class="page-info" title="Data restoration">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('❤️ System Health · Health monitoring', false)"><i class="fas fa-heartbeat"></i> System Health <span class="page-info" title="Health monitoring">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🔍 Forensic Agent · Digital forensics investigation', false)"><i class="fas fa-search"></i> Forensic Agent <span class="page-info" title="Digital forensics">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📋 Evidence Logs · Security event logging', false)"><i class="fas fa-database"></i> Evidence Logs <span class="page-info" title="Event logging">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🐛 Bug Hunter · Vulnerability discovery', false)"><i class="fas fa-bug"></i> Bug Hunter <span class="page-info" title="Vulnerability discovery">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🧪 Malware Lab · Malware analysis environment', false)"><i class="fas fa-biohazard"></i> Malware Lab <span class="page-info" title="Malware analysis">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🚢 Marine Systems · Maritime security', false)"><i class="fas fa-ship"></i> Marine Systems <span class="page-info" title="Maritime security">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('✈️ Critical Sectors · Infrastructure protection', false)"><i class="fas fa-plane"></i> Critical Sectors <span class="page-info" title="Infrastructure protection">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="advancedMonitoring">
+        <span><i class="fas fa-chart-line"></i> 🎯 ADVANCED MONITORING <i class="fas fa-info-circle info-icon" title="Advanced analytics"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-advancedMonitoring"></i>
+      </div>
+      <div class="section-content" id="content-advancedMonitoring">
+        <div class="nav-item" onclick="showToast('📄 System Report · Comprehensive system report', false)"><i class="fas fa-file-alt"></i> System Report <span class="page-info" title="Comprehensive report">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🖥️ Servers Management · Server infrastructure', false)"><i class="fas fa-server"></i> Servers Mgmt <span class="page-info" title="Server management">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🗺️ Network Topology · Network structure visualization', false)"><i class="fas fa-sitemap"></i> Network Topology <span class="page-info" title="Network structure">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('👁️ Devices Overview · All connected devices', false)"><i class="fas fa-eye"></i> Devices Overview <span class="page-info" title="All devices">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📡 Network Simulation · Network tools', false)"><i class="fas fa-chart-network"></i> Network Sim <span class="page-info" title="Network tools">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🧪 Malware Lab · Advanced malware analysis', false)"><i class="fas fa-flask"></i> Malware Lab <span class="page-info" title="Malware analysis">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="cyberDeception">
+        <span><i class="fas fa-mask"></i> 👁️ CYBER DECEPTION <i class="fas fa-info-circle info-icon" title="Deception technology"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-cyberDeception"></i>
+      </div>
+      <div class="section-content" id="content-cyberDeception">
+        <div class="nav-item" onclick="showToast('🔔 Honeypot Alert · Honeypot intrusion alerts', false)"><i class="fas fa-bell"></i> Honeypot Alert <span class="page-info" title="Honeypot alerts">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📱 Deception Vault · Deception strategy vault', false)"><i class="fas fa-qrcode"></i> Deception Vault <span class="page-info" title="Deception strategy">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🎭 Secret Overlay · Secret alert overlay system', false)"><i class="fas fa-mask"></i> Secret Overlay <span class="page-info" title="Secret alerts">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="advancedProtection">
+        <span><i class="fas fa-shield-haltered"></i> 🛡️ ADVANCED PROTECTION <i class="fas fa-info-circle info-icon" title="Next-gen protection"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-advancedProtection"></i>
+      </div>
+      <div class="section-content" id="content-advancedProtection">
+        <div class="nav-item" onclick="showToast('⚙️ Security Policies · Policy management', false)"><i class="fas fa-sliders-h"></i> Security Policies <span class="page-info" title="Policy management">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🚀 Mission Control · Command center', false)"><i class="fas fa-rocket"></i> Mission Control <span class="page-info" title="Command center">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🧪 Cyber Simulation · Attack simulation', false)"><i class="fas fa-flask"></i> Cyber Simulation <span class="page-info" title="Attack simulation">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="unifiedDefense">
+        <span><i class="fas fa-shield-haltered"></i> 🧩 UNIFIED DEFENSE <i class="fas fa-info-circle info-icon" title="Unified protection suite"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-unifiedDefense"></i>
+      </div>
+      <div class="section-content" id="content-unifiedDefense">
+        <div class="nav-item" onclick="showToast('🛡️ Unified Shield · Unified protection layer', false)"><i class="fas fa-shield-alt"></i> Unified Shield <span class="page-info" title="Unified protection">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('💻 Unified Devices · Unified device management', false)"><i class="fas fa-laptop"></i> Unified Devices <span class="page-info" title="Device management">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📊 Threat Intel · Unified threat intelligence', false)"><i class="fas fa-chart-line"></i> Threat Intel <span class="page-info" title="Threat intelligence">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('👥 User Management · Unified user management', false)"><i class="fas fa-users"></i> User Mgmt <span class="page-info" title="User management">ℹ️</span></div>
+      </div>
+      
+      <div class="nav-item logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout <span class="page-info" title="Sign out">ℹ️</span></div>
+    </div>
+    
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1>🛡️ AI Deepfake Detection Center</h1>
+        <div class="subtitle">Digital Identity Shield · Advanced Biometric Forensics · GAN & Voice Cloning Detection</div>
+        <div class="badge" onclick="showToast('🛡️ Strategic Mission: Protecting Digital Identity', false)">
+          <i class="fas fa-shield-haltered"></i> Strategic Mission: Protecting Digital Identity
+        </div>
+      </div>
+      
+      <!-- Detection Grid -->
+      <div class="detection-grid">
+        
+        <!-- LEFT PANEL: Upload & Analysis -->
+        <div class="glass-panel" style="border-left: 4px solid #40c4ff;">
+          <div class="panel-title">
+            <i class="fas fa-upload" onclick="showToast('📤 Upload media for deepfake detection', false)"></i> Media Analysis
+            <span class="info-tip" title="Upload video, audio, or image for deepfake detection">ℹ️</span>
+          </div>
+          
+          <!-- Upload Area -->
+          <div class="upload-area" id="uploadArea">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Drop your media file here or click to browse</p>
+            <div class="file-name" id="fileName">No file selected</div>
+            <input type="file" id="fileInput" accept="video/*,audio/*,image/*" style="display:none;">
+          </div>
+          
+          <!-- Analysis Results -->
+          <div style="margin-top: 0.8rem;">
+            <div class="result-meter">
+              <span class="label">Confidence Score</span>
+              <div class="bar-bg"><div class="bar-fill low" id="confidenceBar" style="width: 0%;"></div></div>
+              <span class="value" id="confidenceValue">0%</span>
+            </div>
+            <div class="result-meter">
+              <span class="label">Authentication</span>
+              <div class="bar-bg"><div class="bar-fill low" id="authBar" style="width: 0%;"></div></div>
+              <span class="value" id="authValue">0%</span>
+            </div>
+            
+            <div class="verdict pending" id="verdictDisplay">
+              <i class="fas fa-clock"></i> Waiting for analysis...
+            </div>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div class="action-row">
+            <button class="btn-primary" id="analyzeBtn"><i class="fas fa-microscope"></i> Start Analysis</button>
+            <button class="btn-secondary" id="resetBtn"><i class="fas fa-undo-alt"></i> Reset</button>
+            <button class="btn-outline" id="demoBtn"><i class="fas fa-play"></i> Run Demo</button>
+          </div>
+          
+          <!-- Scan Log -->
+          <div class="scan-log" id="scanLog">
+            <div class="log-info">🟢 Deepfake Detection Engine initialized.</div>
+            <div class="log-info">📡 Awaiting media for analysis...</div>
+          </div>
+        </div>
+        
+        <!-- RIGHT PANEL: Metrics & Forensics -->
+        <div class="glass-panel" style="border-left: 4px solid #7dd3fc;">
+          <div class="panel-title">
+            <i class="fas fa-microscope" onclick="showToast('🔬 Forensic Analysis · Biometric and digital forensics', false)"></i> Forensic Analysis
+            <span class="info-tip" title="Biometric and digital forensic analysis results">ℹ️</span>
+          </div>
+          
+          <div class="metrics-grid">
+            <div class="metric-item" onclick="showToast('👁️ Eye Blinking: Biological consistency detection', false)">
+              <div class="icon"><i class="fas fa-eye"></i></div>
+              <div class="m-value" id="eyeMetric">—</div>
+              <div class="m-label">Eye Blinking</div>
+            </div>
+            <div class="metric-item" onclick="showToast('💡 Lighting Artifacts: Microscopic light distribution analysis', false)">
+              <div class="icon"><i class="fas fa-sun"></i></div>
+              <div class="m-value" id="lightingMetric">—</div>
+              <div class="m-label">Lighting Artifacts</div>
+            </div>
+            <div class="metric-item" onclick="showToast('🎵 Audio Frequency: Voice cloning & synthetic audio detection', false)">
+              <div class="icon"><i class="fas fa-wave-square"></i></div>
+              <div class="m-value" id="audioMetric">—</div>
+              <div class="m-label">Audio Frequency</div>
+            </div>
+            <div class="metric-item" onclick="showToast('🧬 Biometric Scan: Facial & behavioral pattern matching', false)">
+              <div class="icon"><i class="fas fa-fingerprint"></i></div>
+              <div class="m-value" id="biometricMetric">—</div>
+              <div class="m-label">Biometric Scan</div>
+            </div>
+          </div>
+          
+          <div style="margin-top: 0.6rem; padding: 0.4rem; background: rgba(64,196,255,0.03); border-radius: 0.8rem; border-left: 3px solid #40c4ff;">
+            <div style="font-size: 0.5rem; color: #4a7a8a; text-transform: uppercase; letter-spacing: 0.5px;">Detection Engine</div>
+            <div style="font-size: 0.55rem; color: #80c8e8;" id="engineStatus">
+              <i class="fas fa-circle" style="color: #4ade80; font-size: 0.4rem;"></i> AI Core: Active · GAN Detection: Ready
+            </div>
+            <div style="font-size: 0.45rem; color: #4a7a8a; margin-top: 2px;">
+              <i class="fas fa-shield-alt"></i> Model: Phoenix v3.2 · Training: 2.4M samples
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Technical Analysis Description -->
+      <div class="glass-panel" style="margin-bottom: 0.8rem; border-left: 4px solid #8892ff;">
+        <div class="panel-title">
+          <i class="fas fa-cogs" onclick="showToast('⚙️ Technical Analysis Engine · Advanced biometric and digital forensic analysis', false)"></i> Technical Analysis Engine
+          <span class="info-tip" title="Advanced biometric and digital forensic analysis">ℹ️</span>
+        </div>
+        <div class="tech-grid">
+          <div class="tech-item" onclick="showToast('👁️ Eye Blinking: Biological inconsistency detection', false)">
+            <i class="fas fa-eye cyan"></i>
+            <strong>Eye Blinking</strong>
+            <p>Biological inconsistency detection</p>
+          </div>
+          <div class="tech-item" onclick="showToast('💡 Lighting Artifacts: Microscopic light distribution analysis', false)">
+            <i class="fas fa-sun blue"></i>
+            <strong>Lighting Artifacts</strong>
+            <p>Microscopic light distribution analysis</p>
+          </div>
+          <div class="tech-item" onclick="showToast('🎵 Audio Frequency: Voice cloning & synthetic audio detection', false)">
+            <i class="fas fa-wave-square gold"></i>
+            <strong>Audio Frequency</strong>
+            <p>Voice cloning & synthetic audio detection</p>
+          </div>
+          <div class="tech-item" onclick="showToast('🧬 Biometric Scan: Facial & behavioral pattern matching', false)">
+            <i class="fas fa-fingerprint green"></i>
+            <strong>Biometric Scan</strong>
+            <p>Facial & behavioral pattern matching</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="footer">
+        <i class="fas fa-shield-haltered" onclick="showToast('🛡️ PCS-AI · Azure Phoenix · Deepfake Detection Center · Strategic Digital Identity Protection', false)"></i> PCS-AI · Azure Phoenix · Deepfake Detection Center · 
+        <span class="highlight">Strategic Digital Identity Protection</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Audio -->
+  <audio id="alertSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="successSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }</script>
+  <script type="module">
+    import * as THREE from 'three';
+    const canvas = document.getElementById('cubeCanvas');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0e1a);
+    scene.fog = new THREE.FogExp2(0x0a0e1a, 0.004);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(2.5, 2.2, 14);
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    const ambient = new THREE.AmbientLight(0x112244, 0.4);
+    scene.add(ambient);
+    const cyanLight = new THREE.PointLight(0x40c4ff, 0.6);
+    cyanLight.position.set(3, 4, 3);
+    scene.add(cyanLight);
+    const blueLight = new THREE.PointLight(0x60a5fa, 0.5);
+    blueLight.position.set(-2, 3, 4);
+    scene.add(blueLight);
+    const fillLight = new THREE.DirectionalLight(0x4488aa, 0.3);
+    fillLight.position.set(1,2,2);
+    scene.add(fillLight);
+    const coreMat = new THREE.MeshStandardMaterial({ color: 0x40c4ff, emissive: 0x7dd3fc, emissiveIntensity: 0.3 });
+    const coreMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(0.7,0), coreMat);
+    scene.add(coreMesh);
+    const cubeGroup = new THREE.Group();
+    const colors = [0x40c4ff, 0x7dd3fc, 0x60a5fa, 0x38bdf8, 0x93d5f8];
+    const cubesList = [];
+    for (let i=0; i<200; i++) {
+      const size = 0.08 + Math.random() * 0.14;
+      const material = new THREE.MeshStandardMaterial({ color: colors[Math.floor(Math.random()*colors.length)], emissive: 0x2266aa, emissiveIntensity: 0.08, transparent: true, opacity: 0.3+Math.random()*0.3 });
+      const cube = new THREE.Mesh(new THREE.BoxGeometry(size,size,size), material);
+      const radius = 5 + Math.random() * 5.5;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2*Math.random() -1);
+      cube.position.set(radius * Math.sin(phi) * Math.cos(theta), radius * Math.sin(phi) * Math.sin(theta)*0.7, radius * Math.cos(phi) - 1);
+      cube.userData = { speedX: (Math.random()-0.5)*0.008, speedY: (Math.random()-0.5)*0.008, speedZ: (Math.random()-0.5)*0.008, rotX: (Math.random()-0.5)*0.025, rotY: (Math.random()-0.5)*0.025 };
+      cubeGroup.add(cube);
+      cubesList.push(cube);
+    }
+    scene.add(cubeGroup);
+    const starGeo = new THREE.BufferGeometry();
+    const starPositions = [];
+    for (let i=0; i<1500; i++) { starPositions.push((Math.random()-0.5)*200, (Math.random()-0.5)*120, (Math.random()-0.5)*90 - 40); }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(starPositions), 3));
+    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0x7dd3fc, size: 0.04 }));
+    scene.add(stars);
+    const ringCyan = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.03, 128, 200), new THREE.MeshStandardMaterial({ color: 0x40c4ff, emissive: 0x38bdf8, transparent: true, opacity: 0.3 }));
+    ringCyan.rotation.x = Math.PI / 2;
+    scene.add(ringCyan);
+    const ringBlue = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.025, 128, 200), new THREE.MeshStandardMaterial({ color: 0x60a5fa, emissive: 0x38bdf8, transparent: true, opacity: 0.2 }));
+    ringBlue.rotation.z = 0.8; ringBlue.rotation.x = 0.5;
+    scene.add(ringBlue);
+    let time = 0;
+    function animateScene() {
+      requestAnimationFrame(animateScene);
+      time += 0.012;
+      cubeGroup.rotation.y += 0.0025;
+      cubeGroup.rotation.x += 0.0018;
+      cubesList.forEach(cube => {
+        cube.position.x += cube.userData.speedX;
+        cube.position.y += cube.userData.speedY;
+        cube.position.z += cube.userData.speedZ;
+        cube.rotation.x += cube.userData.rotX;
+        cube.rotation.y += cube.userData.rotY;
+        if (Math.abs(cube.position.x) > 12) cube.userData.speedX *= -1;
+        if (Math.abs(cube.position.y) > 9) cube.userData.speedY *= -1;
+        if (Math.abs(cube.position.z) > 13) cube.userData.speedZ *= -1;
+      });
+      const scaleCore = 1 + Math.sin(time * 5) * 0.07;
+      coreMesh.scale.set(scaleCore, scaleCore, scaleCore);
+      coreMesh.rotation.x += 0.008;
+      coreMesh.rotation.y += 0.012;
+      stars.rotation.y += 0.0004;
+      ringCyan.rotation.z += 0.008;
+      ringBlue.rotation.y += 0.006;
+      cyanLight.intensity = 0.5 + Math.sin(time * 2.5) * 0.15;
+      blueLight.intensity = 0.4 + Math.sin(time * 2) * 0.15;
+      renderer.render(scene, camera);
+    }
+    animateScene();
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+  </script>
+  
+  <script>
+    // ========== SIDEBAR TOGGLE ==========
+    const sections = ['zeroTrust','cyberShield','phoenixCore','advancedMonitoring','cyberDeception','advancedProtection','unifiedDefense'];
+    sections.forEach(section => {
+      const content = document.getElementById(`content-${section}`);
+      const arrow = document.getElementById(`arrow-${section}`);
+      const saved = localStorage.getItem(`sidebar_${section}`);
+      if (saved === 'collapsed') { content.classList.add('collapsed'); arrow.classList.add('collapsed'); }
+      const header = document.querySelector(`.section-header[data-section="${section}"]`);
+      if (header) {
+        header.addEventListener('click', () => {
+          content.classList.toggle('collapsed');
+          arrow.classList.toggle('collapsed');
+          localStorage.setItem(`sidebar_${section}`, content.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+        });
+      }
+    });
+    
+    // ========== USER ==========
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('pcs_ai_current_user');
+      showToast('👋 Logged out successfully', false);
+    });
+    
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError) {
+        const sound = document.getElementById('alertSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('successSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    // ========== DEEPFAKE DETECTION ENGINE ==========
+    let selectedFile = null;
+    let isAnalyzing = false;
+    let analysisComplete = false;
+    
+    // Elements
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const demoBtn = document.getElementById('demoBtn');
+    const scanLog = document.getElementById('scanLog');
+    const verdictDisplay = document.getElementById('verdictDisplay');
+    const confidenceBar = document.getElementById('confidenceBar');
+    const confidenceValue = document.getElementById('confidenceValue');
+    const authBar = document.getElementById('authBar');
+    const authValue = document.getElementById('authValue');
+    const eyeMetric = document.getElementById('eyeMetric');
+    const lightingMetric = document.getElementById('lightingMetric');
+    const audioMetric = document.getElementById('audioMetric');
+    const biometricMetric = document.getElementById('biometricMetric');
+    
+    function addLog(msg, type = 'info') {
+      const div = document.createElement('div');
+      div.className = `log-${type}`;
+      div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      scanLog.appendChild(div);
+      scanLog.scrollTop = scanLog.scrollHeight;
+      if (scanLog.children.length > 20) scanLog.removeChild(scanLog.children[0]);
+    }
+    
+    function resetAnalysis() {
+      selectedFile = null;
+      isAnalyzing = false;
+      analysisComplete = false;
+      fileName.textContent = 'No file selected';
+      fileInput.value = '';
+      confidenceBar.style.width = '0%';
+      confidenceValue.textContent = '0%';
+      authBar.style.width = '0%';
+      authValue.textContent = '0%';
+      verdictDisplay.className = 'verdict pending';
+      verdictDisplay.innerHTML = '<i class="fas fa-clock"></i> Waiting for analysis...';
+      eyeMetric.textContent = '—';
+      eyeMetric.className = 'm-value';
+      lightingMetric.textContent = '—';
+      lightingMetric.className = 'm-value';
+      audioMetric.textContent = '—';
+      audioMetric.className = 'm-value';
+      biometricMetric.textContent = '—';
+      biometricMetric.className = 'm-value';
+      document.getElementById('engineStatus').innerHTML = '<i class="fas fa-circle" style="color: #4ade80; font-size: 0.4rem;"></i> AI Core: Active · GAN Detection: Ready';
+      addLog('🔄 Analysis reset. Ready for new media.', 'info');
+    }
+    
+    function simulateAnalysis(useDemo = false) {
+      if (isAnalyzing) return;
+      if (!selectedFile && !useDemo) {
+        showToast('⚠️ Please upload a media file first', true);
+        return;
+      }
+      
+      isAnalyzing = true;
+      analysisComplete = false;
+      analyzeBtn.disabled = true;
+      analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+      verdictDisplay.className = 'verdict pending';
+      verdictDisplay.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AI Analysis in progress...';
+      addLog('🔬 Starting deepfake analysis...', 'info');
+      addLog('📊 Running GAN detection algorithms...', 'info');
+      
+      // Simulate analysis steps with realistic timing
+      const steps = [
+        { delay: 600, msg: '🔍 Analyzing eye blinking patterns...', metric: 'eye', value: 92 },
+        { delay: 1200, msg: '💡 Detecting lighting artifacts...', metric: 'lighting', value: 88 },
+        { delay: 1800, msg: '🎵 Analyzing audio frequency spectrum...', metric: 'audio', value: 85 },
+        { delay: 2400, msg: '🧬 Running biometric facial scan...', metric: 'biometric', value: 90 },
+      ];
+      
+      let finalScore = 0;
+      let finalAuth = 0;
+      let isFake = false;
+      
+      steps.forEach((step, index) => {
+        setTimeout(() => {
+          addLog(step.msg, 'info');
+          // Update metric
+          const metricEl = document.getElementById(`${step.metric}Metric`);
+          if (metricEl) {
+            const pass = step.value > 75;
+            metricEl.textContent = pass ? `${step.value}% ✅` : `${step.value}% ⚠️`;
+            metricEl.className = `m-value ${pass ? 'pass' : 'warn'}`;
+          }
+          
+          // Update progress bars gradually
+          const progress = ((index + 1) / steps.length) * 100;
+          confidenceBar.style.width = `${progress}%`;
+          confidenceBar.className = `bar-fill ${progress > 70 ? 'high' : progress > 40 ? 'medium' : 'low'}`;
+          confidenceValue.textContent = `${Math.round(progress)}%`;
+          
+          if (index === steps.length - 1) {
+            // Final verdict
+            setTimeout(() => {
+              // Generate final result
+              const baseScore = useDemo ? 98.4 : 85 + Math.random() * 14;
+              finalScore = Math.min(99.9, baseScore);
+              finalAuth = Math.min(99.9, baseScore - 2 + Math.random() * 4);
+              isFake = finalScore > 92;
+              
+              // Update final metrics
+              confidenceBar.style.width = `${finalScore}%`;
+              confidenceBar.className = `bar-fill ${finalScore > 75 ? 'high' : finalScore > 40 ? 'medium' : 'low'}`;
+              confidenceValue.textContent = `${finalScore.toFixed(1)}%`;
+              
+              authBar.style.width = `${finalAuth}%`;
+              authBar.className = `bar-fill ${finalAuth > 75 ? 'high' : finalAuth > 40 ? 'medium' : 'low'}`;
+              authValue.textContent = `${finalAuth.toFixed(1)}%`;
+              
+              // Final verdict
+              if (isFake) {
+                verdictDisplay.className = 'verdict fake';
+                verdictDisplay.innerHTML = `<i class="fas fa-exclamation-triangle"></i> 🚨 DEEPFAKE DETECTED! Confidence: ${finalScore.toFixed(1)}%`;
+                addLog(`🚨 DEEPFAKE DETECTED! Confidence: ${finalScore.toFixed(1)}%`, 'critical');
+                showToast(`🚨 DEEPFAKE DETECTED! ${finalScore.toFixed(1)}% confidence`, true);
+                document.getElementById('engineStatus').innerHTML = '<i class="fas fa-circle" style="color: #dc2626; font-size: 0.4rem;"></i> ⚠️ Deepfake Detected · Action Required';
+              } else {
+                verdictDisplay.className = 'verdict real';
+                verdictDisplay.innerHTML = `<i class="fas fa-check-circle"></i> ✅ AUTHENTIC MEDIA! Confidence: ${finalScore.toFixed(1)}%`;
+                addLog(`✅ AUTHENTIC MEDIA! Confidence: ${finalScore.toFixed(1)}%`, 'success');
+                showToast(`✅ Authentic media verified! ${finalScore.toFixed(1)}% confidence`, false);
+                document.getElementById('engineStatus').innerHTML = '<i class="fas fa-circle" style="color: #4ade80; font-size: 0.4rem;"></i> ✅ Authentic · Identity Verified';
+              }
+              
+              isAnalyzing = false;
+              analysisComplete = true;
+              analyzeBtn.disabled = false;
+              analyzeBtn.innerHTML = '<i class="fas fa-microscope"></i> Start Analysis';
+              
+              addLog('📋 Analysis complete. Full report generated.', 'success');
+            }, 800);
+          }
+        }, step.delay);
+      });
+    }
+    
+    // ========== EVENT LISTENERS ==========
+    
+    // Upload
+    uploadArea.addEventListener('click', () => fileInput.click());
+    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.style.borderColor = '#40c4ff'; });
+    uploadArea.addEventListener('dragleave', () => { uploadArea.style.borderColor = 'rgba(64,196,255,0.2)'; });
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.style.borderColor = 'rgba(64,196,255,0.2)';
+      if (e.dataTransfer.files.length > 0) {
+        selectedFile = e.dataTransfer.files[0];
+        fileName.textContent = selectedFile.name;
+        addLog(`📁 File uploaded: ${selectedFile.name} (${(selectedFile.size / 1024).toFixed(1)} KB)`, 'info');
+        showToast(`📁 ${selectedFile.name} uploaded successfully`, false);
+        resetAnalysis();
+        setTimeout(() => {
+          selectedFile = e.dataTransfer.files[0];
+          fileName.textContent = selectedFile.name;
+        }, 100);
+      }
+    });
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        selectedFile = e.target.files[0];
+        fileName.textContent = selectedFile.name;
+        addLog(`📁 File selected: ${selectedFile.name} (${(selectedFile.size / 1024).toFixed(1)} KB)`, 'info');
+        showToast(`📁 ${selectedFile.name} ready for analysis`, false);
+      }
+    });
+    
+    // Analyze
+    analyzeBtn.addEventListener('click', () => {
+      if (selectedFile) {
+        simulateAnalysis(false);
+      } else {
+        showToast('⚠️ Please upload a media file first', true);
+      }
+    });
+    
+    // Demo
+    demoBtn.addEventListener('click', () => {
+      fileName.textContent = 'CEO_Message_Q4_2026.mp4 (demo)';
+      selectedFile = { name: 'CEO_Message_Q4_2026.mp4' };
+      addLog('🎬 Demo media loaded: CEO_Message_Q4_2026.mp4', 'info');
+      addLog('📋 This is a simulated deepfake analysis scenario.', 'info');
+      showToast('🎬 Demo mode: Analyzing simulated CEO video', false);
+      setTimeout(() => simulateAnalysis(true), 600);
+    });
+    
+    // Reset
+    resetBtn.addEventListener('click', resetAnalysis);
+    
+    // ========== SAMPLE LOGS ==========
+    addLog('🛡️ Deepfake Detection Center initialized.', 'success');
+    addLog('🧠 AI Model: Phoenix v3.2 (GAN Detection + Biometric Analysis)', 'info');
+    addLog('📡 System ready. Upload a media file to begin.', 'info');
+    
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !isAnalyzing) {
+        if (selectedFile) analyzeBtn.click();
+        else demoBtn.click();
+      }
+      if (e.key === 'r' || e.key === 'R') resetBtn.click();
+    });
+  </script>
+</body>
+</html>

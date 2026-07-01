@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Unified Device Management · All Devices Shield</title>
+  <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    #canvas-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00d4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #4ade80; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== Laser Scanner ===== */
+    .laser-scanner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 3;
+      overflow: hidden;
+    }
+    .laser-line {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #ffd700, #ffd700, #ffd700, transparent);
+      box-shadow: 0 0 20px #ffd700, 0 0 40px rgba(255, 215, 0, 0.3);
+      top: 0;
+      animation: laserScan 4.5s ease-in-out infinite;
+      opacity: 0.3;
+    }
+    @keyframes laserScan {
+      0% { top: 2%; opacity: 0.1; }
+      25% { top: 30%; opacity: 0.5; }
+      50% { top: 55%; opacity: 0.8; }
+      75% { top: 80%; opacity: 0.5; }
+      100% { top: 2%; opacity: 0.1; }
+    }
+    
+    /* ===== App Wrapper ===== */
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    /* ===== Sidebar ===== */
+    .sidebar {
+      width: 230px;
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(20px);
+      border-right: 2px solid rgba(0, 212, 255, 0.08);
+      padding: 1.2rem 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .sidebar::-webkit-scrollbar { width: 3px; }
+    .sidebar::-webkit-scrollbar-track { background: rgba(0,212,255,0.05); }
+    .sidebar::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 4px; }
+    
+    .sidebar-logo {
+      text-align: center;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid rgba(0,212,255,0.08);
+      margin-bottom: 0.6rem;
+    }
+    .sidebar-logo i {
+      font-size: 2.8rem;
+      background: linear-gradient(135deg, #00d4ff, #4ade80, #00ffc8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: floatLogo 3s infinite ease-in-out;
+      cursor: pointer;
+    }
+    @keyframes floatLogo { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .sidebar-logo h3 {
+      font-size: 0.95rem;
+      background: linear-gradient(135deg, #00d4ff, #4ade80);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.7rem;
+      color: #80c8e8;
+      font-weight: 500;
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: 0.3s;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(0,212,255,0.04);
+    }
+    .nav-item i { width: 22px; font-size: 0.8rem; color: #00d4ff; animation: navIconPulse 2s infinite; }
+    @keyframes navIconPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+    .nav-item:hover {
+      background: linear-gradient(95deg, #00d4ff, #4ade80);
+      color: #0a0e1a;
+      transform: translateX(4px);
+    }
+    .nav-item:hover i { color: #0a0e1a; }
+    .nav-item.logout { margin-top: auto; border-color: rgba(255,68,68,0.08); }
+    .nav-item.logout:hover { background: #ff4444; }
+    
+    /* ===== Main Content ===== */
+    .main-content {
+      flex: 1;
+      padding: 1.2rem;
+      overflow-y: auto;
+      max-height: 100vh;
+    }
+    
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+    .top-bar h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #4ade80, #00ffc8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    .top-bar p { font-size: 0.6rem; color: #4a8aaa; }
+    .user-btn {
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(0,212,255,0.08);
+      border-radius: 3rem;
+      padding: 0.3rem 1rem 0.3rem 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .user-btn i { font-size: 1.5rem; color: #00d4ff; animation: iconPulse 2s infinite; }
+    @keyframes iconPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .user-btn span { font-size: 0.65rem; font-weight: 600; color: #80c8e8; }
+    
+    /* ===== Stats ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+    .stat-card {
+      background: rgba(0, 20, 40, 0.4);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      padding: 0.6rem;
+      text-align: center;
+      border: 1px solid rgba(0,212,255,0.04);
+      transition: 0.3s;
+      cursor: pointer;
+    }
+    .stat-card:hover { transform: translateY(-3px); border-color: #00d4ff; }
+    .stat-card .val {
+      font-size: 1.3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #4ade80);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: monospace;
+    }
+    .stat-card .lbl { font-size: 0.5rem; color: #4a8aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card i { font-size: 0.9rem; color: #00d4ff; display: block; margin-bottom: 2px; animation: statIconPulse 3s infinite; }
+    @keyframes statIconPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    
+    /* ===== Tabs ===== */
+    .tabs {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 0.8rem;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(0,212,255,0.04);
+      padding: 0.35rem 1rem;
+      border-radius: 2rem;
+      color: #4a8aaa;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.6rem;
+      transition: 0.3s;
+    }
+    .tab-btn:hover { background: rgba(0,212,255,0.03); color: #80c8e8; }
+    .tab-btn.active {
+      background: linear-gradient(95deg, rgba(0,212,255,0.08), rgba(74,222,128,0.03));
+      color: #00d4ff;
+      border-color: rgba(0,212,255,0.08);
+    }
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    /* ===== Devices Grid ===== */
+    .devices-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+    .device-card {
+      background: rgba(0, 20, 40, 0.3);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      padding: 0.7rem;
+      border: 1px solid rgba(0,212,255,0.04);
+      transition: 0.3s;
+      cursor: pointer;
+      animation: deviceFloat 4s infinite ease-in-out;
+    }
+    .device-card:nth-child(1) { animation-delay: 0s; }
+    .device-card:nth-child(2) { animation-delay: 0.5s; }
+    .device-card:nth-child(3) { animation-delay: 1s; }
+    .device-card:nth-child(4) { animation-delay: 1.5s; }
+    .device-card:nth-child(5) { animation-delay: 2s; }
+    .device-card:nth-child(6) { animation-delay: 2.5s; }
+    @keyframes deviceFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    .device-card:hover { border-color: #00d4ff; transform: translateY(-8px); animation: none; }
+    .device-card .header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.3rem; }
+    .device-card .header i { font-size: 1.8rem; animation: deviceIconPulse 2s infinite; }
+    @keyframes deviceIconPulse { 0%,100% { opacity: 0.8; } 50% { opacity: 1; } }
+    .device-card .name { font-weight: 700; font-size: 0.7rem; color: #80c8e8; }
+    .device-card .model { font-size: 0.45rem; color: #4a8aaa; }
+    .device-card .status-row { display: flex; gap: 0.3rem; flex-wrap: wrap; font-size: 0.5rem; margin: 0.2rem 0; }
+    .device-card .status-badge {
+      padding: 0.1rem 0.4rem;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .badge-secure { background: rgba(74,222,128,0.05); color: #4ade80; border: 1px solid rgba(74,222,128,0.08); }
+    .badge-warning { background: rgba(255,215,0,0.05); color: #ffd700; border: 1px solid rgba(255,215,0,0.08); }
+    .badge-danger { background: rgba(255,68,68,0.05); color: #ff4444; border: 1px solid rgba(255,68,68,0.08); animation: dangerPulse 1s infinite; }
+    @keyframes dangerPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+    .badge-vpn { background: rgba(0,212,255,0.05); color: #00d4ff; border: 1px solid rgba(0,212,255,0.08); }
+    .bar {
+      width: 100%;
+      height: 2px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 0.2rem 0;
+    }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+    
+    /* ===== Log Panel ===== */
+    .log-panel {
+      background: rgba(0,0,0,0.15);
+      backdrop-filter: blur(8px);
+      border-radius: 0.8rem;
+      padding: 0.4rem;
+      max-height: 80px;
+      overflow-y: auto;
+      font-size: 0.5rem;
+      font-family: monospace;
+      border: 1px solid rgba(0,212,255,0.02);
+    }
+    .log-panel::-webkit-scrollbar { width: 3px; }
+    .log-panel::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 10px; }
+    .log-entry { padding: 0.1rem 0; border-bottom: 1px solid rgba(0,212,255,0.02); }
+    .log-entry.success { color: #4ade80; }
+    .log-entry.warning { color: #ffd700; }
+    .log-entry.danger { color: #ff4444; }
+    .log-entry.info { color: #4a8aaa; }
+    
+    /* ===== Buttons ===== */
+    .action-row {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin: 0.3rem 0;
+    }
+    .btn {
+      padding: 0.3rem 1rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      font-size: 0.55rem;
+      cursor: pointer;
+      transition: 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: none;
+    }
+    .btn-primary {
+      background: linear-gradient(95deg, #00d4ff, #4ade80);
+      color: #0a0e1a;
+    }
+    .btn-primary:hover { transform: scale(1.04); box-shadow: 0 0 30px rgba(0,212,255,0.1); }
+    .btn-danger {
+      background: linear-gradient(95deg, rgba(255,68,68,0.15), rgba(255,68,68,0.05));
+      border: 1px solid rgba(255,68,68,0.1);
+      color: #ff4444;
+    }
+    .btn-danger:hover { transform: scale(1.04); box-shadow: 0 0 20px rgba(255,68,68,0.05); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(0,212,255,0.06);
+      color: #4a8aaa;
+    }
+    .btn-outline:hover { border-color: #00d4ff; color: #80c8e8; }
+    
+    /* ===== Footer ===== */
+    footer {
+      text-align: center;
+      font-size: 0.4rem;
+      color: #2a5a7a;
+      margin-top: 0.4rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid rgba(0,212,255,0.02);
+    }
+    footer i { color: #00d4ff; }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #4ade80;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(0,212,255,0.1);
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    @keyframes slideToast { from { transform: translateX(100%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) {
+      .sidebar { width: 200px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .fingerprint-border { width: 50px; height: 50px; top: 10px; left: 10px; }
+    }
+    @media (max-width: 600px) {
+      .sidebar { width: 160px; padding: 0.6rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .tabs { flex-direction: column; align-items: stretch; }
+      .devices-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <canvas id="canvas-bg"></canvas>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Laser Scanner ===== -->
+  <div class="laser-scanner">
+    <div class="laser-line"></div>
+  </div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 UNIFIED DEVICE MANAGEMENT · ALL DEVICES SHIELD 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 CENTRALIZED SECURITY · ZERO-TRUST PROTECTION 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00d4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#4ade80" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00d4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#4ade80" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#4ade80" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Main App ===== -->
+  <div class="app-wrapper">
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <i class="fas fa-shield-haltered" onclick="location.href='Phoenix Dashboard.html'"></i>
+        <h3>Azure Shield</h3>
+      </div>
+      <div class="nav-item" onclick="location.href='security operations center (soc).html'"><i class="fas fa-home"></i> Dashboard SOC</div>
+      <div class="nav-item" style="background:linear-gradient(95deg, rgba(0,212,255,0.05), rgba(74,222,128,0.02)); border-color:rgba(0,212,255,0.05);">
+        <i class="fas fa-laptop"></i> Devices
+      </div>
+      <div class="nav-item" onclick="location.href='Live-Global-Attack-Map.html'"><i class="fas fa-globe"></i> Attack Map</div>
+      <div class="nav-item" onclick="location.href='System-Final-Report.html'"><i class="fas fa-file-alt"></i> Reports</div>
+      <div class="nav-item" onclick="location.href='AI Call & SMS Malicious.html'"><i class="fas fa-phone"></i> SMS Shield</div>
+      <div class="nav-item logout" onclick="location.href='logout.html'"><i class="fas fa-sign-out-alt"></i> Logout</div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+      
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div>
+          <h1>🛡️ Unified Device Management</h1>
+          <p>iPhone · iPad · Tablet · Laptop/PC · Centralized Security Monitor</p>
+        </div>
+        <div class="user-btn" id="userBtn">
+          <i class="fas fa-user-circle"></i>
+          <span id="userNameDisplay">Azure Guardian</span>
+        </div>
+      </div>
+      
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card" onclick="showToast('📊 Total devices monitored', false)">
+          <i class="fas fa-mobile-alt"></i>
+          <div class="val" id="totalDevices">13</div>
+          <div class="lbl">Total Devices</div>
+        </div>
+        <div class="stat-card" onclick="showToast('🛡️ Secure devices', false)">
+          <i class="fas fa-shield-alt"></i>
+          <div class="val" id="secureDevices">8</div>
+          <div class="lbl">Secure</div>
+        </div>
+        <div class="stat-card" onclick="showToast('⚠️ Devices with threats', true)">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div class="val" id="threatDevices">3</div>
+          <div class="lbl">Threats Found</div>
+        </div>
+        <div class="stat-card" onclick="showToast('🔐 VPN active devices', false)">
+          <i class="fas fa-lock"></i>
+          <div class="val" id="vpnActive">6</div>
+          <div class="lbl">VPN Active</div>
+        </div>
+      </div>
+      
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="tab-iphone">📱 iPhones</button>
+        <button class="tab-btn" data-tab="tab-ipad">📟 iPads</button>
+        <button class="tab-btn" data-tab="tab-tablet">📱 Tablets</button>
+        <button class="tab-btn" data-tab="tab-laptop">💻 Laptops/PCs</button>
+        <button class="tab-btn" data-tab="tab-all">📊 All Devices</button>
+      </div>
+      
+      <!-- Tab Contents -->
+      <div id="tab-iphone" class="tab-content active"><div class="devices-grid" id="iphoneGrid"></div></div>
+      <div id="tab-ipad" class="tab-content"><div class="devices-grid" id="ipadGrid"></div></div>
+      <div id="tab-tablet" class="tab-content"><div class="devices-grid" id="tabletGrid"></div></div>
+      <div id="tab-laptop" class="tab-content"><div class="devices-grid" id="laptopGrid"></div></div>
+      <div id="tab-all" class="tab-content"><div class="devices-grid" id="allGrid"></div></div>
+      
+      <!-- Action Buttons -->
+      <div class="action-row">
+        <button class="btn btn-primary" id="scanAllBtn"><i class="fas fa-search"></i> SCAN ALL</button>
+        <button class="btn btn-danger" id="isolateThreatsBtn"><i class="fas fa-ban"></i> ISOLATE THREATS</button>
+        <button class="btn btn-outline" id="resetAllBtn"><i class="fas fa-undo-alt"></i> RESET ALL</button>
+      </div>
+      
+      <!-- Log -->
+      <div class="log-panel" id="logPanel">
+        <div class="log-entry success">✓ Unified Device Management initialized</div>
+        <div class="log-entry info">🔍 Monitoring 13 devices across 4 platforms</div>
+      </div>
+      
+      <footer><i class="fas fa-shield-haltered"></i> PCS-AI · Unified Device Management · Centralized Security · Zero-Trust Protection</footer>
+    </div>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="scanSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="alertSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="successSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script>
+    // ========== 3D BACKGROUND ==========
+    (function init3DBackground() {
+      const canvas = document.getElementById('canvas-bg');
+      const ctx = canvas.getContext('2d');
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      
+      const particles = [];
+      const numParticles = 80;
+      
+      class Particle {
+        constructor() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.size = Math.random() * 2.5 + 0.5;
+          this.speedX = (Math.random() - 0.5) * 0.5;
+          this.speedY = (Math.random() - 0.5) * 0.5;
+          this.opacity = Math.random() * 0.3 + 0.1;
+          this.phase = Math.random() * Math.PI * 2;
+          this.colors = ['#00d4ff', '#4ade80', '#00ffc8'];
+          this.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+        }
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.phase += 0.015;
+          if (this.x < 0 || this.x > width) this.speedX *= -1;
+          if (this.y < 0 || this.y > height) this.speedY *= -1;
+        }
+        draw() {
+          const opacity = this.opacity + Math.sin(this.phase) * 0.05;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color.replace(')', `, ${Math.max(0.02, opacity)})`).replace('rgb', 'rgba');
+          if (!this.color.includes('rgba')) {
+            ctx.fillStyle = `rgba(0, 212, 255, ${Math.max(0.02, opacity)})`;
+          }
+          ctx.fill();
+          if (this.size > 1.8) {
+            ctx.beginPath();
+            ctx.arc(this.x + Math.sin(this.phase) * 4, this.y + Math.cos(this.phase) * 4, this.size * 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(74, 222, 128, ${Math.max(0.01, opacity * 0.3)})`;
+            ctx.fill();
+          }
+        }
+      }
+      
+      for (let i = 0; i < numParticles; i++) {
+        particles.push(new Particle());
+      }
+      
+      function drawVerificationLines() {
+        const time = Date.now() / 10000;
+        const colors = ['#00d4ff', '#4ade80', '#00ffc8'];
+        for (let c = 0; c < 3; c++) {
+          ctx.strokeStyle = colors[c] + '33';
+          ctx.lineWidth = 0.5;
+          for (let i = 0; i < 10; i++) {
+            const x1 = Math.sin(time + i * 0.5 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y1 = Math.cos(time * 0.7 + i * 0.3 + c * 0.5) * height * 0.35 + height * 0.5;
+            const x2 = Math.sin(time * 0.8 + i * 0.7 + 1 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y2 = Math.cos(time * 0.5 + i * 0.5 + 1 + c * 0.5) * height * 0.35 + height * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
+        }
+        const cx = width / 2;
+        const cy = height / 2;
+        const maxRadius = Math.min(width, height) * 0.22;
+        const colors2 = ['#00d4ff', '#4ade80', '#00ffc8'];
+        for (let r = 6; r < maxRadius; r += 5) {
+          const opacity = 0.02 + Math.sin(time * 0.5 + r * 0.025) * 0.01;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.strokeStyle = colors2[r % 3] + Math.floor(Math.max(0.005, opacity) * 255).toString(16).padStart(2, '0');
+          ctx.lineWidth = 0.3;
+          ctx.stroke();
+        }
+      }
+      
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+        drawVerificationLines();
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animate);
+      }
+      animate();
+      
+      window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+      });
+    })();
+    
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError) {
+        const sound = document.getElementById('alertSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('successSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    function addLog(msg, type = 'info') {
+      const log = document.getElementById('logPanel');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      const icons = { success: '✅', warning: '⚠️', danger: '🔴', info: '📡' };
+      entry.innerHTML = `${icons[type] || '📡'} [${new Date().toLocaleTimeString()}] ${msg}`;
+      log.insertBefore(entry, log.firstChild);
+      if (log.children.length > 8) log.removeChild(log.lastChild);
+    }
+    
+    // ========== DEVICE DATA ==========
+    const devices = {
+      iphones: [
+        { id: 'iphone1', name: "John's iPhone", model: 'iPhone 14 Pro', ios: 'iOS 17.2', vpn: true, firewall: true, status: 'secure', icon: 'fab fa-apple', color: '#555' },
+        { id: 'iphone2', name: "Sarah's iPhone", model: 'iPhone 15', ios: 'iOS 17.3', vpn: true, firewall: true, status: 'secure', icon: 'fab fa-apple', color: '#555' },
+        { id: 'iphone3', name: "Mike's iPhone", model: 'iPhone 13', ios: 'iOS 16.7', vpn: false, firewall: true, status: 'warning', icon: 'fab fa-apple', color: '#555' }
+      ],
+      ipads: [
+        { id: 'ipad1', name: 'Executive iPad', model: 'iPad Pro 12.9"', os: 'iPadOS 17.2', apps: 28, status: 'secure', icon: 'fab fa-apple', color: '#555' },
+        { id: 'ipad2', name: 'Marketing iPad', model: 'iPad Air 5th Gen', os: 'iPadOS 17.1', apps: 32, status: 'danger', icon: 'fab fa-apple', color: '#555' },
+        { id: 'ipad3', name: 'Field iPad', model: 'iPad Mini 6th Gen', os: 'iPadOS 17.0', apps: 25, status: 'secure', icon: 'fab fa-apple', color: '#555' }
+      ],
+      tablets: [
+        { id: 'tab1', name: 'Samsung Tab S9', brand: 'Samsung', os: 'Android 14', files: 12, status: 'danger', icon: 'fab fa-android', color: '#3DDC84' },
+        { id: 'tab2', name: 'Huawei MatePad', brand: 'Huawei', os: 'HarmonyOS 3.0', files: 9, status: 'secure', icon: 'fab fa-android', color: '#FF6600' },
+        { id: 'tab3', name: 'Lenovo Tab P12', brand: 'Lenovo', os: 'Android 13', files: 11, status: 'warning', icon: 'fab fa-android', color: '#E2231A' },
+        { id: 'tab4', name: 'Xiaomi Pad 6', brand: 'Xiaomi', os: 'Android 14', files: 8, status: 'secure', icon: 'fab fa-android', color: '#FF6700' }
+      ],
+      laptops: [
+        { id: 'pc1', name: 'Engineering WS', os: 'Windows 11 Pro', cpu: 45, ram: 62, status: 'secure', icon: 'fab fa-windows', color: '#00A4EF' },
+        { id: 'pc2', name: 'Developer Laptop', os: 'Ubuntu 22.04', cpu: 28, ram: 41, status: 'secure', icon: 'fab fa-linux', color: '#FCC624' },
+        { id: 'pc3', name: 'Designer MacBook', os: 'macOS Sonoma', cpu: 32, ram: 38, status: 'secure', icon: 'fab fa-apple', color: '#A2A2A2' },
+        { id: 'pc4', name: 'Gaming PC', os: 'Windows 11', cpu: 78, ram: 55, status: 'danger', icon: 'fab fa-windows', color: '#00A4EF' }
+      ]
+    };
+    
+    const allDevices = [
+      ...devices.iphones.map(d => ({ ...d, type: 'iPhone' })),
+      ...devices.ipads.map(d => ({ ...d, type: 'iPad' })),
+      ...devices.tablets.map(d => ({ ...d, type: 'Tablet' })),
+      ...devices.laptops.map(d => ({ ...d, type: 'Laptop/PC' }))
+    ];
+    
+    let totalDevices = allDevices.length;
+    let secureCount = allDevices.filter(d => d.status === 'secure').length;
+    let threatCount = allDevices.filter(d => d.status === 'danger').length;
+    let vpnCount = devices.iphones.filter(d => d.vpn).length;
+    
+    function updateStats() {
+      document.getElementById('totalDevices').textContent = totalDevices;
+      document.getElementById('secureDevices').textContent = secureCount;
+      document.getElementById('threatDevices').textContent = threatCount;
+      document.getElementById('vpnActive').textContent = vpnCount;
+    }
+    
+    function getStatusBadge(status) {
+      const map = { secure: 'badge-secure ✅ SECURE', warning: 'badge-warning ⚠️ WARNING', danger: 'badge-danger 🔴 THREAT' };
+      return map[status] || 'badge-secure ✅ SECURE';
+    }
+    
+    function renderGrid(containerId, deviceList) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      deviceList.forEach((d, idx) => {
+        const card = document.createElement('div');
+        card.className = 'device-card';
+        card.style.animationDelay = (idx * 0.3) + 's';
+        const statusClass = d.status === 'secure' ? 'badge-secure' : (d.status === 'warning' ? 'badge-warning' : 'badge-danger');
+        const statusText = d.status === 'secure' ? '✅ SECURE' : (d.status === 'warning' ? '⚠️ WARNING' : '🔴 THREAT');
+        
+        let extraDetails = '';
+        if (d.type === 'iPhone') {
+          extraDetails = `<div class="status-row"><span class="status-badge ${d.vpn ? 'badge-vpn' : 'badge-danger'}">🔐 VPN: ${d.vpn ? 'ACTIVE' : 'OFF'}</span><span class="status-badge badge-secure">🛡️ Firewall: ${d.firewall ? 'ON' : 'OFF'}</span></div>`;
+        } else if (d.type === 'iPad') {
+          extraDetails = `<div class="status-row"><span class="status-badge badge-secure">📱 ${d.apps} Apps</span><span class="status-badge ${d.status === 'secure' ? 'badge-secure' : 'badge-danger'}">${d.os}</span></div>`;
+        } else if (d.type === 'Tablet') {
+          extraDetails = `<div class="status-row"><span class="status-badge badge-secure">📄 ${d.files} Files</span><span class="status-badge badge-secure">${d.os}</span></div>`;
+        } else if (d.type === 'Laptop/PC') {
+          const cpuColor = d.cpu > 70 ? '#ff4444' : (d.cpu > 50 ? '#ffd700' : '#4ade80');
+          const ramColor = d.ram > 70 ? '#ff4444' : (d.ram > 50 ? '#ffd700' : '#4ade80');
+          extraDetails = `
+            <div class="status-row">
+              <span><i class="fas fa-microchip"></i> CPU: ${d.cpu}%</span>
+              <span><i class="fas fa-memory"></i> RAM: ${d.ram}%</span>
+            </div>
+            <div class="bar"><div class="bar-fill" style="width:${d.cpu}%; background:${cpuColor};"></div></div>
+            <div class="bar"><div class="bar-fill" style="width:${d.ram}%; background:${ramColor};"></div></div>
+          `;
+        }
+        
+        card.innerHTML = `
+          <div class="header">
+            <i class="${d.icon}" style="color:${d.color};"></i>
+            <div>
+              <div class="name">${d.name}</div>
+              <div class="model">${d.model || d.brand || d.os || ''} · ${d.type}</div>
+            </div>
+          </div>
+          <div class="status-row">
+            <span class="status-badge ${statusClass}">${statusText}</span>
+          </div>
+          ${extraDetails}
+        `;
+        card.addEventListener('click', () => {
+          addLog(`📊 ${d.name} (${d.type}) - Status: ${d.status.toUpperCase()}`, d.status === 'danger' ? 'danger' : 'info');
+          if (d.status === 'danger') {
+            const sound = document.getElementById('alertSound');
+            if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+          } else {
+            const sound = document.getElementById('successSound');
+            if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+          }
+        });
+        container.appendChild(card);
+      });
+    }
+    
+    function renderAll() {
+      renderGrid('iphoneGrid', devices.iphones);
+      renderGrid('ipadGrid', devices.ipads);
+      renderGrid('tabletGrid', devices.tablets);
+      renderGrid('laptopGrid', devices.laptops);
+      renderGrid('allGrid', allDevices);
+    }
+    
+    function scanAll() {
+      const sound = document.getElementById('scanSound');
+      if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      addLog('🔍 Scanning all devices for threats...', 'info');
+      let found = 0;
+      allDevices.forEach(d => {
+        if (Math.random() > 0.7 && d.status === 'secure') {
+          d.status = 'warning';
+          found++;
+        }
+      });
+      secureCount = allDevices.filter(d => d.status === 'secure').length;
+      threatCount = allDevices.filter(d => d.status === 'danger').length;
+      updateStats();
+      renderAll();
+      addLog(`✅ Scan complete · Found ${found} new warnings`, found > 0 ? 'warning' : 'success');
+      showToast(`🔍 Scan complete · ${found} warnings found`, found > 0);
+    }
+    
+    function isolateThreats() {
+      const sound = document.getElementById('alertSound');
+      if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      let isolated = 0;
+      allDevices.forEach(d => {
+        if (d.status === 'danger') {
+          d.status = 'secure';
+          isolated++;
+        }
+      });
+      threatCount = allDevices.filter(d => d.status === 'danger').length;
+      secureCount = allDevices.filter(d => d.status === 'secure').length;
+      updateStats();
+      renderAll();
+      addLog(`🛡️ Isolated ${isolated} threats · All devices secured`, 'success');
+      showToast(`🛡️ ${isolated} threats isolated`, false);
+    }
+    
+    function resetAll() {
+      const sound = document.getElementById('successSound');
+      if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      const orig = [
+        ...devices.iphones.map(d => ({ ...d, status: d.id === 'iphone3' ? 'warning' : 'secure' })),
+        ...devices.ipads.map(d => ({ ...d, status: d.id === 'ipad2' ? 'danger' : 'secure' })),
+        ...devices.tablets.map(d => ({ ...d, status: d.id === 'tab1' ? 'danger' : (d.id === 'tab3' ? 'warning' : 'secure') })),
+        ...devices.laptops.map(d => ({ ...d, status: d.id === 'pc4' ? 'danger' : 'secure' }))
+      ];
+      allDevices.forEach((d, i) => { d.status = orig[i].status; });
+      secureCount = allDevices.filter(d => d.status === 'secure').length;
+      threatCount = allDevices.filter(d => d.status === 'danger').length;
+      vpnCount = devices.iphones.filter(d => d.vpn).length;
+      updateStats();
+      renderAll();
+      addLog('🔄 All devices reset to baseline state', 'success');
+      showToast('🔄 All devices reset', false);
+    }
+    
+    // ========== TABS ==========
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+    
+    // ========== EVENT LISTENERS ==========
+    document.getElementById('scanAllBtn').addEventListener('click', scanAll);
+    document.getElementById('isolateThreatsBtn').addEventListener('click', isolateThreats);
+    document.getElementById('resetAllBtn').addEventListener('click', resetAll);
+    
+    const userName = localStorage.getItem('pcs_ai_current_user') || "Azure Guardian";
+    document.getElementById('userNameDisplay').textContent = userName;
+    
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 's' || e.key === 'S') document.getElementById('scanAllBtn').click();
+      if (e.key === 'i' || e.key === 'I') document.getElementById('isolateThreatsBtn').click();
+      if (e.key === 'r' || e.key === 'R') document.getElementById('resetAllBtn').click();
+    });
+    
+    // ========== INITIALIZATION ==========
+    renderAll();
+    updateStats();
+    addLog('🌐 Unified Device Management online · 13 devices monitored', 'success');
+    showToast('🛡️ Unified Device Management active', false);
+  </script>
+</body>
+</html>

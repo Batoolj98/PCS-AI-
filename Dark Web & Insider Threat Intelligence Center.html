@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Dark Web Intel & Insider Threat Center</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2340c4ff'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Blue Forensic Background ===== */
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0a1a2e 0%, #050a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #40c4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #4ade80; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #0a0e1a 20px,
+        #0a0e1a 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #0a0e1a 20px,
+        #0a0e1a 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(10, 14, 26, 0.85);
+      padding: 0.1rem 1.2rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      border-bottom: 2px solid #ffd700;
+      backdrop-filter: blur(8px);
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(10, 14, 26, 0.85);
+      padding: 0.1rem 1.2rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      border-top: 2px solid #ffd700;
+      backdrop-filter: blur(8px);
+    }
+    
+    #cubeCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+    }
+    .glow-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 40%, rgba(64,196,255,0.05), rgba(100,160,255,0.05), transparent 75%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 280px;
+      background: rgba(10, 14, 26, 0.75);
+      backdrop-filter: blur(18px);
+      border-right: 2px solid rgba(64,196,255,0.15);
+      padding: 1rem 0.7rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      transition: 0.3s;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: rgba(64,196,255,0.05); }
+    .sidebar::-webkit-scrollbar-thumb { background: #40c4ff; border-radius: 4px; }
+    .sidebar-logo {
+      text-align: center;
+      padding-bottom: 0.8rem;
+      border-bottom: 2px solid rgba(64,196,255,0.1);
+      margin-bottom: 0.4rem;
+      cursor: pointer;
+    }
+    .sidebar-logo i {
+      font-size: 2.8rem;
+      background: linear-gradient(135deg, #40c4ff, #7dd3fc, #8892ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: floatLogo 3s infinite ease-in-out;
+    }
+    @keyframes floatLogo { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .sidebar-logo h3 {
+      font-size: 1rem;
+      background: linear-gradient(135deg, #40c4ff, #7a8cff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      margin-top: 2px;
+    }
+    .sidebar-logo .sub {
+      font-size: 0.45rem;
+      color: #4a8aaa;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .section-header {
+      font-size: 0.55rem;
+      font-weight: 800;
+      margin: 0.15rem 0 0.05rem 0;
+      padding: 0.2rem 0.5rem;
+      background: rgba(64,196,255,0.05);
+      border-radius: 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      color: #7ab8d4;
+      border: 1px solid rgba(64,196,255,0.05);
+    }
+    .section-header:hover { background: rgba(64,196,255,0.1); border-color: rgba(64,196,255,0.15); }
+    .section-header .info-icon { font-size: 0.5rem; color: #40c4ff; opacity: 0.5; cursor: help; margin-left: 4px; }
+    .section-header .info-icon:hover { opacity: 1; }
+    .section-arrow { font-size: 0.6rem; color: #4a8aaa; transition: transform 0.25s; }
+    .section-arrow.collapsed { transform: rotate(-90deg); }
+    .section-content {
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      margin-left: 0.3rem;
+      padding-left: 0.2rem;
+    }
+    .section-content.collapsed { display: none; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.3rem 0.7rem;
+      border-radius: 0.7rem;
+      color: #8ab8d4;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.6rem;
+      cursor: pointer;
+      transition: 0.25s;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(64,196,255,0.05);
+    }
+    .nav-item i { width: 20px; font-size: 0.7rem; color: #40c4ff; }
+    .nav-item .page-info {
+      font-size: 0.45rem;
+      color: #4a7a8a;
+      margin-left: auto;
+      opacity: 0.4;
+      cursor: help;
+    }
+    .nav-item .page-info:hover { opacity: 1; color: #40c4ff; }
+    .nav-item:hover {
+      background: linear-gradient(95deg, rgba(64,196,255,0.15), rgba(136,146,255,0.15));
+      color: #e0f2fe;
+      transform: translateX(4px);
+      border-color: rgba(64,196,255,0.2);
+    }
+    .nav-item:hover i { color: #7dd3fc; }
+    .nav-item:hover .page-info { color: #7dd3fc; opacity: 1; }
+    .nav-item.logout { margin-top: 0.4rem; border-color: rgba(239,68,68,0.15); }
+    .nav-item.logout:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); }
+    .nav-item.logout:hover i { color: #ef4444; }
+    .main-content {
+      flex: 1;
+      padding: 1.2rem;
+      overflow-y: auto;
+      max-height: 100vh;
+      background: rgba(10, 14, 26, 0.3);
+    }
+    
+    /* ===== HEADER ===== */
+    .page-header {
+      text-align: center;
+      margin-bottom: 1.2rem;
+      position: relative;
+    }
+    .page-header h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #40c4ff, #7dd3fc, #8892ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .page-header .subtitle {
+      font-size: 0.65rem;
+      color: #5a8aaa;
+      margin-top: 2px;
+      letter-spacing: 1px;
+    }
+    .page-header .badge {
+      display: inline-block;
+      background: rgba(64,196,255,0.08);
+      border: 1px solid rgba(64,196,255,0.15);
+      padding: 0.15rem 0.8rem;
+      border-radius: 30px;
+      font-size: 0.5rem;
+      color: #7ab8d4;
+      margin-top: 4px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .page-header .badge:hover { transform: scale(1.02); background: rgba(64,196,255,0.15); }
+    
+    /* ===== GLASS PANELS ===== */
+    .glass-panel {
+      background: rgba(10, 14, 26, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 1.2rem;
+      padding: 1rem;
+      border: 1px solid rgba(64,196,255,0.06);
+      transition: 0.3s;
+    }
+    .glass-panel:hover { border-color: rgba(64,196,255,0.15); box-shadow: 0 0 40px rgba(64,196,255,0.02); }
+    .panel-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid #40c4ff;
+      padding-left: 10px;
+      color: #80c8e8;
+    }
+    .panel-title i { color: #40c4ff; cursor: pointer; transition: 0.3s; }
+    .panel-title i:hover { transform: scale(1.15); color: #7dd3fc; }
+    .panel-title .info-tip {
+      font-size: 0.5rem;
+      color: #4a7a8a;
+      cursor: help;
+      margin-left: auto;
+      opacity: 0.4;
+      transition: 0.3s;
+    }
+    .panel-title .info-tip:hover { opacity: 1; color: #40c4ff; transform: scale(1.1); }
+    
+    /* ===== DARK WEB INTELLIGENCE ===== */
+    .darkweb-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    /* Leak Table */
+    .leak-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.55rem;
+    }
+    .leak-table th { text-align: left; padding: 0.25rem 0.3rem; background: rgba(64,196,255,0.08); color: #7ab8d4; font-weight: 700; }
+    .leak-table td { padding: 0.2rem 0.3rem; border-bottom: 1px solid rgba(64,196,255,0.04); color: #8ab8d4; }
+    .leak-table tr:hover { background: rgba(64,196,255,0.03); }
+    .leak-table .critical { color: #dc2626; font-weight: 700; }
+    .leak-table .high { color: #f59e0b; font-weight: 600; }
+    .leak-table .medium { color: #40c4ff; }
+    
+    /* Email Scanner */
+    .email-scanner {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .email-scanner input {
+      flex: 1;
+      padding: 0.4rem 0.8rem;
+      border-radius: 2rem;
+      border: 1px solid rgba(64,196,255,0.15);
+      background: rgba(0,0,0,0.3);
+      font-size: 0.6rem;
+      outline: none;
+      color: #d0f0ff;
+    }
+    .email-scanner input::placeholder { color: #4a7a8a; }
+    .email-scanner input:focus { border-color: #40c4ff; box-shadow: 0 0 15px rgba(64,196,255,0.1); }
+    .email-scanner .btn-scan {
+      background: linear-gradient(95deg, #40c4ff, #7a8cff);
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 2rem;
+      color: #0a0e1a;
+      cursor: pointer;
+      font-size: 0.55rem;
+      font-weight: 700;
+      transition: 0.3s;
+    }
+    .email-scanner .btn-scan:hover { transform: scale(1.04); box-shadow: 0 0 20px rgba(64,196,255,0.2); }
+    .email-result {
+      margin-top: 0.4rem;
+      padding: 0.4rem;
+      border-radius: 0.8rem;
+      font-size: 0.55rem;
+      text-align: center;
+      border: 1px solid transparent;
+    }
+    .email-result.compromised { background: rgba(220,38,38,0.08); border-color: rgba(220,38,38,0.2); color: #dc2626; }
+    .email-result.clean { background: rgba(74,222,128,0.06); border-color: rgba(74,222,128,0.15); color: #4ade80; }
+    .email-result.pending { color: #4a7a8a; }
+    
+    /* Alert Radar */
+    .alert-radar {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    .alert-radar::-webkit-scrollbar { width: 3px; }
+    .alert-radar::-webkit-scrollbar-thumb { background: #40c4ff; border-radius: 10px; }
+    .alert-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.3rem 0.5rem;
+      border-radius: 0.6rem;
+      background: rgba(255,255,255,0.03);
+      border-left: 3px solid #40c4ff;
+      font-size: 0.55rem;
+      color: #8ab8d4;
+    }
+    .alert-item .alert-icon { color: #dc2626; font-size: 0.5rem; animation: pulseAlert 1s infinite; }
+    @keyframes pulseAlert { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .alert-item .alert-time { color: #4a7a8a; font-size: 0.45rem; margin-left: auto; }
+    
+    /* ===== INSIDER THREAT MONITOR ===== */
+    .insider-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    /* Behavior Gauge */
+    .gauge-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.5rem;
+    }
+    .gauge-ring {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: conic-gradient(#4ade80 0% 70%, #f59e0b 70% 85%, #dc2626 85% 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+    }
+    .gauge-ring .gauge-inner {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: rgba(10,14,26,0.8);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #d0f0ff;
+      flex-direction: column;
+    }
+    .gauge-ring .gauge-inner .gauge-label {
+      font-size: 0.4rem;
+      font-weight: 400;
+      color: #4a7a8a;
+      display: block;
+      text-align: center;
+    }
+    .gauge-info {
+      flex: 1;
+    }
+    .gauge-info .gauge-user {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #80c8e8;
+    }
+    .gauge-info .gauge-status {
+      font-size: 0.5rem;
+      color: #4a8aaa;
+      margin-top: 2px;
+    }
+    .gauge-info .gauge-risk {
+      font-size: 0.55rem;
+      font-weight: 700;
+      margin-top: 4px;
+      padding: 0.15rem 0.6rem;
+      border-radius: 30px;
+      display: inline-block;
+    }
+    .gauge-risk.low { background: rgba(74,222,128,0.1); color: #4ade80; border: 1px solid rgba(74,222,128,0.15); }
+    .gauge-risk.medium { background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.15); }
+    .gauge-risk.high { background: rgba(220,38,38,0.1); color: #dc2626; border: 1px solid rgba(220,38,38,0.2); animation: pulseRisk 1s infinite; }
+    @keyframes pulseRisk { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+    
+    /* Data Exfiltration Detector */
+    .exfil-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    .exfil-list::-webkit-scrollbar { width: 3px; }
+    .exfil-list::-webkit-scrollbar-thumb { background: #40c4ff; border-radius: 10px; }
+    .exfil-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.3rem 0.5rem;
+      border-radius: 0.6rem;
+      background: rgba(255,255,255,0.03);
+      font-size: 0.55rem;
+      border-left: 3px solid #4ade80;
+      color: #8ab8d4;
+    }
+    .exfil-item.danger { border-left-color: #dc2626; background: rgba(220,38,38,0.05); }
+    .exfil-item .exfil-icon { color: #40c4ff; }
+    .exfil-item.danger .exfil-icon { color: #dc2626; }
+    .exfil-item .exfil-time { color: #4a7a8a; font-size: 0.45rem; margin-left: auto; }
+    
+    /* Instant Mitigation */
+    .mitigation-area {
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      border-radius: 0.8rem;
+      background: rgba(255,255,255,0.03);
+      text-align: center;
+      border: 1px solid rgba(64,196,255,0.04);
+    }
+    .mitigation-area .mitigation-status {
+      font-size: 0.55rem;
+      color: #4a7a8a;
+      margin-bottom: 0.4rem;
+    }
+    .mitigation-area .mitigation-status .highlight {
+      color: #40c4ff;
+      font-weight: 700;
+    }
+    .btn-mitigate {
+      background: linear-gradient(95deg, #dc2626, #ef4444);
+      border: none;
+      padding: 0.4rem 1.2rem;
+      border-radius: 2rem;
+      color: white;
+      cursor: pointer;
+      font-size: 0.6rem;
+      font-weight: 700;
+      transition: 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-mitigate:hover { transform: scale(1.04); box-shadow: 0 0 30px rgba(220,38,38,0.2); }
+    .btn-mitigate.success { background: linear-gradient(95deg, #22b55a, #4ade80); }
+    .btn-mitigate.success:hover { box-shadow: 0 0 30px rgba(74,222,128,0.2); }
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1100px) { .darkweb-grid, .insider-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { .sidebar { width: 200px; padding: 0.4rem 0.2rem; } }
+    
+    /* ===== TOAST ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(10, 14, 26, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #4ade80;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(64,196,255,0.1);
+    }
+    .toast-notification.error { border-left-color: #dc2626; }
+    @keyframes slideToast { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    
+    /* ===== FOOTER ===== */
+    .footer {
+      text-align: center;
+      font-size: 0.45rem;
+      color: #4a7a8a;
+      margin-top: 0.6rem;
+      padding-top: 0.3rem;
+      border-top: 1px solid rgba(64,196,255,0.05);
+    }
+    .footer i { color: #40c4ff; cursor: pointer; transition: 0.3s; }
+    .footer i:hover { color: #7dd3fc; transform: scale(1.2); }
+    .footer .highlight { color: #40c4ff; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <canvas id="cubeCanvas"></canvas>
+  <div class="glow-overlay"></div>
+  <div class="bg-canvas"></div>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 DARK WEB & INSIDER THREAT INTELLIGENCE · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 PROACTIVE INTELLIGENCE · BEHAVIORAL ANALYTICS · ZERO-TRUST 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#40c4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#40c4ff" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#40c4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#40c4ff" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#40c4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#40c4ff" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#40c4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <div class="app-wrapper">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-logo" onclick="showToast('🛡️ Azure Phoenix · Dark Web & Insider Threat Intelligence', false)">
+        <i class="fas fa-shield-haltered"></i>
+        <h3>Azure Phoenix</h3>
+        <div class="sub">Dark Web & Insider Intel</div>
+      </div>
+      
+      <div class="section-header" data-section="zeroTrust">
+        <span><i class="fas fa-fingerprint"></i> 🔐 ZERO TRUST <i class="fas fa-info-circle info-icon" title="Zero Trust security model"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-zeroTrust"></i>
+      </div>
+      <div class="section-content" id="content-zeroTrust">
+        <div class="nav-item" onclick="showToast('🔐 Login · Secure authentication portal', false)"><i class="fas fa-sign-in-alt"></i> Login <span class="page-info" title="Secure authentication">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📝 Register · Create new account', false)"><i class="fas fa-user-plus"></i> Register <span class="page-info" title="Create account">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('👤 Face Gate · Biometric facial recognition', false)"><i class="fas fa-camera"></i> Face Gate <span class="page-info" title="Biometric verification">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🌐 AirGap · Air-gapped security isolation', false)"><i class="fas fa-globe"></i> AirGap <span class="page-info" title="Air-gapped security">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="cyberShield">
+        <span><i class="fas fa-shield-alt"></i> 📊 CYBER SHIELD <i class="fas fa-info-circle info-icon" title="Cyber defense monitoring"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-cyberShield"></i>
+      </div>
+      <div class="section-content" id="content-cyberShield">
+        <div class="nav-item" onclick="showToast('📊 Dashboard · Main control panel', false)"><i class="fas fa-tachometer-alt"></i> Dashboard <span class="page-info" title="Main control panel">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📹 AI Cyber Camera Shield · Smart surveillance', false)"><i class="fas fa-camera"></i> Camera Shield <span class="page-info" title="AI Cyber Camera Shield">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🗺️ Attack Map · Global threat visualization', false)"><i class="fas fa-globe"></i> Attack Map <span class="page-info" title="Global threats">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🛡️ Active Defense · Proactive threat neutralization', false)"><i class="fas fa-shield-virus"></i> Active Defense <span class="page-info" title="Proactive protection">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🔒 VPN Gateway · Secure encrypted tunnel', false)"><i class="fas fa-lock"></i> VPN Gateway <span class="page-info" title="Secure VPN">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('☁️ Cloud Security · Cloud infrastructure protection', false)"><i class="fas fa-cloud-upload-alt"></i> Cloud Security <span class="page-info" title="Cloud protection">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📡 Network Simulation · Network behavior analysis', false)"><i class="fas fa-chart-network"></i> Network Sim <span class="page-info" title="Network simulation">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('💻 API & SDK · Developer integration tools', false)"><i class="fas fa-code"></i> API & SDK <span class="page-info" title="Developer tools">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📱 Device Management · Device inventory control', false)"><i class="fas fa-laptop"></i> Device Mgmt <span class="page-info" title="Device control">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('👥 Users & Permissions · Role management', false)"><i class="fas fa-users"></i> Users & Permissions <span class="page-info" title="Role management">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="phoenixCore">
+        <span><i class="fas fa-dragon"></i> 🧬 PHOENIX CORE <i class="fas fa-info-circle info-icon" title="Self-healing AI engine"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-phoenixCore"></i>
+      </div>
+      <div class="section-content" id="content-phoenixCore">
+        <div class="nav-item" onclick="showToast('🧠 Phoenix Core Unit · Central AI processing', false)"><i class="fas fa-archive"></i> Core Unit <span class="page-info" title="AI processing">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🔬 Hardware Unit · Security modules', false)"><i class="fas fa-microchip"></i> Hardware Unit <span class="page-info" title="Security modules">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📀 Systems Clone · System replication and backup', false)"><i class="fas fa-clone"></i> Systems Clone <span class="page-info" title="System backup">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🛡️ DMZ Isolation · Demilitarized zone isolation', false)"><i class="fas fa-shield-virus"></i> DMZ Isolation <span class="page-info" title="Isolation zone">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('💾 Backup & Recovery · Data restoration', false)"><i class="fas fa-database"></i> Backup & Recovery <span class="page-info" title="Data restoration">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('❤️ System Health · Health monitoring', false)"><i class="fas fa-heartbeat"></i> System Health <span class="page-info" title="Health monitoring">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🔍 Forensic Agent · Digital forensics investigation', false)"><i class="fas fa-search"></i> Forensic Agent <span class="page-info" title="Digital forensics">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📋 Evidence Logs · Security event logging', false)"><i class="fas fa-database"></i> Evidence Logs <span class="page-info" title="Event logging">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🐛 Bug Hunter · Vulnerability discovery', false)"><i class="fas fa-bug"></i> Bug Hunter <span class="page-info" title="Vulnerability discovery">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🧪 Malware Lab · Malware analysis environment', false)"><i class="fas fa-biohazard"></i> Malware Lab <span class="page-info" title="Malware analysis">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🚢 Marine Systems · Maritime security', false)"><i class="fas fa-ship"></i> Marine Systems <span class="page-info" title="Maritime security">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('✈️ Critical Sectors · Infrastructure protection', false)"><i class="fas fa-plane"></i> Critical Sectors <span class="page-info" title="Infrastructure protection">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="advancedMonitoring">
+        <span><i class="fas fa-chart-line"></i> 🎯 ADVANCED MONITORING <i class="fas fa-info-circle info-icon" title="Advanced analytics"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-advancedMonitoring"></i>
+      </div>
+      <div class="section-content" id="content-advancedMonitoring">
+        <div class="nav-item" onclick="showToast('📄 System Report · Comprehensive system report', false)"><i class="fas fa-file-alt"></i> System Report <span class="page-info" title="Comprehensive report">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🖥️ Servers Management · Server infrastructure', false)"><i class="fas fa-server"></i> Servers Mgmt <span class="page-info" title="Server management">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🗺️ Network Topology · Network structure visualization', false)"><i class="fas fa-sitemap"></i> Network Topology <span class="page-info" title="Network structure">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('👁️ Devices Overview · All connected devices', false)"><i class="fas fa-eye"></i> Devices Overview <span class="page-info" title="All devices">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📡 Network Simulation · Network tools', false)"><i class="fas fa-chart-network"></i> Network Sim <span class="page-info" title="Network tools">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🧪 Malware Lab · Advanced malware analysis', false)"><i class="fas fa-flask"></i> Malware Lab <span class="page-info" title="Malware analysis">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="cyberDeception">
+        <span><i class="fas fa-mask"></i> 👁️ CYBER DECEPTION <i class="fas fa-info-circle info-icon" title="Deception technology"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-cyberDeception"></i>
+      </div>
+      <div class="section-content" id="content-cyberDeception">
+        <div class="nav-item" onclick="showToast('🔔 Honeypot Alert · Honeypot intrusion alerts', false)"><i class="fas fa-bell"></i> Honeypot Alert <span class="page-info" title="Honeypot alerts">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📱 Deception Vault · Deception strategy vault', false)"><i class="fas fa-qrcode"></i> Deception Vault <span class="page-info" title="Deception strategy">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🎭 Secret Overlay · Secret alert overlay system', false)"><i class="fas fa-mask"></i> Secret Overlay <span class="page-info" title="Secret alerts">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="advancedProtection">
+        <span><i class="fas fa-shield-haltered"></i> 🛡️ ADVANCED PROTECTION <i class="fas fa-info-circle info-icon" title="Next-gen protection"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-advancedProtection"></i>
+      </div>
+      <div class="section-content" id="content-advancedProtection">
+        <div class="nav-item" onclick="showToast('⚙️ Security Policies · Policy management', false)"><i class="fas fa-sliders-h"></i> Security Policies <span class="page-info" title="Policy management">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🚀 Mission Control · Command center', false)"><i class="fas fa-rocket"></i> Mission Control <span class="page-info" title="Command center">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🧪 Cyber Simulation · Attack simulation', false)"><i class="fas fa-flask"></i> Cyber Simulation <span class="page-info" title="Attack simulation">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="unifiedDefense">
+        <span><i class="fas fa-shield-haltered"></i> 🧩 UNIFIED DEFENSE <i class="fas fa-info-circle info-icon" title="Unified protection suite"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-unifiedDefense"></i>
+      </div>
+      <div class="section-content" id="content-unifiedDefense">
+        <div class="nav-item" onclick="showToast('🛡️ Unified Shield · Unified protection layer', false)"><i class="fas fa-shield-alt"></i> Unified Shield <span class="page-info" title="Unified protection">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('💻 Unified Devices · Unified device management', false)"><i class="fas fa-laptop"></i> Unified Devices <span class="page-info" title="Device management">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📊 Threat Intel · Unified threat intelligence', false)"><i class="fas fa-chart-line"></i> Threat Intel <span class="page-info" title="Threat intelligence">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('👥 User Management · Unified user management', false)"><i class="fas fa-users"></i> User Mgmt <span class="page-info" title="User management">ℹ️</span></div>
+      </div>
+      
+      <div class="nav-item logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout <span class="page-info" title="Sign out">ℹ️</span></div>
+    </div>
+    
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1>🛡️ Dark Web & Insider Threat Intelligence</h1>
+        <div class="subtitle">Proactive Intelligence · Behavioral Analytics · Zero-Trust Insider Protection</div>
+        <div class="badge" onclick="showToast('🛡️ Strategic Intelligence: Dark Web Monitoring + Insider Threat Prevention', false)">
+          <i class="fas fa-shield-haltered"></i> Strategic Intelligence: Dark Web Monitoring + Insider Threat Prevention
+        </div>
+      </div>
+      
+      <!-- ===== DARK WEB INTELLIGENCE CENTER ===== -->
+      <div style="margin-bottom: 1rem;">
+        <div class="glass-panel" style="border-left: 4px solid #40c4ff;">
+          <div class="panel-title">
+            <i class="fas fa-globe" onclick="showToast('🌐 Dark Web Intelligence Center · Proactive dark web monitoring', false)"></i> Dark Web Intelligence Center
+            <span class="info-tip" title="Proactive dark web monitoring and threat intelligence">ℹ️</span>
+          </div>
+          
+          <div class="darkweb-grid">
+            <!-- Left: Live Leak Monitor -->
+            <div>
+              <div style="font-size:0.6rem; font-weight:700; color:#80c8e8; margin-bottom:0.3rem;">
+                <i class="fas fa-database" style="color:#40c4ff;"></i> Live Leak Monitor
+                <span style="font-size:0.45rem; color:#4a7a8a; font-weight:400; margin-left:6px;">Real-time dark web data breach scanning</span>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="leak-table" id="leakTable">
+                  <thead><tr><th>Organization</th><th>Data Type</th><th>Records</th><th>Status</th></tr></thead>
+                  <tbody id="leakTableBody">
+                    <tr><td>Global Bank Corp</td><td>Customer PII</td><td>2.4M</td><td class="critical">⚠️ Active Leak</td></tr>
+                    <tr><td>HealthNet Systems</td><td>Medical Records</td><td>850K</td><td class="high">🟡 Verified</td></tr>
+                    <tr><td>TechInnovate Inc</td><td>Source Code</td><td>120K</td><td class="medium">🔵 Under Review</td></tr>
+                    <tr><td>SecureData Solutions</td><td>Credentials</td><td>45K</td><td class="critical">⚠️ Critical</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <!-- Right: Email Scanner + Alerts -->
+            <div>
+              <div style="font-size:0.6rem; font-weight:700; color:#80c8e8; margin-bottom:0.3rem;">
+                <i class="fas fa-envelope" style="color:#40c4ff;"></i> Compromised Email Scanner
+                <span style="font-size:0.45rem; color:#4a7a8a; font-weight:400; margin-left:6px;">Check if your credentials are exposed</span>
+              </div>
+              <div class="email-scanner">
+                <input type="email" id="emailInput" placeholder="Enter your email to scan...">
+                <button class="btn-scan" id="scanEmailBtn"><i class="fas fa-search"></i> Scan</button>
+              </div>
+              <div class="email-result pending" id="emailResult">Enter an email to check for breaches</div>
+              
+              <div style="font-size:0.6rem; font-weight:700; color:#80c8e8; margin-top:0.6rem; margin-bottom:0.3rem;">
+                <i class="fas fa-radar" style="color:#40c4ff;"></i> Early Threat Alerts
+                <span style="font-size:0.45rem; color:#4a7a8a; font-weight:400; margin-left:6px;">Real-time dark web threat detection</span>
+              </div>
+              <div class="alert-radar" id="alertRadar">
+                <div class="alert-item"><span class="alert-icon"><i class="fas fa-circle"></i></span> 🔴 Hacker offering exploit for your firewall <span class="alert-time">2 min ago</span></div>
+                <div class="alert-item"><span class="alert-icon"><i class="fas fa-circle"></i></span> 🟡 Credentials for your domain detected <span class="alert-time">12 min ago</span></div>
+                <div class="alert-item"><span class="alert-icon"><i class="fas fa-circle"></i></span> 🔵 Ransomware group targeting your sector <span class="alert-time">28 min ago</span></div>
+                <div class="alert-item"><span class="alert-icon"><i class="fas fa-circle"></i></span> 🟠 Internal docs being sold on dark web <span class="alert-time">1 hour ago</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ===== INSIDER THREAT MONITOR ===== -->
+      <div style="margin-bottom: 0.8rem;">
+        <div class="glass-panel" style="border-left: 4px solid #7dd3fc;">
+          <div class="panel-title">
+            <i class="fas fa-user-shield" onclick="showToast('👥 Insider Threat Monitor · Behavioral analytics · User behavior monitoring', false)"></i> Insider Threat Monitor
+            <span class="info-tip" title="Behavioral analytics and insider threat detection">ℹ️</span>
+          </div>
+          
+          <div class="insider-grid">
+            <!-- Left: Behavior Gauge -->
+            <div>
+              <div style="font-size:0.6rem; font-weight:700; color:#80c8e8; margin-bottom:0.3rem;">
+                <i class="fas fa-chart-pie" style="color:#40c4ff;"></i> Behavioral Anomaly Gauge
+                <span style="font-size:0.45rem; color:#4a7a8a; font-weight:400; margin-left:6px;">AI-powered user behavior analytics</span>
+              </div>
+              <div class="gauge-container">
+                <div class="gauge-ring" onclick="showToast('📊 Risk Score: 72 · Medium Risk · Unusual login detected', false)">
+                  <div class="gauge-inner">
+                    <span id="gaugeScore">72</span>
+                    <span class="gauge-label">Risk Score</span>
+                  </div>
+                </div>
+                <div class="gauge-info">
+                  <div class="gauge-user" id="gaugeUser">👤 John Anderson (Finance)</div>
+                  <div class="gauge-status">📍 Login: 3:15 AM · 🇷🇺 Moscow (Unusual)</div>
+                  <div class="gauge-risk medium" id="gaugeRisk">⚠️ Medium Risk</div>
+                </div>
+              </div>
+              <div style="font-size:0.45rem; color:#4a7a8a; margin-top:0.2rem; text-align:center;">
+                <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#4ade80; margin-right:4px;"></span> Normal
+                <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#f59e0b; margin-left:10px; margin-right:4px;"></span> Warning
+                <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#dc2626; margin-left:10px; margin-right:4px;"></span> Critical
+              </div>
+            </div>
+            
+            <!-- Right: Data Exfiltration Detector -->
+            <div>
+              <div style="font-size:0.6rem; font-weight:700; color:#80c8e8; margin-bottom:0.3rem;">
+                <i class="fas fa-arrow-right" style="color:#40c4ff;"></i> Data Exfiltration Detector
+                <span style="font-size:0.45rem; color:#4a7a8a; font-weight:400; margin-left:6px;">Real-time data transfer monitoring</span>
+              </div>
+              <div class="exfil-list" id="exfilList">
+                <div class="exfil-item"><span class="exfil-icon"><i class="fas fa-file"></i></span> 📁 finance_report_q4.xlsx → USB <span class="exfil-time">✅ Authorized</span></div>
+                <div class="exfil-item danger"><span class="exfil-icon"><i class="fas fa-exclamation-triangle"></i></span> 🚨 customer_db_backup.sql → External Cloud <span class="exfil-time">⚠️ Blocked</span></div>
+                <div class="exfil-item"><span class="exfil-icon"><i class="fas fa-file"></i></span> 📄 employee_contracts.pdf → Email <span class="exfil-time">✅ Authorized</span></div>
+                <div class="exfil-item danger"><span class="exfil-icon"><i class="fas fa-exclamation-triangle"></i></span> 🚨 source_code_archive.zip → FTP <span class="exfil-time">⚠️ Blocked</span></div>
+              </div>
+              
+              <!-- Instant Mitigation -->
+              <div class="mitigation-area">
+                <div class="mitigation-status" id="mitigationStatus">
+                  <i class="fas fa-shield-alt" style="color:#40c4ff;"></i> 
+                  <span class="highlight">Zero-Trust Response</span> · Ready to neutralize threats
+                </div>
+                <button class="btn-mitigate" id="mitigateBtn">
+                  <i class="fas fa-bolt"></i> Simulate Insider Threat
+                </button>
+                <div style="font-size:0.45rem; color:#4a7a8a; margin-top:4px;">
+                  ⚡ One-click simulation: Session termination · Access revoked · Device lockdown
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Footer -->
+      <div class="footer">
+        <i class="fas fa-shield-haltered" onclick="showToast('🛡️ PCS-AI · Azure Phoenix · Dark Web Intelligence + Insider Threat Protection', false)"></i> PCS-AI · Azure Phoenix · Dark Web Intelligence + Insider Threat Protection · 
+        <span class="highlight">Proactive · Predictive · Protective</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Audio -->
+  <audio id="alertSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="successSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }</script>
+  <script type="module">
+    import * as THREE from 'three';
+    const canvas = document.getElementById('cubeCanvas');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0e1a);
+    scene.fog = new THREE.FogExp2(0x0a0e1a, 0.004);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(2.5, 2.2, 14);
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    const ambient = new THREE.AmbientLight(0x112244, 0.4);
+    scene.add(ambient);
+    const cyanLight = new THREE.PointLight(0x40c4ff, 0.6);
+    cyanLight.position.set(3, 4, 3);
+    scene.add(cyanLight);
+    const blueLight = new THREE.PointLight(0x60a5fa, 0.5);
+    blueLight.position.set(-2, 3, 4);
+    scene.add(blueLight);
+    const fillLight = new THREE.DirectionalLight(0x4488aa, 0.3);
+    fillLight.position.set(1,2,2);
+    scene.add(fillLight);
+    const coreMat = new THREE.MeshStandardMaterial({ color: 0x40c4ff, emissive: 0x7dd3fc, emissiveIntensity: 0.3 });
+    const coreMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(0.7,0), coreMat);
+    scene.add(coreMesh);
+    const cubeGroup = new THREE.Group();
+    const colors = [0x40c4ff, 0x7dd3fc, 0x60a5fa, 0x38bdf8, 0x93d5f8];
+    const cubesList = [];
+    for (let i=0; i<200; i++) {
+      const size = 0.08 + Math.random() * 0.14;
+      const material = new THREE.MeshStandardMaterial({ color: colors[Math.floor(Math.random()*colors.length)], emissive: 0x2266aa, emissiveIntensity: 0.08, transparent: true, opacity: 0.3+Math.random()*0.3 });
+      const cube = new THREE.Mesh(new THREE.BoxGeometry(size,size,size), material);
+      const radius = 5 + Math.random() * 5.5;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2*Math.random() -1);
+      cube.position.set(radius * Math.sin(phi) * Math.cos(theta), radius * Math.sin(phi) * Math.sin(theta)*0.7, radius * Math.cos(phi) - 1);
+      cube.userData = { speedX: (Math.random()-0.5)*0.008, speedY: (Math.random()-0.5)*0.008, speedZ: (Math.random()-0.5)*0.008, rotX: (Math.random()-0.5)*0.025, rotY: (Math.random()-0.5)*0.025 };
+      cubeGroup.add(cube);
+      cubesList.push(cube);
+    }
+    scene.add(cubeGroup);
+    const starGeo = new THREE.BufferGeometry();
+    const starPositions = [];
+    for (let i=0; i<1500; i++) { starPositions.push((Math.random()-0.5)*200, (Math.random()-0.5)*120, (Math.random()-0.5)*90 - 40); }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(starPositions), 3));
+    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0x7dd3fc, size: 0.04 }));
+    scene.add(stars);
+    const ringCyan = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.03, 128, 200), new THREE.MeshStandardMaterial({ color: 0x40c4ff, emissive: 0x38bdf8, transparent: true, opacity: 0.3 }));
+    ringCyan.rotation.x = Math.PI / 2;
+    scene.add(ringCyan);
+    const ringBlue = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.025, 128, 200), new THREE.MeshStandardMaterial({ color: 0x60a5fa, emissive: 0x38bdf8, transparent: true, opacity: 0.2 }));
+    ringBlue.rotation.z = 0.8; ringBlue.rotation.x = 0.5;
+    scene.add(ringBlue);
+    let time = 0;
+    function animateScene() {
+      requestAnimationFrame(animateScene);
+      time += 0.012;
+      cubeGroup.rotation.y += 0.0025;
+      cubeGroup.rotation.x += 0.0018;
+      cubesList.forEach(cube => {
+        cube.position.x += cube.userData.speedX;
+        cube.position.y += cube.userData.speedY;
+        cube.position.z += cube.userData.speedZ;
+        cube.rotation.x += cube.userData.rotX;
+        cube.rotation.y += cube.userData.rotY;
+        if (Math.abs(cube.position.x) > 12) cube.userData.speedX *= -1;
+        if (Math.abs(cube.position.y) > 9) cube.userData.speedY *= -1;
+        if (Math.abs(cube.position.z) > 13) cube.userData.speedZ *= -1;
+      });
+      const scaleCore = 1 + Math.sin(time * 5) * 0.07;
+      coreMesh.scale.set(scaleCore, scaleCore, scaleCore);
+      coreMesh.rotation.x += 0.008;
+      coreMesh.rotation.y += 0.012;
+      stars.rotation.y += 0.0004;
+      ringCyan.rotation.z += 0.008;
+      ringBlue.rotation.y += 0.006;
+      cyanLight.intensity = 0.5 + Math.sin(time * 2.5) * 0.15;
+      blueLight.intensity = 0.4 + Math.sin(time * 2) * 0.15;
+      renderer.render(scene, camera);
+    }
+    animateScene();
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+  </script>
+  
+  <script>
+    // ========== SIDEBAR TOGGLE ==========
+    const sections = ['zeroTrust','cyberShield','phoenixCore','advancedMonitoring','cyberDeception','advancedProtection','unifiedDefense'];
+    sections.forEach(section => {
+      const content = document.getElementById(`content-${section}`);
+      const arrow = document.getElementById(`arrow-${section}`);
+      const saved = localStorage.getItem(`sidebar_${section}`);
+      if (saved === 'collapsed') { content.classList.add('collapsed'); arrow.classList.add('collapsed'); }
+      const header = document.querySelector(`.section-header[data-section="${section}"]`);
+      if (header) {
+        header.addEventListener('click', () => {
+          content.classList.toggle('collapsed');
+          arrow.classList.toggle('collapsed');
+          localStorage.setItem(`sidebar_${section}`, content.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+        });
+      }
+    });
+    
+    // ========== USER ==========
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('pcs_ai_current_user');
+      showToast('👋 Logged out successfully', false);
+    });
+    
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError) {
+        const sound = document.getElementById('alertSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('successSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    // ========== EMAIL SCANNER ==========
+    const emailInput = document.getElementById('emailInput');
+    const scanBtn = document.getElementById('scanEmailBtn');
+    const emailResult = document.getElementById('emailResult');
+    
+    const breachedEmails = ['admin@company.com', 'ceo@globalbank.com', 'finance@techinc.com', 'test@example.com'];
+    
+    scanBtn.addEventListener('click', () => {
+      const email = emailInput.value.trim();
+      if (!email || !email.includes('@')) {
+        emailResult.className = 'email-result pending';
+        emailResult.textContent = '⚠️ Please enter a valid email address';
+        return;
+      }
+      
+      emailResult.className = 'email-result pending';
+      emailResult.textContent = '🔍 Scanning dark web databases...';
+      
+      setTimeout(() => {
+        const isBreached = breachedEmails.some(e => e.toLowerCase() === email.toLowerCase()) || Math.random() > 0.6;
+        if (isBreached) {
+          emailResult.className = 'email-result compromised';
+          emailResult.innerHTML = `🚨 COMPROMISED! Your email was found in ${Math.floor(Math.random() * 8) + 2} data breaches. <strong>Change your password immediately!</strong>`;
+          showToast(`🚨 Email ${email} is compromised! Change password immediately.`, true);
+        } else {
+          emailResult.className = 'email-result clean';
+          emailResult.innerHTML = `✅ CLEAN! No breaches found for ${email}. Your credentials are secure.`;
+          showToast(`✅ ${email} is clean. No breaches found.`, false);
+        }
+      }, 1500);
+    });
+    
+    emailInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') scanBtn.click(); });
+    
+    // ========== INSIDER THREAT SIMULATION ==========
+    const mitigateBtn = document.getElementById('mitigateBtn');
+    const mitigationStatus = document.getElementById('mitigationStatus');
+    const gaugeScore = document.getElementById('gaugeScore');
+    const gaugeRisk = document.getElementById('gaugeRisk');
+    const gaugeUser = document.getElementById('gaugeUser');
+    const exfilList = document.getElementById('exfilList');
+    const leakTableBody = document.getElementById('leakTableBody');
+    const alertRadar = document.getElementById('alertRadar');
+    
+    let isMitigating = false;
+    
+    mitigateBtn.addEventListener('click', () => {
+      if (isMitigating) return;
+      isMitigating = true;
+      
+      // Update button
+      mitigateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mitigating...';
+      mitigateBtn.classList.add('success');
+      
+      // Update status
+      mitigationStatus.innerHTML = `
+        <i class="fas fa-exclamation-triangle" style="color:#dc2626;"></i> 
+        <span class="highlight" style="color:#dc2626;">🚨 THREAT DETECTED!</span> 
+        John Anderson attempting massive data exfiltration...
+      `;
+      
+      // Update gauge to critical
+      gaugeScore.textContent = '94';
+      gaugeRisk.className = 'gauge-risk high';
+      gaugeRisk.textContent = '🔴 Critical Risk';
+      gaugeUser.textContent = '👤 John Anderson (Finance) · 🚨 Suspicious Activity';
+      
+      // Add critical exfil
+      const criticalExfil = document.createElement('div');
+      criticalExfil.className = 'exfil-item danger';
+      criticalExfil.innerHTML = `
+        <span class="exfil-icon"><i class="fas fa-exclamation-triangle"></i></span>
+        🚨 2.4GB client_data_export.zip → External Drive
+        <span class="exfil-time">⚠️ BLOCKED</span>
+      `;
+      exfilList.prepend(criticalExfil);
+      if (exfilList.children.length > 6) exfilList.removeChild(exfilList.lastChild);
+      
+      // Add alert
+      const alertItem = document.createElement('div');
+      alertItem.className = 'alert-item';
+      alertItem.innerHTML = `
+        <span class="alert-icon"><i class="fas fa-circle"></i></span>
+        🔴 CRITICAL: Insider threat detected - John Anderson (Finance) - Immediate response triggered
+        <span class="alert-time">Now</span>
+      `;
+      alertRadar.prepend(alertItem);
+      if (alertRadar.children.length > 6) alertRadar.removeChild(alertRadar.lastChild);
+      
+      // Update leak table
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `<td>Your Organization</td><td>🔴 Insider Leak Attempt</td><td>2.4 GB</td><td class="critical">⚠️ BLOCKED</td>`;
+      leakTableBody.prepend(newRow);
+      if (leakTableBody.children.length > 6) leakTableBody.removeChild(leakTableBody.lastChild);
+      
+      showToast('🚨 Insider threat detected! Immediate mitigation triggered.', true);
+      
+      // Simulate mitigation steps
+      let step = 0;
+      const steps = [
+        { delay: 800, msg: '🔒 Session terminated · Forcing logout...' },
+        { delay: 1600, msg: '🔐 Access permissions revoked for John Anderson...' },
+        { delay: 2400, msg: '💻 Device locked remotely · USB ports disabled...' },
+        { delay: 3200, msg: '📋 Incident logged · Security team notified...' },
+      ];
+      
+      steps.forEach(s => {
+        setTimeout(() => {
+          mitigationStatus.innerHTML = `
+            <i class="fas fa-shield-alt" style="color:#40c4ff;"></i> 
+            <span class="highlight">${s.msg}</span>
+          `;
+        }, s.delay);
+      });
+      
+      // Final success
+      setTimeout(() => {
+        mitigationStatus.innerHTML = `
+          <i class="fas fa-check-circle" style="color:#4ade80;"></i> 
+          <span class="highlight" style="color:#4ade80;">✅ THREAT NEUTRALIZED!</span> 
+          John Anderson isolated · Data secured · Investigation started
+        `;
+        mitigateBtn.innerHTML = '<i class="fas fa-bolt"></i> Simulate Insider Threat';
+        mitigateBtn.classList.remove('success');
+        isMitigating = false;
+        showToast('✅ Insider threat successfully neutralized!', false);
+        
+        // Reset gauge after 2 seconds
+        setTimeout(() => {
+          gaugeScore.textContent = '72';
+          gaugeRisk.className = 'gauge-risk medium';
+          gaugeRisk.textContent = '⚠️ Medium Risk';
+          gaugeUser.textContent = '👤 John Anderson (Finance)';
+        }, 2000);
+      }, 4000);
+    });
+    
+    // ========== AUTO LEAK UPDATES ==========
+    const leakData = [
+      { org: 'FinTech Global', type: 'Customer PII', records: '1.8M', status: 'critical' },
+      { org: 'HealthCare Plus', type: 'Medical Records', records: '620K', status: 'high' },
+      { org: 'E-Commerce Hub', type: 'Payment Data', records: '340K', status: 'high' },
+      { org: 'Energy Corp', type: 'Internal Docs', records: '95K', status: 'medium' },
+      { org: 'TechStart Inc', type: 'Source Code', records: '280K', status: 'critical' },
+    ];
+    let leakIndex = 0;
+    
+    setInterval(() => {
+      const data = leakData[leakIndex % leakData.length];
+      const newRow = document.createElement('tr');
+      const statusClass = data.status === 'critical' ? 'critical' : data.status === 'high' ? 'high' : 'medium';
+      const statusText = data.status === 'critical' ? '⚠️ Active Leak' : data.status === 'high' ? '🟡 Verified' : '🔵 Under Review';
+      newRow.innerHTML = `<td>${data.org}</td><td>${data.type}</td><td>${data.records}</td><td class="${statusClass}">${statusText}</td>`;
+      leakTableBody.prepend(newRow);
+      if (leakTableBody.children.length > 6) leakTableBody.removeChild(leakTableBody.lastChild);
+      leakIndex++;
+    }, 8000);
+    
+    // ========== AUTO ALERTS ==========
+    const alertMessages = [
+      '🔴 Dark web forum discussing your organization\'s infrastructure',
+      '🟡 Credentials for your domain being sold on underground market',
+      '🔵 New ransomware variant targeting your industry sector',
+      '🟠 Internal documents detected on dark web sharing platform',
+      '🔴 Zero-day exploit for your firewall version being offered',
+    ];
+    let alertIndex = 0;
+    
+    setInterval(() => {
+      const msg = alertMessages[alertIndex % alertMessages.length];
+      const alertItem = document.createElement('div');
+      alertItem.className = 'alert-item';
+      alertItem.innerHTML = `
+        <span class="alert-icon"><i class="fas fa-circle"></i></span>
+        ${msg}
+        <span class="alert-time">Just now</span>
+      `;
+      alertRadar.prepend(alertItem);
+      if (alertRadar.children.length > 6) alertRadar.removeChild(alertRadar.lastChild);
+      alertIndex++;
+      
+      if (msg.includes('🔴')) {
+        showToast(`⚠️ Dark web alert: ${msg}`, true);
+      }
+    }, 12000);
+    
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && document.activeElement === emailInput) {
+        scanBtn.click();
+      }
+      if (e.key === 'm' || e.key === 'M') {
+        mitigateBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>

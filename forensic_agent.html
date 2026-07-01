@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Forensic Agent · Digital Evidence Scanner</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00d4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #0088ff; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== App Wrapper ===== */
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3rem;
+      min-height: 100vh;
+    }
+    
+    /* ===== Header ===== */
+    .header {
+      text-align: center;
+      padding: 1rem 0 1.5rem;
+      position: relative;
+    }
+    .header .logo-icon {
+      font-size: 3rem;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8, #0088ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: logoPulse 3s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes logoPulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0,212,255,0.3)); }
+      50% { transform: scale(1.05); filter: drop-shadow(0 0 30px rgba(0,212,255,0.6)); }
+    }
+    .header h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8, #0088ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: 2px;
+      margin-top: 4px;
+    }
+    .header .sub {
+      font-size: 0.65rem;
+      color: #4a8aaa;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .header .badge {
+      display: inline-block;
+      border: 1px solid rgba(0,212,255,0.2);
+      padding: 0.15rem 1rem;
+      border-radius: 30px;
+      font-size: 0.45rem;
+      color: #00d4ff;
+      background: rgba(0,212,255,0.05);
+      margin-top: 6px;
+      letter-spacing: 2px;
+    }
+    .forensic-tools {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .forensic-tool {
+      font-size: 0.55rem;
+      color: #4a8aaa;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .forensic-tool i { color: #00d4ff; font-size: 0.8rem; }
+    
+    /* ===== Divider ===== */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #00d4ff, #00ffc8, #00d4ff, transparent);
+      margin: 0.5rem 0 1.5rem;
+      opacity: 0.3;
+    }
+    
+    /* ===== Glass Panels ===== */
+    .glass-panel {
+      background: rgba(0, 20, 40, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 1.2rem;
+      padding: 1rem;
+      border: 1px solid rgba(0,212,255,0.06);
+      transition: 0.3s;
+      margin-bottom: 1.2rem;
+    }
+    .glass-panel:hover { border-color: rgba(0,212,255,0.15); box-shadow: 0 0 40px rgba(0,212,255,0.02); }
+    .panel-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid #00d4ff;
+      padding-left: 10px;
+      color: #80c8e8;
+    }
+    .panel-title i { color: #00d4ff; }
+    .panel-title .badge-count {
+      font-size: 0.4rem;
+      background: rgba(0,212,255,0.1);
+      padding: 0.1rem 0.5rem;
+      border-radius: 30px;
+      color: #00d4ff;
+      margin-left: auto;
+    }
+    
+    /* ===== Scan Section ===== */
+    .scan-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.8rem;
+      flex-wrap: wrap;
+    }
+    .scan-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,0,0,0.2);
+      padding: 0.2rem 0.8rem;
+      border-radius: 30px;
+      font-size: 0.6rem;
+      color: #4a8aaa;
+    }
+    .scan-status .pulse {
+      width: 8px;
+      height: 8px;
+      background: #4ade80;
+      border-radius: 50%;
+      animation: pulseGreen 1s infinite;
+    }
+    @keyframes pulseGreen { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .scan-progress {
+      background: rgba(0,0,0,0.3);
+      border-radius: 30px;
+      height: 6px;
+      overflow: hidden;
+      margin: 0.6rem 0;
+    }
+    .scan-progress-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #00d4ff, #00ffc8);
+      border-radius: 30px;
+      transition: width 0.3s;
+    }
+    .scan-stats {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .scan-stat {
+      background: rgba(0,0,0,0.2);
+      border-radius: 0.8rem;
+      padding: 0.3rem 0.8rem;
+      flex: 1;
+      text-align: center;
+    }
+    .scan-stat .value {
+      font-size: 0.9rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: monospace;
+    }
+    .scan-stat .label {
+      font-size: 0.45rem;
+      color: #4a8aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* ===== Evidence Table ===== */
+    .logs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.6rem;
+    }
+    .logs-table th {
+      text-align: left;
+      padding: 0.4rem 0.4rem;
+      background: rgba(0,212,255,0.06);
+      color: #00d4ff;
+      font-weight: 700;
+    }
+    .logs-table td {
+      padding: 0.3rem 0.4rem;
+      border-bottom: 1px solid rgba(0,212,255,0.03);
+      font-family: monospace;
+      color: #80c8e8;
+    }
+    .logs-table tr:hover { background: rgba(0,212,255,0.02); }
+    .badge-port { 
+      background: rgba(0,212,255,0.08);
+      padding: 0.1rem 0.4rem;
+      border-radius: 10px;
+      font-size: 0.5rem;
+      color: #4a8aaa;
+    }
+    .badge-danger { color: #ff4444; }
+    .badge-warning { color: #ffd700; }
+    
+    /* ===== Defense Grid ===== */
+    .defense-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.8rem;
+      margin-top: 0.6rem;
+    }
+    .defense-card {
+      background: rgba(0,0,0,0.2);
+      border-radius: 1rem;
+      padding: 0.8rem;
+      text-align: center;
+      border: 1px solid rgba(0,212,255,0.06);
+      transition: 0.3s;
+    }
+    .defense-card:hover { border-color: rgba(0,212,255,0.15); }
+    .defense-card h4 { font-size: 0.7rem; color: #80c8e8; margin-bottom: 0.2rem; }
+    .defense-card .def-icon { font-size: 1.2rem; color: #00d4ff; }
+    .defense-status { font-size: 0.55rem; margin: 0.3rem 0; }
+    .status-active { color: #4ade80; }
+    .status-warning { color: #ffd700; }
+    .status-critical { color: #ff4444; }
+    
+    .defense-btn {
+      background: linear-gradient(95deg, #00d4ff, #0088ff);
+      border: none;
+      padding: 0.3rem 1rem;
+      border-radius: 2rem;
+      color: white;
+      cursor: pointer;
+      font-size: 0.55rem;
+      font-weight: 600;
+      transition: 0.3s;
+      margin-top: 0.3rem;
+    }
+    .defense-btn:hover { transform: scale(1.04); box-shadow: 0 0 20px rgba(0,212,255,0.3); }
+    .defense-btn.danger { background: linear-gradient(95deg, #ff4444, #dc2626); }
+    .defense-btn.danger:hover { box-shadow: 0 0 20px rgba(255,68,68,0.3); }
+    
+    /* ===== Forensic Tools Bar ===== */
+    .forensic-tools-bar {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      padding: 0.5rem;
+      background: rgba(0,0,0,0.15);
+      border-radius: 1rem;
+      margin-top: 0.5rem;
+      border: 1px solid rgba(0,212,255,0.04);
+    }
+    .forensic-tool-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.5rem;
+      color: #4a8aaa;
+    }
+    .forensic-tool-item i { color: #00d4ff; font-size: 0.8rem; }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #00d4ff;
+      border-radius: 1rem;
+      padding: 0.5rem 1.5rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      font-size: 0.65rem;
+      border: 1px solid rgba(0,212,255,0.1);
+      max-width: 90%;
+      text-align: center;
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    @keyframes slideToast { from { transform: translateX(-50%) translateY(20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+    
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      font-size: 0.4rem;
+      color: #2a5a7a;
+      padding-top: 0.8rem;
+      border-top: 1px solid rgba(0,212,255,0.05);
+      margin-top: 0.5rem;
+      letter-spacing: 2px;
+    }
+    .footer i { color: #00d4ff; }
+    .footer .highlight { color: #00d4ff; }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 800px) { .app-wrapper { padding: 1rem; } .defense-grid { grid-template-columns: 1fr; } .forensic-tools { gap: 0.8rem; } }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <div class="bg-canvas"></div>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 FORENSIC AGENT · DIGITAL EVIDENCE LAB · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 LIVE INCIDENT SCAN · EVIDENCE CORRELATION · ATTACK RECONSTRUCTION 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00d4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#00d4ff" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00d4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#00d4ff" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Main Content ===== -->
+  <div class="app-wrapper">
+    
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-icon"><i class="fas fa-search"></i></div>
+      <h1 class="glitch-text">Forensic Agent · Digital Evidence Lab</h1>
+      <div class="sub">Live Incident Scan | Evidence Correlation | Attack Reconstruction</div>
+      <div class="badge"><i class="fas fa-shield-alt"></i> REAL-TIME · ZERO FALSE POSITIVES · AUTONOMOUS THREAT HUNTING</div>
+      
+      <!-- Forensic Tools -->
+      <div class="forensic-tools">
+        <span class="forensic-tool"><i class="fas fa-fingerprint"></i> Fingerprint Analysis</span>
+        <span class="forensic-tool"><i class="fas fa-microscope"></i> Digital Forensics</span>
+        <span class="forensic-tool"><i class="fas fa-dna"></i> DNA Matching</span>
+        <span class="forensic-tool"><i class="fas fa-camera"></i> Crime Scene Imaging</span>
+        <span class="forensic-tool"><i class="fas fa-print"></i> Evidence Marking</span>
+      </div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <!-- Live Incident Scan -->
+    <div class="glass-panel">
+      <div class="panel-title">
+        <i class="fas fa-microchip"></i> Live Incident Scan
+        <span class="badge-count">🔴 ACTIVE</span>
+      </div>
+      <div class="scan-header">
+        <span style="font-size:0.6rem; color:#4a8aaa;"><i class="fas fa-sync-alt fa-spin"></i> Real-time monitoring</span>
+        <div class="scan-status">
+          <div class="pulse"></div>
+          <span id="scanStatusText" style="color:#4ade80;">ACTIVE · MONITORING</span>
+        </div>
+      </div>
+      <div class="scan-progress"><div class="scan-progress-fill" id="scanProgress" style="width: 100%;"></div></div>
+      <div class="scan-stats">
+        <div class="scan-stat"><div class="value" id="logsScanned">0</div><div class="label">Logs Analyzed</div></div>
+        <div class="scan-stat"><div class="value" id="threatsDetected">0</div><div class="label">Threats Detected</div></div>
+        <div class="scan-stat"><div class="value" id="anomaliesFound">0</div><div class="label">Anomalies Found</div></div>
+        <div class="scan-stat"><div class="value" id="entryPoint">-</div><div class="label">Entry Point</div></div>
+      </div>
+    </div>
+    
+    <!-- Evidence Logs Table -->
+    <div class="glass-panel">
+      <div class="panel-title">
+        <i class="fas fa-table"></i> Evidence Logs · Real-Time Data
+        <span class="badge-count">📊</span>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="logs-table" id="evidenceTable">
+          <thead>
+            <tr><th>Timestamp</th><th>Source IP</th><th>Target Port</th><th>Protocol</th><th>Action</th><th>Status</th></tr>
+          </thead>
+          <tbody id="logsBody">
+            <tr><td colspan="6" style="text-align:center; color:#4a8aaa;">Loading evidence logs...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Active Defense & Bug Hunter -->
+    <div class="glass-panel">
+      <div class="panel-title">
+        <i class="fas fa-shield-virus"></i> Active Defense & Bug Hunter Control
+        <span class="badge-count">🛡️</span>
+      </div>
+      <div class="defense-grid">
+        <div class="defense-card">
+          <div class="def-icon"><i class="fas fa-shield-alt"></i></div>
+          <h4>Active Defense Shield</h4>
+          <div class="defense-status status-active" id="defenseStatus">🟢 ACTIVE</div>
+          <button class="defense-btn danger" id="isolateBtn"><i class="fas fa-ban"></i> Isolate Infected Device</button>
+        </div>
+        <div class="defense-card">
+          <div class="def-icon"><i class="fas fa-bug"></i></div>
+          <h4>Autonomous Bug Hunter</h4>
+          <div class="defense-status status-active" id="bugStatus">🟢 SCANNING</div>
+          <button class="defense-btn" id="patchBtn"><i class="fas fa-syringe"></i> Apply Security Patch</button>
+        </div>
+        <div class="defense-card">
+          <div class="def-icon"><i class="fas fa-fingerprint"></i></div>
+          <h4>Attack Reconstruction</h4>
+          <div class="defense-status" id="reconStatus" style="color:#4a8aaa;">📊 Ready</div>
+          <button class="defense-btn" id="reconstructBtn"><i class="fas fa-chart-line"></i> Reconstruct Timeline</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Forensic Tools Bar -->
+    <div class="forensic-tools-bar">
+      <span class="forensic-tool-item"><i class="fas fa-fingerprint"></i> Fingerprint Scanner Active</span>
+      <span class="forensic-tool-item"><i class="fas fa-microscope"></i> Digital Forensics Engine</span>
+      <span class="forensic-tool-item"><i class="fas fa-dna"></i> DNA Pattern Matching</span>
+      <span class="forensic-tool-item"><i class="fas fa-camera"></i> Crime Scene Reconstruction</span>
+      <span class="forensic-tool-item"><i class="fas fa-print"></i> Evidence Chain Custody</span>
+      <span class="forensic-tool-item"><i class="fas fa-skull-crosswalk"></i> Victim Analysis</span>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <i class="fas fa-shield-haltered"></i> PCS-AI · Forensic Agent · 
+      <span class="highlight">Real-time Evidence Logging · Autonomous Threat Hunting · Digital Forensics</span>
+    </div>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="alertSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="successSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script>
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError) {
+        const sound = document.getElementById('alertSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('successSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    function playSound(sound) {
+      if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+    }
+    
+    // ========== FORENSIC AGENT ==========
+    let logsScanned = 0;
+    let threatsDetected = 0;
+    let anomaliesFound = 0;
+    let scanInterval;
+    let currentLogIndex = 0;
+    
+    const sampleLogs = [
+      { time: "2024-06-12 14:23:45", src: "192.168.1.105", port: "445", proto: "SMB", action: "Brute Force", status: "Blocked" },
+      { time: "2024-06-12 14:24:12", src: "10.0.0.87", port: "3389", proto: "RDP", action: "Unauthorized Access", status: "Isolated" },
+      { time: "2024-06-12 14:24:33", src: "172.16.2.14", port: "22", proto: "SSH", action: "Port Scan", status: "Monitored" },
+      { time: "2024-06-12 14:25:01", src: "192.168.1.67", port: "80", proto: "HTTP", action: "SQL Injection", status: "Blocked" },
+      { time: "2024-06-12 14:25:28", src: "45.33.22.11", port: "443", proto: "HTTPS", action: "Malicious Payload", status: "Quarantined" },
+      { time: "2024-06-12 14:26:05", src: "192.168.1.200", port: "53", proto: "DNS", action: "Tunneling", status: "Alert" },
+      { time: "2024-06-12 14:27:18", src: "198.51.100.23", port: "3306", proto: "MySQL", action: "Data Exfiltration", status: "Blocked" },
+      { time: "2024-06-12 14:28:44", src: "203.0.113.5", port: "23", proto: "Telnet", action: "Brute Force", status: "Monitored" }
+    ];
+    
+    const logsBody = document.getElementById('logsBody');
+    const logsScannedSpan = document.getElementById('logsScanned');
+    const threatsDetectedSpan = document.getElementById('threatsDetected');
+    const anomaliesFoundSpan = document.getElementById('anomaliesFound');
+    const entryPointSpan = document.getElementById('entryPoint');
+    const scanProgressFill = document.getElementById('scanProgress');
+    const scanStatusText = document.getElementById('scanStatusText');
+    
+    function addLogRow(log) {
+      const row = document.createElement('tr');
+      const isDanger = log.action === 'Blocked' || log.action === 'Quarantined' || log.action === 'Data Exfiltration';
+      const isWarning = log.action === 'Alert' || log.action === 'Tunneling' || log.action === 'Unauthorized Access';
+      row.innerHTML = `
+        <td style="color:#4a8aaa;">${log.time}</td>
+        <td style="color:#00d4ff;">${log.src}</td>
+        <td><span class="badge-port">${log.port}</span></td>
+        <td style="color:#80c8e8;">${log.proto}</td>
+        <td class="${isDanger ? 'badge-danger' : isWarning ? 'badge-warning' : ''}">${log.action}</td>
+        <td style="color:${log.status === 'Blocked' || log.status === 'Quarantined' ? '#4ade80' : '#ffd700'};">${log.status}</td>
+      `;
+      logsBody.insertBefore(row, logsBody.firstChild);
+      if (logsBody.children.length > 12) logsBody.removeChild(logsBody.lastChild);
+    }
+    
+    function simulateLiveScan() {
+      const newLog = sampleLogs[currentLogIndex % sampleLogs.length];
+      const isThreat = newLog.action !== "Port Scan";
+      const isAnomaly = newLog.status === "Alert" || newLog.action === "Malicious Payload" || newLog.action === "Tunneling";
+      
+      addLogRow(newLog);
+      logsScanned++;
+      if (isThreat) threatsDetected++;
+      if (isAnomaly) anomaliesFound++;
+      
+      logsScannedSpan.textContent = logsScanned;
+      threatsDetectedSpan.textContent = threatsDetected;
+      anomaliesFoundSpan.textContent = anomaliesFound;
+      
+      if (isThreat) {
+        entryPointSpan.textContent = newLog.src + ":" + newLog.port;
+        entryPointSpan.style.color = '#ff4444';
+      }
+      
+      const progress = Math.max(60, 100 - (threatsDetected * 2));
+      scanProgressFill.style.width = Math.min(100, progress) + '%';
+      
+      if (threatsDetected > 5) {
+        scanStatusText.textContent = "⚠️ HIGH ALERT · Multiple Threats";
+        scanStatusText.style.color = "#ff4444";
+      } else if (threatsDetected > 2) {
+        scanStatusText.textContent = "🟡 WARNING · Suspicious Activity";
+        scanStatusText.style.color = "#ffd700";
+      } else {
+        scanStatusText.textContent = "🟢 ACTIVE · MONITORING";
+        scanStatusText.style.color = "#4ade80";
+      }
+      
+      currentLogIndex++;
+      
+      if (newLog.action === "Data Exfiltration" || newLog.action === "Malicious Payload") {
+        showToast(`🚨 ${newLog.action} detected from ${newLog.src}`, true);
+        playSound(document.getElementById('alertSound'));
+      }
+    }
+    
+    // ========== DEFENSE ACTIONS ==========
+    document.getElementById('isolateBtn').addEventListener('click', () => {
+      const firstRow = document.querySelector('#logsBody tr:first-child');
+      const deviceIp = firstRow ? firstRow.children[1]?.textContent || "Unknown" : "Unknown";
+      showToast(`🛡️ Active Defense: Isolating device ${deviceIp} · Ports blocked`, false);
+      playSound(document.getElementById('successSound'));
+      addLogRow({
+        time: new Date().toLocaleString(),
+        src: "SYSTEM",
+        port: "ALL",
+        proto: "ACTION",
+        action: "Isolation Command",
+        status: "Executed"
+      });
+    });
+    
+    document.getElementById('patchBtn').addEventListener('click', () => {
+      showToast(`🐞 Bug Hunter: Scanning vulnerabilities... Security patch applied`, false);
+      playSound(document.getElementById('successSound'));
+      threatsDetected = Math.max(0, threatsDetected - 1);
+      threatsDetectedSpan.textContent = threatsDetected;
+      addLogRow({
+        time: new Date().toLocaleString(),
+        src: "BUG_HUNTER",
+        port: "PATCH",
+        proto: "AUTO",
+        action: "Vulnerability Fixed",
+        status: "Healed"
+      });
+    });
+    
+    document.getElementById('reconstructBtn').addEventListener('click', () => {
+      const entry = entryPointSpan.textContent;
+      showToast(`📊 Attack Timeline Reconstructed: Entry at ${entry} → Lateral movement detected → Containment successful`, false);
+      playSound(document.getElementById('successSound'));
+      addLogRow({
+        time: new Date().toLocaleString(),
+        src: "FORENSIC",
+        port: "TIMELINE",
+        proto: "AI",
+        action: "Attack Reconstruction",
+        status: "Complete"
+      });
+    });
+    
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'i' || e.key === 'I') {
+        document.getElementById('isolateBtn').click();
+      }
+      if (e.key === 'p' || e.key === 'P') {
+        document.getElementById('patchBtn').click();
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        document.getElementById('reconstructBtn').click();
+      }
+    });
+    
+    // ========== INITIALIZATION ==========
+    scanInterval = setInterval(simulateLiveScan, 3500);
+    
+    for(let i = 0; i < 3; i++) {
+      setTimeout(() => simulateLiveScan(), i * 800);
+    }
+    
+    setTimeout(() => {
+      showToast("🔍 Forensic Agent initialized · Real-time evidence scanning active", false);
+    }, 500);
+  </script>
+</body>
+</html>

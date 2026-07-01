@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Cyber Simulation Lab · Digital Twin Attack & Defense</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300b4d8'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    #canvas-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00b4d8; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #4ade80; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== Forensic Warning ===== */
+    .forensic-warning {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      background: rgba(0, 20, 40, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      border-radius: 0.8rem;
+      padding: 0.3rem 1.2rem;
+      font-size: 0.45rem;
+      color: #ffd700;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .forensic-warning i { color: #ffd700; margin-right: 6px; }
+    
+    /* ===== Container ===== */
+    .container {
+      position: relative;
+      z-index: 10;
+      max-width: 1400px;
+      margin: 1.5rem auto;
+      padding: 1.5rem;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .header h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00b4d8, #4ade80, #00ffc8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: 1px;
+    }
+    .header p {
+      color: #4a8aaa;
+      font-size: 0.6rem;
+      letter-spacing: 2px;
+    }
+    
+    /* ===== Grid ===== */
+    .two-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 0.8fr;
+      gap: 1.2rem;
+    }
+    .glass-panel {
+      background: rgba(0, 20, 40, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 1.5rem;
+      padding: 1rem;
+      border: 1px solid rgba(0, 180, 216, 0.06);
+    }
+    .panel-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid #00b4d8;
+      padding-left: 10px;
+      color: #80c8e8;
+    }
+    .panel-title i { color: #00b4d8; }
+    
+    /* ===== Network Viz ===== */
+    .network-viz {
+      background: rgba(0,0,0,0.2);
+      border-radius: 1rem;
+      padding: 0.8rem;
+      min-height: 260px;
+      position: relative;
+    }
+    .network-nodes {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+    .net-node {
+      text-align: center;
+      flex: 1;
+      min-width: 70px;
+      transition: all 0.3s;
+    }
+    .node-icon {
+      width: 55px;
+      height: 55px;
+      background: rgba(0, 180, 216, 0.05);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.3rem;
+      font-size: 1.5rem;
+      border: 2px solid #00b4d8;
+      transition: all 0.3s;
+      position: relative;
+    }
+    .node-icon i { color: #00b4d8; }
+    .node-icon.under-attack { border-color: #ff4444; box-shadow: 0 0 30px rgba(255,68,68,0.4); animation: pulseRed 0.5s infinite; }
+    .node-icon.under-attack i { color: #ff4444; }
+    .node-icon.isolated { border-color: #ffd700; opacity: 0.5; animation: pulseGold 1s infinite; }
+    .node-icon.isolated i { color: #ffd700; }
+    .node-icon.healing { border-color: #4ade80; animation: pulseGreen 1s infinite; }
+    .node-icon.healing i { color: #4ade80; }
+    @keyframes pulseRed { 0%,100% { box-shadow: 0 0 10px rgba(255,68,68,0.3); } 50% { box-shadow: 0 0 30px rgba(255,68,68,0.6); } }
+    @keyframes pulseGold { 0%,100% { opacity: 0.5; } 50% { opacity: 0.8; } }
+    @keyframes pulseGreen { 0%,100% { box-shadow: 0 0 5px rgba(74,222,128,0.2); } 50% { box-shadow: 0 0 20px rgba(74,222,128,0.4); } }
+    
+    .node-label { font-size: 0.5rem; color: #4a8aaa; }
+    .node-status { font-size: 0.4rem; color: #4a8aaa; }
+    
+    .node-lines {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0.2rem 0;
+      gap: 0.3rem;
+    }
+    .line {
+      height: 2px;
+      background: rgba(74,222,128,0.3);
+      flex: 1;
+      transition: all 0.3s;
+      border-radius: 4px;
+    }
+    .line.under-attack { background: #ff4444; animation: lineFlash 0.3s infinite; }
+    .line.healing { background: #4ade80; animation: linePulse 0.5s infinite; }
+    @keyframes lineFlash { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+    @keyframes linePulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+    
+    /* ===== Progress Steps ===== */
+    .progress-steps {
+      display: flex;
+      justify-content: space-between;
+      margin: 0.6rem 0;
+      gap: 0.2rem;
+    }
+    .step {
+      flex: 1;
+      background: rgba(0,0,0,0.2);
+      border-radius: 1.5rem;
+      padding: 0.25rem;
+      font-size: 0.45rem;
+      text-align: center;
+      opacity: 0.3;
+      transition: 0.3s;
+      color: #4a8aaa;
+    }
+    .step.active { opacity: 1; background: rgba(255,68,68,0.2); color: #ff4444; border: 1px solid rgba(255,68,68,0.2); }
+    .step.completed { opacity: 1; background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.15); }
+    
+    /* ===== Attack Buttons ===== */
+    .attack-buttons {
+      display: flex;
+      gap: 0.4rem;
+      margin: 0.4rem 0;
+      flex-wrap: wrap;
+    }
+    .attack-btn {
+      flex: 1;
+      background: linear-gradient(95deg, rgba(220,38,38,0.2), rgba(239,68,68,0.1));
+      border: 1px solid rgba(239,68,68,0.2);
+      padding: 0.35rem 0.5rem;
+      border-radius: 1.5rem;
+      color: #ff4444;
+      cursor: pointer;
+      font-size: 0.5rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: 0.3s;
+    }
+    .attack-btn:hover { transform: scale(1.04); background: linear-gradient(95deg, rgba(220,38,38,0.3), rgba(239,68,68,0.2)); box-shadow: 0 0 20px rgba(239,68,68,0.1); }
+    .reset-btn {
+      background: linear-gradient(95deg, #00b4d8, #4ade80);
+      border: none;
+      color: #0a0e1a;
+      width: 100%;
+      padding: 0.4rem;
+      border-radius: 1.5rem;
+      font-weight: 700;
+      font-size: 0.55rem;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .reset-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(0,180,216,0.2); }
+    
+    /* ===== Sim Log ===== */
+    .sim-log {
+      background: rgba(0,0,0,0.2);
+      border-radius: 0.7rem;
+      padding: 0.4rem;
+      height: 120px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.5rem;
+      margin: 0.4rem 0;
+    }
+    .sim-log::-webkit-scrollbar { width: 3px; }
+    .sim-log::-webkit-scrollbar-thumb { background: #00b4d8; border-radius: 10px; }
+    .log-entry { padding: 0.15rem 0; border-bottom: 1px solid rgba(0,180,216,0.02); }
+    .log-entry.critical { color: #ff4444; }
+    .log-entry.success { color: #4ade80; }
+    .log-entry.warning { color: #ffd700; }
+    .log-entry.info { color: #4a8aaa; }
+    
+    /* ===== Health Badge ===== */
+    .health-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(0,0,0,0.2);
+      border-radius: 2rem;
+      padding: 0.2rem 0.8rem;
+      margin-top: 0.3rem;
+      font-size: 0.55rem;
+    }
+    .health-value { font-size: 1rem; font-weight: 800; font-family: monospace; color: #4ade80; }
+    
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.4rem;
+      color: #2a5a7a;
+    }
+    .footer i { color: #00b4d8; }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #00b4d8;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(0,180,216,0.1);
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    @keyframes slideToast { from { transform: translateX(100%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) { 
+      .two-grid { grid-template-columns: 1fr; }
+      .container { padding: 1rem; }
+      .fingerprint-border { width: 50px; height: 50px; top: 10px; left: 10px; }
+      .forensic-warning { bottom: 60px; font-size: 0.35rem; padding: 0.2rem 0.8rem; }
+    }
+    @media (max-width: 600px) {
+      .network-nodes { gap: 0.1rem; }
+      .node-icon { width: 40px; height: 40px; font-size: 1rem; }
+      .node-label { font-size: 0.4rem; }
+      .attack-btn { font-size: 0.4rem; padding: 0.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <canvas id="canvas-bg"></canvas>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 CYBER SIMULATION LAB · DIGITAL TWIN · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 ATTACK & DEFENSE SIMULATION · PHOENIX CORE · ZERO-TRUST 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00b4d8" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#4ade80" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00b4d8" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#4ade80" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00b4d8" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#4ade80" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00b4d8" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Forensic Warning ===== -->
+  <div class="forensic-warning">
+    <i class="fas fa-exclamation-triangle"></i> DIGITAL TWIN SIMULATION · ATTACK & DEFENSE · AUDIT TRAIL ACTIVE
+    <i class="fas fa-fingerprint" style="margin-left:8px;"></i>
+  </div>
+  
+  <!-- ===== Main Container ===== -->
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-flask"></i> Cyber Simulation Lab · Digital Twin</h1>
+      <p>Autonomous Attack & Defense Simulation · Phoenix Core Self-Healing · Zero-Trust Security</p>
+    </div>
+    
+    <div class="two-grid">
+      
+      <!-- LEFT PANEL: Network Topology -->
+      <div class="glass-panel">
+        <div class="panel-title"><i class="fas fa-network-wired"></i> Digital Twin · Network Topology</div>
+        <div class="network-viz">
+          <div class="network-nodes" id="networkNodes">
+            <div class="net-node" data-node="internet">
+              <div class="node-icon" id="icon-internet"><i class="fas fa-globe"></i></div>
+              <div class="node-label">Internet</div>
+              <div class="node-status" id="status-internet">🟢 Online</div>
+            </div>
+            <div class="net-node" data-node="firewall">
+              <div class="node-icon" id="icon-firewall"><i class="fas fa-firewall"></i></div>
+              <div class="node-label">Firewall</div>
+              <div class="node-status" id="status-firewall">🟢 Active</div>
+            </div>
+            <div class="net-node" data-node="router">
+              <div class="node-icon" id="icon-router"><i class="fas fa-router"></i></div>
+              <div class="node-label">Core Router</div>
+              <div class="node-status" id="status-router">🟢 Online</div>
+            </div>
+            <div class="net-node" data-node="server">
+              <div class="node-icon" id="icon-server"><i class="fas fa-server"></i></div>
+              <div class="node-label">Database</div>
+              <div class="node-status" id="status-server">🟢 Protected</div>
+            </div>
+            <div class="net-node" data-node="workstations">
+              <div class="node-icon" id="icon-workstations"><i class="fas fa-laptop"></i></div>
+              <div class="node-label">Workstations</div>
+              <div class="node-status" id="status-workstations">🟢 12 Active</div>
+            </div>
+          </div>
+          <div class="node-lines">
+            <div class="line" id="line1"></div>
+            <div class="line" id="line2"></div>
+            <div class="line" id="line3"></div>
+            <div class="line" id="line4"></div>
+          </div>
+        </div>
+        
+        <div class="progress-steps" id="progressSteps">
+          <div class="step" id="stepDetect">🔍 Detect</div>
+          <div class="step" id="stepAnalyze">🤖 Analyze</div>
+          <div class="step" id="stepIsolate">⚡ Isolate</div>
+          <div class="step" id="stepHeal">🩺 Heal</div>
+          <div class="step" id="stepRecover">✅ Recover</div>
+        </div>
+        
+        <div class="sim-log" id="simLog">
+          <div class="log-entry success">✅ Digital Twin initialized. Network simulation active.</div>
+          <div class="log-entry info">🟢 All nodes operational. Phoenix Core ready.</div>
+        </div>
+        
+        <div class="health-badge">
+          <i class="fas fa-heartbeat"></i> System Health: <span class="health-value" id="systemHealth">100</span>%
+        </div>
+      </div>
+      
+      <!-- RIGHT PANEL: Attacker Console -->
+      <div class="glass-panel">
+        <div class="panel-title"><i class="fas fa-skull-crosswalk"></i> Attacker Console</div>
+        <div class="attack-buttons">
+          <button class="attack-btn" id="ddosBtn"><i class="fas fa-network-wired"></i> DDoS</button>
+          <button class="attack-btn" id="ransomwareBtn"><i class="fas fa-lock"></i> Ransomware</button>
+          <button class="attack-btn" id="sqlBtn"><i class="fas fa-database"></i> SQL</button>
+        </div>
+        <div class="attack-buttons">
+          <button class="attack-btn" id="malwareBtn"><i class="fas fa-bug"></i> Malware</button>
+          <button class="attack-btn" id="phishingBtn"><i class="fas fa-envelope"></i> Phishing</button>
+          <button class="attack-btn" id="zeroDayBtn"><i class="fas fa-exclamation-triangle"></i> Zero-Day</button>
+        </div>
+        
+        <div class="panel-title" style="margin-top:0.6rem;"><i class="fas fa-shield-alt"></i> Defense Controls</div>
+        <button class="reset-btn" id="resetBtn"><i class="fas fa-undo-alt"></i> RESET SYSTEM</button>
+        <div class="health-badge" style="margin-top:0.3rem;">
+          <i class="fas fa-dragon"></i> Phoenix Core: <span id="phoenixStatus" style="color:#4ade80;">🟢 ACTIVE</span>
+        </div>
+      </div>
+      
+    </div>
+    
+    <div class="footer"><i class="fas fa-dragon"></i> PCS-AI · Digital Twin Simulation · Autonomous Response · Zero Trust Security</div>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="attackSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="healSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script>
+    // ========== 3D BACKGROUND ==========
+    (function init3DBackground() {
+      const canvas = document.getElementById('canvas-bg');
+      const ctx = canvas.getContext('2d');
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      
+      const particles = [];
+      const numParticles = 80;
+      
+      class Particle {
+        constructor() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.size = Math.random() * 2.5 + 0.5;
+          this.speedX = (Math.random() - 0.5) * 0.5;
+          this.speedY = (Math.random() - 0.5) * 0.5;
+          this.opacity = Math.random() * 0.3 + 0.1;
+          this.phase = Math.random() * Math.PI * 2;
+          this.colors = ['#00b4d8', '#4ade80', '#00ffc8'];
+          this.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+        }
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.phase += 0.015;
+          if (this.x < 0 || this.x > width) this.speedX *= -1;
+          if (this.y < 0 || this.y > height) this.speedY *= -1;
+        }
+        draw() {
+          const opacity = this.opacity + Math.sin(this.phase) * 0.05;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color.replace(')', `, ${Math.max(0.02, opacity)})`).replace('rgb', 'rgba');
+          if (!this.color.includes('rgba')) {
+            ctx.fillStyle = `rgba(0, 180, 216, ${Math.max(0.02, opacity)})`;
+          }
+          ctx.fill();
+          if (this.size > 1.8) {
+            ctx.beginPath();
+            ctx.arc(this.x + Math.sin(this.phase) * 4, this.y + Math.cos(this.phase) * 4, this.size * 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(74, 222, 128, ${Math.max(0.01, opacity * 0.3)})`;
+            ctx.fill();
+          }
+        }
+      }
+      
+      for (let i = 0; i < numParticles; i++) {
+        particles.push(new Particle());
+      }
+      
+      function drawVerificationLines() {
+        const time = Date.now() / 10000;
+        const colors = ['#00b4d8', '#4ade80', '#00ffc8'];
+        for (let c = 0; c < 3; c++) {
+          ctx.strokeStyle = colors[c] + '33';
+          ctx.lineWidth = 0.5;
+          for (let i = 0; i < 12; i++) {
+            const x1 = Math.sin(time + i * 0.5 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y1 = Math.cos(time * 0.7 + i * 0.3 + c * 0.5) * height * 0.35 + height * 0.5;
+            const x2 = Math.sin(time * 0.8 + i * 0.7 + 1 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y2 = Math.cos(time * 0.5 + i * 0.5 + 1 + c * 0.5) * height * 0.35 + height * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
+        }
+        const cx = width / 2;
+        const cy = height / 2;
+        const maxRadius = Math.min(width, height) * 0.22;
+        const colors2 = ['#00b4d8', '#4ade80', '#00ffc8'];
+        for (let r = 6; r < maxRadius; r += 5) {
+          const opacity = 0.02 + Math.sin(time * 0.5 + r * 0.025) * 0.01;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.strokeStyle = colors2[r % 3] + Math.floor(Math.max(0.005, opacity) * 255).toString(16).padStart(2, '0');
+          ctx.lineWidth = 0.3;
+          ctx.stroke();
+        }
+      }
+      
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+        drawVerificationLines();
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animate);
+      }
+      animate();
+      
+      window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+      });
+    })();
+    
+    // ========== SIMULATION LOGIC ==========
+    const attacks = {
+      ddos: { name: "DDoS Attack", target: "firewall", damage: 35, log: "Volumetric DDoS attack detected! Traffic flood from 15,000 IPs." },
+      ransomware: { name: "Ransomware", target: "server", damage: 45, log: "Ransomware encryption pattern detected! Files being encrypted." },
+      sql: { name: "SQL Injection", target: "server", damage: 40, log: "SQL injection attempt on database! Malicious query detected." },
+      malware: { name: "Malware", target: "workstations", damage: 30, log: "Malware payload detected! Spread across workstations." },
+      phishing: { name: "Phishing", target: "workstations", damage: 25, log: "Phishing campaign detected! Suspicious emails with malicious links." },
+      zeroDay: { name: "Zero-Day Exploit", target: "router", damage: 50, log: "CRITICAL: Zero-day exploit targeting router firmware!" }
+    };
+    
+    let attackInProgress = false;
+    let currentHealth = 100;
+    
+    const icons = {
+      internet: document.getElementById('icon-internet'),
+      firewall: document.getElementById('icon-firewall'),
+      router: document.getElementById('icon-router'),
+      server: document.getElementById('icon-server'),
+      workstations: document.getElementById('icon-workstations')
+    };
+    
+    const statuses = {
+      internet: document.getElementById('status-internet'),
+      firewall: document.getElementById('status-firewall'),
+      router: document.getElementById('status-router'),
+      server: document.getElementById('status-server'),
+      workstations: document.getElementById('status-workstations')
+    };
+    
+    const steps = {
+      detect: document.getElementById('stepDetect'),
+      analyze: document.getElementById('stepAnalyze'),
+      isolate: document.getElementById('stepIsolate'),
+      heal: document.getElementById('stepHeal'),
+      recover: document.getElementById('stepRecover')
+    };
+    
+    const simLog = document.getElementById('simLog');
+    const systemHealthSpan = document.getElementById('systemHealth');
+    const phoenixStatusSpan = document.getElementById('phoenixStatus');
+    const lines = document.querySelectorAll('.line');
+    
+    function addLog(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      const time = new Date().toLocaleTimeString();
+      const icons = { critical: '🚨', success: '✅', warning: '⚠️', info: '📡' };
+      entry.innerHTML = `${icons[type] || '📡'} [${time}] ${message}`;
+      simLog.insertBefore(entry, simLog.firstChild);
+      if(simLog.children.length > 15) simLog.removeChild(simLog.lastChild);
+    }
+    
+    function resetSteps() {
+      Object.values(steps).forEach(s => { s.classList.remove('active', 'completed'); s.style.opacity = '0.3'; });
+    }
+    
+    function resetNetwork() {
+      Object.values(icons).forEach(icon => {
+        icon.classList.remove('under-attack', 'isolated', 'healing');
+        icon.style.borderColor = '#00b4d8';
+        icon.style.boxShadow = 'none';
+      });
+      statuses.internet.innerHTML = '🟢 Online';
+      statuses.firewall.innerHTML = '🟢 Active';
+      statuses.router.innerHTML = '🟢 Online';
+      statuses.server.innerHTML = '🟢 Protected';
+      statuses.workstations.innerHTML = '🟢 12 Active';
+      lines.forEach(line => { line.classList.remove('under-attack', 'healing'); });
+    }
+    
+    function updateHealth(percent) {
+      currentHealth = Math.min(100, Math.max(0, percent));
+      systemHealthSpan.textContent = currentHealth;
+      systemHealthSpan.style.color = currentHealth < 30 ? '#ff4444' : currentHealth < 70 ? '#ffd700' : '#4ade80';
+      if (currentHealth < 30) phoenixStatusSpan.textContent = '🔴 CRITICAL';
+      else if (currentHealth < 70) phoenixStatusSpan.textContent = '🟡 HEALING';
+      else phoenixStatusSpan.textContent = '🟢 ACTIVE';
+      phoenixStatusSpan.style.color = currentHealth < 30 ? '#ff4444' : currentHealth < 70 ? '#ffd700' : '#4ade80';
+    }
+    
+    function executeAttack(attackType) {
+      if (attackInProgress) {
+        addLog("⚠️ System already responding to an attack. Please wait.", "warning");
+        return;
+      }
+      
+      const attack = attacks[attackType];
+      if (!attack) return;
+      
+      attackInProgress = true;
+      resetSteps();
+      resetNetwork();
+      addLog(`🚨 ${attack.log}`, "critical");
+      
+      const targetIcon = icons[attack.target];
+      const targetStatus = statuses[attack.target];
+      if (targetIcon) {
+        targetIcon.classList.add('under-attack');
+        targetStatus.innerHTML = '🔴 UNDER ATTACK';
+        targetStatus.style.color = '#ff4444';
+      }
+      
+      // All lines under attack
+      lines.forEach(line => line.classList.add('under-attack'));
+      
+      // Step 1: Detect
+      steps.detect.classList.add('active');
+      addLog(`🛡️ AI DETECTION: ${attack.name} identified on ${attack.target.toUpperCase()}`, "critical");
+      
+      setTimeout(() => {
+        steps.detect.classList.remove('active');
+        steps.detect.classList.add('completed');
+        steps.analyze.classList.add('active');
+        addLog(`🧠 AI ANALYSIS: Threat pattern analyzed. Severity: ${attack.damage > 40 ? 'CRITICAL' : 'HIGH'}`, "warning");
+        
+        setTimeout(() => {
+          steps.analyze.classList.remove('active');
+          steps.analyze.classList.add('completed');
+          steps.isolate.classList.add('active');
+          addLog(`🔒 ISOLATION: ${attack.target.toUpperCase()} quarantined. Network segmentation active.`, "success");
+          if (targetIcon) {
+            targetIcon.classList.remove('under-attack');
+            targetIcon.classList.add('isolated');
+          }
+          
+          setTimeout(() => {
+            steps.isolate.classList.remove('active');
+            steps.isolate.classList.add('completed');
+            steps.heal.classList.add('active');
+            addLog(`⚡ PHOENIX CORE: Deploying self-healing sequence. Cloning clean system image.`, "success");
+            updateHealth(currentHealth - attack.damage);
+            
+            setTimeout(() => {
+              steps.heal.classList.remove('active');
+              steps.heal.classList.add('completed');
+              steps.recover.classList.add('active');
+              addLog(`✅ RECOVERY: System restored. ${attack.target.toUpperCase()} back to operational state.`, "success");
+              
+              setTimeout(() => {
+                steps.recover.classList.remove('active');
+                steps.recover.classList.add('completed');
+                if (targetIcon) {
+                  targetIcon.classList.remove('isolated');
+                  targetIcon.classList.add('healing');
+                }
+                targetStatus.innerHTML = '🟢 HEALED';
+                targetStatus.style.color = '#4ade80';
+                lines.forEach(line => { line.classList.remove('under-attack'); line.classList.add('healing'); });
+                updateHealth(Math.min(100, currentHealth + attack.damage + 10));
+                addLog(`🛡️ Phoenix Core: Attack neutralized. System health restored to ${currentHealth}%.`, "success");
+                
+                setTimeout(() => {
+                  if (targetIcon) targetIcon.classList.remove('healing');
+                  lines.forEach(line => line.classList.remove('healing'));
+                  targetStatus.innerHTML = attack.target === 'server' ? '🟢 Protected' : 
+                                            attack.target === 'firewall' ? '🟢 Active' : 
+                                            attack.target === 'router' ? '🟢 Online' : '🟢 12 Active';
+                  attackInProgress = false;
+                  addLog(`✨ All systems nominal. Phoenix Core Shield active.`, "success");
+                }, 800);
+              }, 1000);
+            }, 1200);
+          }, 1200);
+        }, 1200);
+      }, 1200);
+    }
+    
+    function resetSystem() {
+      if (attackInProgress) {
+        addLog("⚠️ Cannot reset while attack simulation is running.", "warning");
+        return;
+      }
+      resetSteps();
+      resetNetwork();
+      updateHealth(100);
+      addLog(`🔄 SYSTEM RESET: All systems restored to 100% health.`, "success");
+      addLog(`🛡️ Phoenix Core ready. Waiting for attack simulation.`, "success");
+    }
+    
+    // ========== EVENT LISTENERS ==========
+    document.getElementById('ddosBtn').addEventListener('click', () => executeAttack('ddos'));
+    document.getElementById('ransomwareBtn').addEventListener('click', () => executeAttack('ransomware'));
+    document.getElementById('sqlBtn').addEventListener('click', () => executeAttack('sql'));
+    document.getElementById('malwareBtn').addEventListener('click', () => executeAttack('malware'));
+    document.getElementById('phishingBtn').addEventListener('click', () => executeAttack('phishing'));
+    document.getElementById('zeroDayBtn').addEventListener('click', () => executeAttack('zeroDay'));
+    document.getElementById('resetBtn').addEventListener('click', resetSystem);
+    
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      const map = { '1': 'ddosBtn', '2': 'ransomwareBtn', '3': 'sqlBtn', '4': 'malwareBtn', '5': 'phishingBtn', '6': 'zeroDayBtn' };
+      if (e.key in map) document.getElementById(map[e.key]).click();
+      if (e.key === 'r' || e.key === 'R') document.getElementById('resetBtn').click();
+    });
+    
+    // ========== INITIALIZATION ==========
+    addLog("🔥 Digital Twin simulation ready. Click any attack button to demonstrate Phoenix Core.", "success");
+    addLog("🛡️ Autonomous response sequence: Detect → Analyze → Isolate → Heal → Recover", "info");
+    addLog("⌨️ Keyboard shortcuts: 1-6 for attacks, R for reset", "info");
+  </script>
+</body>
+</html>

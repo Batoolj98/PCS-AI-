@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | AirGap & Quantum Twin · Future Forensics</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    #canvas-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00d4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #4ade80; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== Forensic Warning ===== */
+    .forensic-warning {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      background: rgba(0, 20, 40, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      border-radius: 0.8rem;
+      padding: 0.3rem 1.2rem;
+      font-size: 0.45rem;
+      color: #ffd700;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .forensic-warning i { color: #ffd700; margin-right: 6px; }
+    
+    /* ===== Phoenix Bird & Dragon ===== */
+    .phoenix-bird {
+      position: fixed;
+      bottom: 20%;
+      left: -100px;
+      font-size: 2.5rem;
+      filter: drop-shadow(0 0 20px rgba(0,212,255,0.3));
+      animation: flyPhoenix 22s ease-in-out infinite;
+      z-index: 5;
+      pointer-events: none;
+    }
+    @keyframes flyPhoenix {
+      0% { left: -100px; bottom: 20%; transform: rotate(0deg); opacity: 0.7; }
+      10% { transform: rotate(5deg); opacity: 1; }
+      50% { left: 110%; bottom: 35%; transform: rotate(-3deg); opacity: 1; }
+      60% { left: -100px; bottom: 25%; transform: rotate(0deg); opacity: 0.7; }
+      100% { left: -100px; bottom: 20%; transform: rotate(0deg); opacity: 0.7; }
+    }
+    .dragon-flying {
+      position: fixed;
+      top: 15%;
+      right: -100px;
+      font-size: 2.5rem;
+      filter: drop-shadow(0 0 15px rgba(74,222,128,0.3));
+      animation: flyDragon 25s linear infinite;
+      z-index: 5;
+      pointer-events: none;
+    }
+    @keyframes flyDragon {
+      0% { right: -100px; top: 15%; transform: rotate(0deg); }
+      25% { right: 110%; top: 20%; transform: rotate(5deg); }
+      50% { right: -100px; top: 25%; transform: rotate(-5deg); }
+      75% { right: 110%; top: 30%; transform: rotate(3deg); }
+      100% { right: -100px; top: 15%; transform: rotate(0deg); }
+    }
+    
+    /* ===== Container ===== */
+    .container {
+      position: relative;
+      z-index: 10;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+    
+    /* ===== Header ===== */
+    .hero {
+      text-align: center;
+      margin-bottom: 1.2rem;
+    }
+    .mythic-icons {
+      display: flex;
+      justify-content: center;
+      gap: 1.2rem;
+      margin-bottom: 0.3rem;
+    }
+    .mythic-icons i {
+      font-size: 1.8rem;
+      animation: iconFloat 2.5s infinite alternate;
+      filter: drop-shadow(0 0 8px currentColor);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .mythic-icons i:hover { transform: scale(1.15); }
+    .fa-dragon { color: #00d4ff; }
+    .fa-phoenix-squadron { color: #4ade80; }
+    .fa-shield-haltered { color: #60a5fa; }
+    .fa-brain-circuit { color: #a855f7; }
+    .fa-fingerprint { color: #ffd700; }
+    @keyframes iconFloat {
+      0% { transform: translateY(0px); }
+      100% { transform: translateY(-5px); }
+    }
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #4ade80, #ffd700, #a855f7);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: gradientFlow 5s ease infinite;
+    }
+    @keyframes gradientFlow {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .subtitle {
+      font-size: 0.6rem;
+      color: #4a8aaa;
+      margin-top: 0.2rem;
+      letter-spacing: 2px;
+    }
+    .offline-badge {
+      display: inline-block;
+      background: rgba(255,215,0,0.08);
+      border: 1px solid rgba(255,215,0,0.15);
+      border-radius: 40px;
+      padding: 3px 14px;
+      margin-top: 4px;
+      font-size: 0.55rem;
+      font-weight: 700;
+      color: #ffd700;
+    }
+    
+    /* ===== Status Bar ===== */
+    .status-bar {
+      background: rgba(0, 20, 40, 0.5);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      padding: 0.4rem 0.8rem;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(0, 212, 255, 0.06);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,0,0,0.2);
+      padding: 0.2rem 0.6rem;
+      border-radius: 2rem;
+      font-size: 0.55rem;
+      color: #4a8aaa;
+    }
+    .status-led {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ffd700;
+      box-shadow: 0 0 8px rgba(255,215,0,0.3);
+      animation: pulseLed 1.5s infinite;
+    }
+    @keyframes pulseLed {
+      0%,100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+    
+    /* ===== AI Terminal ===== */
+    .ai-panel {
+      background: rgba(0, 20, 40, 0.4);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      padding: 0.6rem;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(0, 212, 255, 0.06);
+    }
+    .ai-terminal {
+      background: rgba(0,0,0,0.2);
+      border-radius: 0.6rem;
+      padding: 0.4rem;
+      font-family: monospace;
+      font-size: 0.5rem;
+      color: #4ade80;
+      height: 70px;
+      overflow-y: auto;
+      border: 1px solid rgba(0, 212, 255, 0.04);
+    }
+    .ai-terminal::-webkit-scrollbar { width: 3px; }
+    .ai-terminal::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 10px; }
+    .ai-line {
+      margin: 1px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      animation: typing 0.5s steps(40);
+    }
+    @keyframes typing {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+    
+    /* ===== Tabs ===== */
+    .tabs {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid rgba(0, 212, 255, 0.04);
+      padding-bottom: 0.4rem;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 2rem;
+      color: #4a8aaa;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.6rem;
+      transition: 0.3s;
+    }
+    .tab-btn.active {
+      background: linear-gradient(95deg, rgba(0,212,255,0.1), rgba(74,222,128,0.05));
+      color: #00d4ff;
+      border: 1px solid rgba(0,212,255,0.1);
+    }
+    .tab-btn:hover:not(.active) { color: #80c8e8; background: rgba(0,212,255,0.02); }
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    /* ===== Sectors Grid ===== */
+    .sectors-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+    .sector-card {
+      background: rgba(0, 20, 40, 0.4);
+      backdrop-filter: blur(10px);
+      border-radius: 1rem;
+      padding: 0.6rem;
+      text-align: center;
+      border: 1px solid rgba(0, 212, 255, 0.04);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .sector-card:hover { transform: translateY(-3px); border-color: rgba(0,212,255,0.1); }
+    .sector-card.secure { border-left: 3px solid #4ade80; }
+    .sector-card.warning { border-left: 3px solid #ffd700; background: rgba(255,215,0,0.02); }
+    .sector-card.critical { border-left: 3px solid #ff4444; background: rgba(255,68,68,0.03); }
+    .sector-icon { font-size: 1.2rem; margin-bottom: 0.2rem; color: #00d4ff; }
+    .sector-name { font-weight: 700; font-size: 0.6rem; color: #80c8e8; }
+    .sector-status { font-size: 0.45rem; padding: 1px 8px; border-radius: 20px; display: inline-block; margin-top: 2px; }
+    .sector-status.secure { background: rgba(74,222,128,0.05); color: #4ade80; }
+    .sector-status.warning { background: rgba(255,215,0,0.05); color: #ffd700; }
+    .sector-status.critical { background: rgba(255,68,68,0.05); color: #ff4444; }
+    
+    /* ===== Twins Grid ===== */
+    .twins-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+    .twin-card {
+      background: rgba(0, 20, 40, 0.4);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      padding: 0.6rem;
+      text-align: center;
+      border: 1px solid rgba(0, 212, 255, 0.04);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .twin-card:hover { transform: translateY(-3px); border-color: rgba(0,212,255,0.1); }
+    .twin-icon-bg {
+      width: 45px;
+      height: 45px;
+      background: rgba(0, 212, 255, 0.03);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.3rem;
+      font-size: 1.2rem;
+      color: #00d4ff;
+    }
+    .twin-name { font-weight: 700; font-size: 0.6rem; color: #80c8e8; }
+    .twin-prediction { font-size: 0.45rem; color: #4a8aaa; margin: 0.2rem 0; }
+    .twin-status {
+      font-size: 0.45rem;
+      padding: 1px 8px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+    .twin-status.stable { background: rgba(74,222,128,0.05); color: #4ade80; }
+    .twin-status.warning { background: rgba(255,215,0,0.05); color: #ffd700; }
+    .twin-status.critical { background: rgba(255,68,68,0.05); color: #ff4444; animation: pulseRed 0.8s infinite; }
+    @keyframes pulseRed { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+    
+    /* ===== Timeline Slider ===== */
+    .timeline-slider { margin: 0.3rem 0; }
+    input[type="range"] {
+      width: 100%;
+      height: 4px;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background: linear-gradient(90deg, #00d4ff, #4ade80, #a855f7, #ffd700);
+      border-radius: 10px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #ffd700;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid #0a0e1a;
+      box-shadow: 0 0 12px rgba(255,215,0,0.2);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: #ffd700;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid #0a0e1a;
+    }
+    .year-badge {
+      background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(74,222,128,0.05));
+      border: 1px solid rgba(0,212,255,0.06);
+      border-radius: 2rem;
+      padding: 0.1rem 0.8rem;
+      font-weight: 700;
+      font-size: 0.7rem;
+      color: #00d4ff;
+      display: inline-block;
+    }
+    .risk-content {
+      background: rgba(0,0,0,0.15);
+      border-radius: 0.6rem;
+      padding: 0.4rem;
+      font-family: monospace;
+      font-size: 0.5rem;
+      border-left: 3px solid #00d4ff;
+      margin-bottom: 0.6rem;
+      color: #4a8aaa;
+    }
+    
+    /* ===== Buttons ===== */
+    .action-bar {
+      display: flex;
+      gap: 0.6rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 0.8rem;
+    }
+    .btn {
+      padding: 0.35rem 1rem;
+      border-radius: 2rem;
+      font-weight: 700;
+      font-size: 0.55rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: none;
+      transition: 0.3s;
+    }
+    .btn:hover { transform: scale(1.03); }
+    .btn-attack { background: linear-gradient(95deg, rgba(220,38,38,0.2), rgba(239,68,68,0.1)); border: 1px solid rgba(239,68,68,0.15); color: #ff4444; }
+    .btn-attack:hover { box-shadow: 0 0 20px rgba(239,68,68,0.1); }
+    .btn-heal { background: linear-gradient(95deg, rgba(74,222,128,0.1), rgba(0,212,255,0.05)); border: 1px solid rgba(74,222,128,0.1); color: #4ade80; }
+    .btn-heal:hover { box-shadow: 0 0 20px rgba(74,222,128,0.1); }
+    .btn-future { background: linear-gradient(95deg, rgba(0,212,255,0.1), rgba(168,85,247,0.05)); border: 1px solid rgba(0,212,255,0.1); color: #00d4ff; }
+    .btn-future:hover { box-shadow: 0 0 20px rgba(0,212,255,0.1); }
+    .btn-scan { background: linear-gradient(95deg, rgba(0,255,200,0.1), rgba(74,222,128,0.05)); border: 1px solid rgba(0,255,200,0.1); color: #00ffc8; }
+    .btn-scan:hover { box-shadow: 0 0 20px rgba(0,255,200,0.1); }
+    .btn-reset { background: transparent; border: 1px solid rgba(0,212,255,0.06); color: #4a8aaa; }
+    .btn-reset:hover { border-color: rgba(0,212,255,0.15); color: #80c8e8; }
+    
+    .sector-buttons {
+      display: flex;
+      gap: 0.3rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 0.3rem;
+    }
+    .sector-btn {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(0,212,255,0.04);
+      border-radius: 2rem;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.45rem;
+      cursor: pointer;
+      color: #4a8aaa;
+      transition: 0.3s;
+    }
+    .sector-btn:hover { border-color: rgba(0,212,255,0.1); color: #80c8e8; }
+    
+    /* ===== Log Panel ===== */
+    .log-panel {
+      background: rgba(0,0,0,0.15);
+      backdrop-filter: blur(8px);
+      border-radius: 0.8rem;
+      padding: 0.4rem;
+      max-height: 80px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.5rem;
+      margin-top: 0.6rem;
+    }
+    .log-panel::-webkit-scrollbar { width: 3px; }
+    .log-panel::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 10px; }
+    .log-entry { padding: 0.1rem 0; border-bottom: 1px solid rgba(0,212,255,0.02); }
+    .log-entry.success { color: #4ade80; }
+    .log-entry.critical { color: #ff4444; }
+    .log-entry.warning { color: #ffd700; }
+    .log-entry.info { color: #4a8aaa; }
+    
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      margin-top: 0.8rem;
+      font-size: 0.4rem;
+      color: #2a5a7a;
+      letter-spacing: 2px;
+    }
+    .footer i { color: #00d4ff; }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #00d4ff;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(0,212,255,0.1);
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    @keyframes slideToast { from { transform: translateX(100%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) {
+      .sectors-grid, .twins-grid { grid-template-columns: repeat(2, 1fr); }
+      .container { padding: 1rem; }
+      h1 { font-size: 1.3rem; }
+      .fingerprint-border { width: 50px; height: 50px; top: 10px; left: 10px; }
+      .forensic-warning { bottom: 60px; font-size: 0.35rem; padding: 0.2rem 0.8rem; }
+    }
+    @media (max-width: 600px) {
+      .sectors-grid, .twins-grid { grid-template-columns: 1fr; }
+      .action-bar { flex-direction: column; align-items: center; }
+      .tabs { flex-direction: column; align-items: center; }
+      .mythic-icons { gap: 0.6rem; }
+      .mythic-icons i { font-size: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <canvas id="canvas-bg"></canvas>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 AIRGAP & QUANTUM TWIN · FUTURE FORENSICS 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 OFFLINE MODE · QUANTUM PREDICTION · AUTONOMOUS RESILIENCE 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00d4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#4ade80" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00d4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#4ade80" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#4ade80" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Forensic Warning ===== -->
+  <div class="forensic-warning">
+    <i class="fas fa-exclamation-triangle"></i> AIRGAP OFFLINE · QUANTUM TWIN · FUTURE FORECAST · AUDIT TRAIL ACTIVE
+    <i class="fas fa-fingerprint" style="margin-left:8px;"></i>
+  </div>
+  
+  <!-- ===== Phoenix & Dragon ===== -->
+  <div class="phoenix-bird"><i class="fas fa-phoenix-squadron"></i></div>
+  <div class="dragon-flying"><i class="fas fa-dragon"></i></div>
+  
+  <!-- ===== Main Container ===== -->
+  <div class="container">
+    
+    <!-- Header -->
+    <div class="hero">
+      <div class="mythic-icons">
+        <i class="fas fa-dragon" onclick="showToast('🐉 Dragon Guardian: Active · Quantum Shield Online', false)"></i>
+        <i class="fas fa-phoenix-squadron" onclick="showToast('🔥 Phoenix Core: Self-Healing Engine Active', false)"></i>
+        <i class="fas fa-shield-haltered" onclick="showToast('🛡️ Unified Shield: All Sectors Protected', false)"></i>
+        <i class="fas fa-brain-circuit" onclick="showToast('🧠 Quantum AI: Analyzing Future Threat Vectors', false)"></i>
+        <i class="fas fa-fingerprint" onclick="showToast('🔍 Biometric Verification: 100% Authenticated', false)"></i>
+      </div>
+      <h1>PCS-AI · Unified Cyber Command · AirGap & Quantum Twin</h1>
+      <div class="subtitle">OFFLINE MODE · QUANTUM DIGITAL TWIN · AUTONOMOUS RESILIENCE</div>
+      <div class="offline-badge"><i class="fas fa-globe-asia"></i> AIRGAP OFFLINE · NO CLOUD DEPENDENCY</div>
+    </div>
+    
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="connection-status"><div class="status-led"></div><span><i class="fas fa-ban"></i> LOCAL ONLY · AIRGAP ACTIVE</span></div>
+      <div class="connection-status"><i class="fas fa-brain" style="color:#4ade80;"></i><span>LOCAL AI AGENT · ON-PREMISE KERNEL</span></div>
+      <div class="connection-status"><i class="fas fa-fingerprint" style="color:#ffd700;"></i><span>BIOMETRIC VERIFIED</span></div>
+    </div>
+    
+    <!-- AI Terminal -->
+    <div class="ai-panel">
+      <div class="ai-terminal" id="aiTerminal">
+        <div class="ai-line">[AI] Unified Command Center initialized</div>
+        <div class="ai-line">[AI] Offline mode + Quantum Twin active</div>
+        <div class="ai-line">[AI] Monitoring all critical sectors...</div>
+      </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab1">🛡️ AIRGAP OFFLINE</button>
+      <button class="tab-btn" data-tab="tab2">🔮 QUANTUM TWIN</button>
+    </div>
+    
+    <!-- TAB 1: AirGap Offline -->
+    <div id="tab1" class="tab-content active">
+      <div class="sectors-grid">
+        <div class="sector-card secure" data-sector="endpoint" id="sector1">
+          <div class="sector-icon"><i class="fas fa-laptop-code"></i></div>
+          <div class="sector-name">ENDPOINT GATES</div>
+          <div class="sector-status secure" id="status1">🟢 SECURE</div>
+        </div>
+        <div class="sector-card secure" data-sector="servers" id="sector2">
+          <div class="sector-icon"><i class="fas fa-server"></i></div>
+          <div class="sector-name">SERVER RACKS</div>
+          <div class="sector-status secure" id="status2">🟢 SECURE</div>
+        </div>
+        <div class="sector-card secure" data-sector="maritime" id="sector3">
+          <div class="sector-icon"><i class="fas fa-ship"></i></div>
+          <div class="sector-name">MARITIME SYS</div>
+          <div class="sector-status secure" id="status3">🟢 SECURE</div>
+        </div>
+        <div class="sector-card secure" data-sector="aviation" id="sector4">
+          <div class="sector-icon"><i class="fas fa-plane"></i></div>
+          <div class="sector-name">AVIATION SECT</div>
+          <div class="sector-status secure" id="status4">🟢 SECURE</div>
+        </div>
+      </div>
+      
+      <div class="action-bar">
+        <button class="btn btn-attack" id="simulateAttackBtn"><i class="fas fa-skull-crosswalk"></i> SIMULATE ATTACK</button>
+        <button class="btn btn-heal" id="fullHealBtn"><i class="fas fa-dragon"></i> FULL REGENERATION</button>
+        <button class="btn btn-reset" id="resetOfflineBtn"><i class="fas fa-sync-alt"></i> RESET SYSTEM</button>
+      </div>
+      <div class="sector-buttons">
+        <button class="sector-btn isolate-btn" data-sector="endpoint">🔧 Isolate Endpoint</button>
+        <button class="sector-btn isolate-btn" data-sector="servers">🔧 Isolate Servers</button>
+        <button class="sector-btn isolate-btn" data-sector="maritime">🔧 Isolate Maritime</button>
+        <button class="sector-btn isolate-btn" data-sector="aviation">🔧 Isolate Aviation</button>
+        <button class="sector-btn heal-sector-btn" data-sector="endpoint">🩹 Heal Endpoint</button>
+        <button class="sector-btn heal-sector-btn" data-sector="servers">🩹 Heal Servers</button>
+        <button class="sector-btn heal-sector-btn" data-sector="maritime">🩹 Heal Maritime</button>
+        <button class="sector-btn heal-sector-btn" data-sector="aviation">🩹 Heal Aviation</button>
+      </div>
+    </div>
+    
+    <!-- TAB 2: Quantum Twin -->
+    <div id="tab2" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <span class="year-badge" id="yearDisplay">2026</span>
+        <span style="font-size:0.5rem; color:#4a8aaa;">FUTURE SIMULATION PORTAL</span>
+      </div>
+      <div class="timeline-slider">
+        <input type="range" id="timelineSlider" min="0" max="100" value="0">
+      </div>
+      <div class="risk-content" id="riskContent" style="margin-bottom: 0.6rem;">
+        <i class="fas fa-brain" style="color:#00d4ff;"></i> [QUANTUM FORECAST] All digital twins stable.
+      </div>
+      <div class="twins-grid">
+        <div class="twin-card" data-twin="endpoint">
+          <div class="twin-icon-bg"><i class="fas fa-laptop-code"></i></div>
+          <div class="twin-name">ENDPOINT TWIN</div>
+          <div class="twin-prediction" id="predEndpoint">📊 Stable</div>
+          <div class="twin-status stable" id="statusEndpoint">SECURE</div>
+        </div>
+        <div class="twin-card" data-twin="servers">
+          <div class="twin-icon-bg"><i class="fas fa-server"></i></div>
+          <div class="twin-name">SERVER TWIN</div>
+          <div class="twin-prediction" id="predServers">📊 Stable</div>
+          <div class="twin-status stable" id="statusServers">SECURE</div>
+        </div>
+        <div class="twin-card" data-twin="maritime">
+          <div class="twin-icon-bg"><i class="fas fa-ship"></i></div>
+          <div class="twin-name">MARITIME TWIN</div>
+          <div class="twin-prediction" id="predMaritime">📊 Stable</div>
+          <div class="twin-status stable" id="statusMaritime">SECURE</div>
+        </div>
+        <div class="twin-card" data-twin="aviation">
+          <div class="twin-icon-bg"><i class="fas fa-plane"></i></div>
+          <div class="twin-name">AVIATION TWIN</div>
+          <div class="twin-prediction" id="predAviation">📊 Stable</div>
+          <div class="twin-status stable" id="statusAviation">SECURE</div>
+        </div>
+      </div>
+      <div class="action-bar">
+        <button class="btn btn-future" id="simulateFutureBtn"><i class="fas fa-calendar-week"></i> SIMULATE FUTURE</button>
+        <button class="btn btn-scan" id="quantumScanBtn"><i class="fas fa-brain"></i> QUANTUM SCAN</button>
+        <button class="btn btn-reset" id="resetTwinsBtn"><i class="fas fa-undo-alt"></i> RESET TWINS</button>
+      </div>
+    </div>
+    
+    <!-- Log Panel -->
+    <div class="log-panel" id="logPanel">
+      <div class="log-entry success">✓ Unified Command Center initialized · AirGap + Quantum Twin active</div>
+      <div class="log-entry info">🐉 Phoenix & Dragon guardians deployed · Fully autonomous</div>
+    </div>
+    
+    <div class="footer"><i class="fas fa-phoenix-squadron"></i> PCS-AI · Unified Cyber Command · Offline Resilience · Quantum Future Forecasting</div>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="attackSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="healSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="futureSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script>
+    // ========== 3D BACKGROUND ==========
+    (function init3DBackground() {
+      const canvas = document.getElementById('canvas-bg');
+      const ctx = canvas.getContext('2d');
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      
+      const particles = [];
+      const numParticles = 80;
+      
+      class Particle {
+        constructor() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.size = Math.random() * 2.5 + 0.5;
+          this.speedX = (Math.random() - 0.5) * 0.5;
+          this.speedY = (Math.random() - 0.5) * 0.5;
+          this.opacity = Math.random() * 0.3 + 0.1;
+          this.phase = Math.random() * Math.PI * 2;
+          this.colors = ['#00d4ff', '#4ade80', '#00ffc8', '#ffd700'];
+          this.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+        }
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.phase += 0.015;
+          if (this.x < 0 || this.x > width) this.speedX *= -1;
+          if (this.y < 0 || this.y > height) this.speedY *= -1;
+        }
+        draw() {
+          const opacity = this.opacity + Math.sin(this.phase) * 0.05;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color.replace(')', `, ${Math.max(0.02, opacity)})`).replace('rgb', 'rgba');
+          if (!this.color.includes('rgba')) {
+            ctx.fillStyle = `rgba(0, 212, 255, ${Math.max(0.02, opacity)})`;
+          }
+          ctx.fill();
+          if (this.size > 1.8) {
+            ctx.beginPath();
+            ctx.arc(this.x + Math.sin(this.phase) * 4, this.y + Math.cos(this.phase) * 4, this.size * 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(74, 222, 128, ${Math.max(0.01, opacity * 0.3)})`;
+            ctx.fill();
+          }
+        }
+      }
+      
+      for (let i = 0; i < numParticles; i++) {
+        particles.push(new Particle());
+      }
+      
+      function drawVerificationLines() {
+        const time = Date.now() / 10000;
+        const colors = ['#00d4ff', '#4ade80', '#00ffc8', '#ffd700'];
+        for (let c = 0; c < 4; c++) {
+          ctx.strokeStyle = colors[c] + '33';
+          ctx.lineWidth = 0.5;
+          for (let i = 0; i < 10; i++) {
+            const x1 = Math.sin(time + i * 0.5 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y1 = Math.cos(time * 0.7 + i * 0.3 + c * 0.5) * height * 0.35 + height * 0.5;
+            const x2 = Math.sin(time * 0.8 + i * 0.7 + 1 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y2 = Math.cos(time * 0.5 + i * 0.5 + 1 + c * 0.5) * height * 0.35 + height * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
+        }
+        const cx = width / 2;
+        const cy = height / 2;
+        const maxRadius = Math.min(width, height) * 0.22;
+        const colors2 = ['#00d4ff', '#4ade80', '#00ffc8', '#ffd700'];
+        for (let r = 6; r < maxRadius; r += 5) {
+          const opacity = 0.02 + Math.sin(time * 0.5 + r * 0.025) * 0.01;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.strokeStyle = colors2[r % 4] + Math.floor(Math.max(0.005, opacity) * 255).toString(16).padStart(2, '0');
+          ctx.lineWidth = 0.3;
+          ctx.stroke();
+        }
+      }
+      
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+        drawVerificationLines();
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animate);
+      }
+      animate();
+      
+      window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+      });
+    })();
+    
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError) {
+        const sound = document.getElementById('attackSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('healSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    function playSound(snd) {
+      if(snd) { snd.currentTime = 0; snd.play().catch(()=>{}); }
+    }
+    
+    // ========== AI TERMINAL ==========
+    function addAILine(text) {
+      const terminal = document.getElementById('aiTerminal');
+      const line = document.createElement('div');
+      line.className = 'ai-line';
+      line.textContent = text;
+      terminal.appendChild(line);
+      terminal.scrollTop = terminal.scrollHeight;
+      if (terminal.children.length > 6) terminal.removeChild(terminal.firstChild);
+    }
+    
+    function addLog(msg, type = 'info') {
+      const log = document.getElementById('logPanel');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.innerHTML = `🐉 [${new Date().toLocaleTimeString()}] ${msg}`;
+      log.insertBefore(entry, log.firstChild);
+      if (log.children.length > 10) log.removeChild(log.lastChild);
+    }
+    
+    // ========== TAB SYSTEM ==========
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabId = btn.getAttribute('data-tab');
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+      });
+    });
+    
+    // ========== SECTORS ==========
+    let sectors = {
+      endpoint: { name: 'Endpoint Gates', status: 'secure' },
+      servers: { name: 'Server Racks', status: 'secure' },
+      maritime: { name: 'Maritime Systems', status: 'secure' },
+      aviation: { name: 'Aviation Sectors', status: 'secure' }
+    };
+    
+    function updateSectorUI() {
+      const list = ['endpoint', 'servers', 'maritime', 'aviation'];
+      list.forEach((s, i) => {
+        const card = document.getElementById(`sector${i+1}`);
+        const statusSpan = document.getElementById(`status${i+1}`);
+        const status = sectors[s].status;
+        card.className = `sector-card ${status}`;
+        statusSpan.className = `sector-status ${status}`;
+        statusSpan.innerHTML = status === 'secure' ? '🟢 SECURE' : (status === 'warning' ? '🟡 WARNING' : '🔴 COMPROMISED');
+      });
+    }
+    
+    function setSectorStatus(sectorId, status) {
+      if (sectors[sectorId]) {
+        sectors[sectorId].status = status;
+        updateSectorUI();
+        addLog(`${sectors[sectorId].name} → ${status.toUpperCase()}`, status === 'critical' ? 'critical' : (status === 'warning' ? 'warning' : 'success'));
+        addAILine(`[AI] ${sectors[sectorId].name}: ${status.toUpperCase()}`);
+      }
+    }
+    
+    function isolateSector(sectorId) {
+      if (sectors[sectorId].status === 'critical') { addLog(`${sectors[sectorId].name} already isolated. Use Heal.`, 'warning'); return; }
+      setSectorStatus(sectorId, 'critical');
+      addLog(`🛡️ Manual isolation: ${sectors[sectorId].name} quarantined.`, 'critical');
+    }
+    
+    function healSector(sectorId) {
+      if (sectors[sectorId].status === 'secure') { addLog(`${sectors[sectorId].name} already secure.`, 'info'); return; }
+      setSectorStatus(sectorId, 'secure');
+      addLog(`🩹 Regeneration: ${sectors[sectorId].name} healed.`, 'success');
+    }
+    
+    function simulateAttack() {
+      const keys = ['endpoint', 'servers', 'maritime', 'aviation'];
+      const target = keys[Math.floor(Math.random() * keys.length)];
+      const attacks = ['Ransomware', 'DDoS', 'Malware', 'Zero-Day', 'Phishing'];
+      const attack = attacks[Math.floor(Math.random() * attacks.length)];
+      playSound(document.getElementById('attackSound'));
+      addLog(`🚨 ${attack} attack detected on ${sectors[target].name}!`, 'critical');
+      addAILine(`[ALERT] ${attack} targeting ${sectors[target].name}`);
+      showToast(`🚨 ${attack} attack on ${sectors[target].name}`, true);
+      setSectorStatus(target, 'critical');
+      if (Math.random() > 0.6) {
+        const others = keys.filter(k => k !== target);
+        const second = others[Math.floor(Math.random() * others.length)];
+        setTimeout(() => { setSectorStatus(second, 'critical'); addLog(`⚠️ Attack spreading to ${sectors[second].name}!`, 'critical'); }, 600);
+      }
+    }
+    
+    function fullHeal() {
+      playSound(document.getElementById('healSound'));
+      addLog(`🔥 Phoenix Core: Full system regeneration initiated.`, 'warning');
+      addAILine(`[AI] Autonomous regeneration protocol activated.`);
+      showToast(`🔥 Phoenix Core: Regeneration initiated`, false);
+      setTimeout(() => {
+        Object.keys(sectors).forEach(k => sectors[k].status = 'secure');
+        updateSectorUI();
+        addLog(`✅ All 4 sectors restored to 100% integrity.`, 'success');
+        addAILine(`[AI] System regeneration complete.`);
+        showToast(`✅ All sectors restored to 100%`, false);
+      }, 800);
+    }
+    
+    function resetOffline() {
+      Object.keys(sectors).forEach(k => sectors[k].status = 'secure');
+      updateSectorUI();
+      addLog(`🔄 System reset to secure baseline.`, 'success');
+      showToast(`🔄 System reset complete`, false);
+    }
+    
+    // ========== TWINS ==========
+    let twins = {
+      endpoint: { name: 'Endpoint', prediction: 'Stable', status: 'stable', risk: 0 },
+      servers: { name: 'Servers', prediction: 'Stable', status: 'stable', risk: 0 },
+      maritime: { name: 'Maritime', prediction: 'Stable', status: 'stable', risk: 0 },
+      aviation: { name: 'Aviation', prediction: 'Stable', status: 'stable', risk: 0 }
+    };
+    
+    function updateTwinsUI() {
+      document.getElementById('predEndpoint').innerHTML = `📊 ${twins.endpoint.prediction}`;
+      document.getElementById('predServers').innerHTML = `📊 ${twins.servers.prediction}`;
+      document.getElementById('predMaritime').innerHTML = `📊 ${twins.maritime.prediction}`;
+      document.getElementById('predAviation').innerHTML = `📊 ${twins.aviation.prediction}`;
+      const statusMap = { endpoint: 'statusEndpoint', servers: 'statusServers', maritime: 'statusMaritime', aviation: 'statusAviation' };
+      for (let [k, v] of Object.entries(statusMap)) {
+        const el = document.getElementById(v);
+        const t = twins[k];
+        el.className = `twin-status ${t.status}`;
+        el.innerHTML = t.status === 'stable' ? 'SECURE' : (t.status === 'warning' ? 'WARNING' : 'CRITICAL');
+      }
+    }
+    
+    function updateRiskPanel(year, highest, risky) {
+      const riskDiv = document.getElementById('riskContent');
+      if (highest > 75) {
+        riskDiv.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:#ff4444;"></i> [CRITICAL] ${risky} twin: ${highest}% risk by ${year}. Immediate patch required!`;
+        riskDiv.style.borderLeftColor = '#ff4444';
+        addLog(`🚨 CRITICAL: ${risky} twin predicted ${highest}% risk by ${year}!`, 'critical');
+        showToast(`🚨 CRITICAL: ${risky} twin risk ${highest}%`, true);
+      } else if (highest > 45) {
+        riskDiv.innerHTML = `<i class="fas fa-chart-line" style="color:#ffd700;"></i> [WARNING] ${risky} twin: ${highest}% risk by ${year}. Review recommended.`;
+        riskDiv.style.borderLeftColor = '#ffd700';
+        addLog(`⚠️ WARNING: ${risky} twin risk at ${highest}% by ${year}`, 'warning');
+        showToast(`⚠️ WARNING: ${risky} twin risk ${highest}%`, false);
+      } else {
+        riskDiv.innerHTML = `<i class="fas fa-shield-alt" style="color:#4ade80;"></i> [SECURE] All twins stable. No critical risks predicted for ${year}.`;
+        riskDiv.style.borderLeftColor = '#4ade80';
+      }
+    }
+    
+    function simulateFuture() {
+      const slider = document.getElementById('timelineSlider');
+      const val = parseInt(slider.value);
+      const year = 2026 + Math.floor(val / 18);
+      document.getElementById('yearDisplay').innerHTML = year;
+      playSound(document.getElementById('futureSound'));
+      addLog(`🔮 Simulating future scenario for ${year}...`, 'info');
+      showToast(`🔮 Simulating future for ${year}`, false);
+      const risks = {
+        endpoint: Math.min(85, Math.floor(Math.random() * (val / 1.5) + 5)),
+        servers: Math.min(95, Math.floor(Math.random() * (val / 1.3) + 10)),
+        maritime: Math.min(80, Math.floor(Math.random() * (val / 1.6) + 5)),
+        aviation: Math.min(90, Math.floor(Math.random() * (val / 1.4) + 8))
+      };
+      setTimeout(() => {
+        let highest = 0, highestTwin = '';
+        for (let [k, r] of Object.entries(risks)) {
+          twins[k].risk = r;
+          if (r > 75) { twins[k].prediction = `Critical (${r}%)`; twins[k].status = 'critical'; }
+          else if (r > 45) { twins[k].prediction = `Elevated (${r}%)`; twins[k].status = 'warning'; }
+          else { twins[k].prediction = `Low (${r}%)`; twins[k].status = 'stable'; }
+          if (r > highest) { highest = r; highestTwin = twins[k].name; }
+        }
+        updateTwinsUI();
+        updateRiskPanel(year, highest, highestTwin);
+        addLog(`📊 Future analysis: ${highestTwin} shows ${highest}% risk by ${year}`, highest > 70 ? 'critical' : (highest > 45 ? 'warning' : 'success'));
+      }, 600);
+    }
+    
+    function quantumScan() {
+      addLog(`🧠 Quantum scan analyzing all digital twins...`, 'info');
+      showToast(`🧠 Quantum Scan initiated`, false);
+      setTimeout(() => {
+        addLog(`✅ Endpoint twin: 96% stability projected`, 'success');
+        addLog(`✅ Server twin: 22% capacity risk · Mitigation ready`, 'success');
+        addLog(`✅ Maritime twin: 99.9% secure · No anomalies`, 'success');
+        addLog(`✅ Aviation twin: 99.8% integrity · Passed`, 'success');
+        addLog(`🎯 Quantum scan completed · All twins secure`, 'success');
+        showToast(`✅ Quantum Scan complete · All twins secure`, false);
+      }, 1000);
+    }
+    
+    function resetTwins() {
+      document.getElementById('timelineSlider').value = 0;
+      document.getElementById('yearDisplay').innerHTML = '2026';
+      for (let k of Object.keys(twins)) {
+        twins[k] = { name: twins[k].name, prediction: 'Stable', status: 'stable', risk: 0 };
+      }
+      updateTwinsUI();
+      document.getElementById('riskContent').innerHTML = `<i class="fas fa-brain" style="color:#00d4ff;"></i> [QUANTUM FORECAST] All digital twins stable.`;
+      document.getElementById('riskContent').style.borderLeftColor = '#00d4ff';
+      addLog(`🔄 Quantum twins reset to present baseline.`, 'success');
+      showToast(`🔄 Quantum twins reset`, false);
+    }
+    
+    // ========== EVENT LISTENERS ==========
+    document.getElementById('simulateAttackBtn').addEventListener('click', simulateAttack);
+    document.getElementById('fullHealBtn').addEventListener('click', fullHeal);
+    document.getElementById('resetOfflineBtn').addEventListener('click', resetOffline);
+    document.querySelectorAll('.isolate-btn').forEach(btn => {
+      btn.addEventListener('click', () => isolateSector(btn.getAttribute('data-sector')));
+    });
+    document.querySelectorAll('.heal-sector-btn').forEach(btn => {
+      btn.addEventListener('click', () => healSector(btn.getAttribute('data-sector')));
+    });
+    document.querySelectorAll('.sector-card').forEach((card, i) => {
+      card.addEventListener('click', () => {
+        const names = ['endpoint', 'servers', 'maritime', 'aviation'];
+        const s = sectors[names[i]];
+        addLog(`📊 ${s.name} - Status: ${s.status.toUpperCase()}`, 'info');
+        showToast(`📊 ${s.name}: ${s.status.toUpperCase()}`, false);
+      });
+    });
+    document.getElementById('simulateFutureBtn').addEventListener('click', simulateFuture);
+    document.getElementById('quantumScanBtn').addEventListener('click', quantumScan);
+    document.getElementById('resetTwinsBtn').addEventListener('click', resetTwins);
+    document.getElementById('timelineSlider').addEventListener('input', (e) => {
+      const year = 2026 + Math.floor(parseInt(e.target.value) / 18);
+      document.getElementById('yearDisplay').innerHTML = year;
+    });
+    document.querySelectorAll('.twin-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const twin = card.getAttribute('data-twin');
+        const t = twins[twin];
+        addLog(`🔍 ${t.name.toUpperCase()} Twin: ${t.prediction} | Status: ${t.status.toUpperCase()}`, 'info');
+        showToast(`🔍 ${t.name}: ${t.prediction} · ${t.status.toUpperCase()}`, false);
+      });
+    });
+    
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'a' || e.key === 'A') document.getElementById('simulateAttackBtn').click();
+      if (e.key === 'h' || e.key === 'H') document.getElementById('fullHealBtn').click();
+      if (e.key === 'r' || e.key === 'R') document.getElementById('resetOfflineBtn').click();
+      if (e.key === 'f' || e.key === 'F') document.getElementById('simulateFutureBtn').click();
+      if (e.key === 'q' || e.key === 'Q') document.getElementById('quantumScanBtn').click();
+    });
+    
+    // ========== INITIALIZATION ==========
+    addAILine('[AI] Unified Command ready · AirGap + Quantum Twin active');
+    addAILine('[AI] No cloud dependency · Fully autonomous');
+    addLog('✓ Unified Command Center initialized · AirGap + Quantum Twin active', 'success');
+    addLog('🐉 Phoenix & Dragon guardians deployed · Fully autonomous', 'info');
+    showToast('🛡️ Unified Command Center active · AirGap + Quantum Twin', false);
+  </script>
+</body>
+</html>

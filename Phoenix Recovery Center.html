@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Phoenix Core · Unified System Resilience</title>
+  <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    #canvas-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00d4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #4ade80; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== Laser Scanner ===== */
+    .laser-scanner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 3;
+      overflow: hidden;
+    }
+    .laser-line {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #ffd700, #ffd700, #ffd700, transparent);
+      box-shadow: 0 0 20px #ffd700, 0 0 40px rgba(255, 215, 0, 0.3);
+      top: 0;
+      animation: laserScan 4.5s ease-in-out infinite;
+      opacity: 0.3;
+    }
+    @keyframes laserScan {
+      0% { top: 2%; opacity: 0.1; }
+      25% { top: 30%; opacity: 0.5; }
+      50% { top: 55%; opacity: 0.8; }
+      75% { top: 80%; opacity: 0.5; }
+      100% { top: 2%; opacity: 0.1; }
+    }
+    
+    /* ===== App Wrapper ===== */
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    /* ===== Sidebar ===== */
+    .sidebar {
+      width: 230px;
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(20px);
+      border-right: 2px solid rgba(0, 212, 255, 0.08);
+      padding: 1.2rem 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .sidebar::-webkit-scrollbar { width: 3px; }
+    .sidebar::-webkit-scrollbar-track { background: rgba(0,212,255,0.05); }
+    .sidebar::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 4px; }
+    
+    .sidebar-logo {
+      text-align: center;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid rgba(0,212,255,0.08);
+      margin-bottom: 0.6rem;
+    }
+    .sidebar-logo i {
+      font-size: 2.8rem;
+      background: linear-gradient(135deg, #00d4ff, #4ade80, #00ffc8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: floatLogo 3s infinite ease-in-out;
+      cursor: pointer;
+    }
+    @keyframes floatLogo { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .sidebar-logo h3 {
+      font-size: 0.95rem;
+      background: linear-gradient(135deg, #00d4ff, #4ade80);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.7rem;
+      color: #80c8e8;
+      font-weight: 500;
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: 0.3s;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(0,212,255,0.04);
+    }
+    .nav-item i { width: 22px; font-size: 0.8rem; color: #00d4ff; animation: navIconPulse 2s infinite; }
+    @keyframes navIconPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+    .nav-item:hover {
+      background: linear-gradient(95deg, #00d4ff, #4ade80);
+      color: #0a0e1a;
+      transform: translateX(4px);
+    }
+    .nav-item:hover i { color: #0a0e1a; }
+    .nav-item.logout { margin-top: auto; border-color: rgba(255,68,68,0.08); }
+    .nav-item.logout:hover { background: #ff4444; }
+    
+    /* ===== Main Content ===== */
+    .main-content {
+      flex: 1;
+      padding: 1.2rem;
+      overflow-y: auto;
+      max-height: 100vh;
+    }
+    
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+    .top-bar h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #4ade80, #00ffc8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    .top-bar p { font-size: 0.6rem; color: #4a8aaa; }
+    .user-btn {
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(0,212,255,0.08);
+      border-radius: 3rem;
+      padding: 0.3rem 1rem 0.3rem 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .user-btn i { font-size: 1.5rem; color: #00d4ff; animation: iconPulse 2s infinite; }
+    @keyframes iconPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .user-btn span { font-size: 0.65rem; font-weight: 600; color: #80c8e8; }
+    
+    /* ===== Stats ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+    }
+    .stat-card {
+      background: rgba(0, 20, 40, 0.4);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      padding: 0.6rem;
+      text-align: center;
+      border: 1px solid rgba(0,212,255,0.04);
+      transition: 0.3s;
+      cursor: pointer;
+    }
+    .stat-card:hover { transform: translateY(-3px); border-color: #00d4ff; }
+    .stat-card .val {
+      font-size: 1.3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #4ade80);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: monospace;
+    }
+    .stat-card .lbl { font-size: 0.5rem; color: #4a8aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card i { font-size: 0.9rem; color: #00d4ff; display: block; margin-bottom: 2px; animation: statIconPulse 3s infinite; }
+    @keyframes statIconPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    
+    /* ===== Tabs ===== */
+    .tabs {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 0.8rem;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(0,212,255,0.04);
+      padding: 0.35rem 1rem;
+      border-radius: 2rem;
+      color: #4a8aaa;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.6rem;
+      transition: 0.3s;
+    }
+    .tab-btn:hover { background: rgba(0,212,255,0.03); color: #80c8e8; }
+    .tab-btn.active {
+      background: linear-gradient(95deg, rgba(0,212,255,0.08), rgba(74,222,128,0.03));
+      color: #00d4ff;
+      border-color: rgba(0,212,255,0.08);
+    }
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    /* ===== Glass Panels ===== */
+    .glass-panel {
+      background: rgba(0, 20, 40, 0.3);
+      backdrop-filter: blur(16px);
+      border-radius: 1.2rem;
+      padding: 1rem;
+      border: 1px solid rgba(0,212,255,0.04);
+      margin-bottom: 0.8rem;
+    }
+    .panel-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid #00d4ff;
+      padding-left: 10px;
+      color: #80c8e8;
+    }
+    .panel-title i { color: #00d4ff; animation: titleIconPulse 2s infinite; }
+    @keyframes titleIconPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 1rem;
+    }
+    
+    /* ===== Tables ===== */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.6rem;
+    }
+    .data-table th {
+      text-align: left;
+      padding: 0.3rem 0.3rem;
+      background: rgba(0,212,255,0.03);
+      color: #00d4ff;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(0,212,255,0.04);
+    }
+    .data-table td {
+      padding: 0.25rem 0.3rem;
+      border-bottom: 1px solid rgba(0,212,255,0.02);
+      color: #80c8e8;
+    }
+    .data-table .status-ok { color: #4ade80; }
+    .data-table .status-warning { color: #ffd700; }
+    .data-table .status-danger { color: #ff4444; }
+    
+    /* ===== Code Window ===== */
+    .code-window {
+      background: rgba(0,0,0,0.3);
+      border-radius: 0.8rem;
+      padding: 0.5rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.5rem;
+      line-height: 1.4;
+      max-height: 120px;
+      overflow-y: auto;
+      border: 1px solid rgba(0,212,255,0.04);
+      color: #4ade80;
+    }
+    .code-window .malicious { color: #ff4444; background: rgba(255,68,68,0.05); }
+    .code-window .secure { color: #4ade80; }
+    
+    /* ===== Progress Bars ===== */
+    .progress-bar {
+      background: rgba(255,255,255,0.03);
+      border-radius: 30px;
+      height: 5px;
+      overflow: hidden;
+      margin: 0.2rem 0;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 30px;
+      transition: width 0.3s;
+    }
+    .damage-bar-container {
+      background: rgba(255,255,255,0.03);
+      border-radius: 30px;
+      height: 12px;
+      overflow: hidden;
+      margin: 0.2rem 0;
+    }
+    .damage-bar {
+      height: 100%;
+      border-radius: 30px;
+      transition: width 0.3s;
+    }
+    
+    /* ===== Buttons ===== */
+    .action-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 0.3rem 0;
+    }
+    .btn {
+      padding: 0.3rem 0.9rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      font-size: 0.55rem;
+      cursor: pointer;
+      transition: 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border: none;
+    }
+    .btn-primary {
+      background: linear-gradient(95deg, #00d4ff, #4ade80);
+      color: #0a0e1a;
+    }
+    .btn-primary:hover { transform: scale(1.04); box-shadow: 0 0 30px rgba(0,212,255,0.1); }
+    .btn-danger {
+      background: linear-gradient(95deg, rgba(255,68,68,0.15), rgba(255,68,68,0.05));
+      border: 1px solid rgba(255,68,68,0.1);
+      color: #ff4444;
+    }
+    .btn-danger:hover { transform: scale(1.04); box-shadow: 0 0 20px rgba(255,68,68,0.05); }
+    .btn-success {
+      background: linear-gradient(95deg, rgba(74,222,128,0.15), rgba(74,222,128,0.05));
+      border: 1px solid rgba(74,222,128,0.08);
+      color: #4ade80;
+    }
+    .btn-success:hover { transform: scale(1.04); box-shadow: 0 0 20px rgba(74,222,128,0.05); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(0,212,255,0.06);
+      color: #4a8aaa;
+    }
+    .btn-outline:hover { border-color: #00d4ff; color: #80c8e8; }
+    
+    /* ===== Log Panel ===== */
+    .log-panel {
+      background: rgba(0,0,0,0.15);
+      backdrop-filter: blur(8px);
+      border-radius: 0.8rem;
+      padding: 0.4rem;
+      max-height: 80px;
+      overflow-y: auto;
+      font-size: 0.5rem;
+      font-family: monospace;
+      border: 1px solid rgba(0,212,255,0.02);
+    }
+    .log-panel::-webkit-scrollbar { width: 3px; }
+    .log-panel::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 10px; }
+    .log-entry { padding: 0.1rem 0; border-bottom: 1px solid rgba(0,212,255,0.02); }
+    .log-entry.success { color: #4ade80; }
+    .log-entry.warning { color: #ffd700; }
+    .log-entry.danger { color: #ff4444; }
+    .log-entry.info { color: #4a8aaa; }
+    
+    /* ===== Footer ===== */
+    footer {
+      text-align: center;
+      font-size: 0.4rem;
+      color: #2a5a7a;
+      margin-top: 0.4rem;
+      padding-top: 0.4rem;
+      border-top: 1px solid rgba(0,212,255,0.02);
+    }
+    footer i { color: #00d4ff; }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #4ade80;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(0,212,255,0.1);
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    @keyframes slideToast { from { transform: translateX(100%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) {
+      .sidebar { width: 200px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .two-col { grid-template-columns: 1fr; }
+      .fingerprint-border { width: 50px; height: 50px; top: 10px; left: 10px; }
+    }
+    @media (max-width: 600px) {
+      .sidebar { width: 160px; padding: 0.6rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .tabs { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <canvas id="canvas-bg"></canvas>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Laser Scanner ===== -->
+  <div class="laser-scanner">
+    <div class="laser-line"></div>
+  </div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 PHOENIX CORE · UNIFIED SYSTEM RESILIENCE 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 INTEGRITY · HEALTH · BACKUP · CLONES · AI 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00d4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#4ade80" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00d4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#4ade80" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#4ade80" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Main App ===== -->
+  <div class="app-wrapper">
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <i class="fas fa-shield-haltered" onclick="location.href='Security Operations Center (SOC).html'"></i>
+        <h3>Azure Resilience</h3>
+      </div>
+      <div class="nav-item" onclick="location.href='Security Operations Center (SOC).html'"><i class="fas fa-home"></i> Dashboard SOC </div>
+      <div class="nav-item" style="background:linear-gradient(95deg, rgba(0,212,255,0.05), rgba(74,222,128,0.02)); border-color:rgba(0,212,255,0.05);">
+        <i class="fas fa-heartbeat"></i> Resilience
+      </div>
+      <div class="nav-item" onclick="location.href='Live-Global-Attack-Map.html'"><i class="fas fa-globe"></i> Attack Map</div>
+      <div class="nav-item" onclick="location.href='System-Final-Report.html'"><i class="fas fa-file-alt"></i> Reports</div>
+      <div class="nav-item" onclick="location.href='AI Call & SMS Malicious.html'"><i class="fas fa-phone"></i> SMS Shield</div>
+      <div class="nav-item logout" onclick="location.href='logout.html'"><i class="fas fa-sign-out-alt"></i> Logout</div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+      
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div>
+          <h1>🛡️ Phoenix Core · Unified System Resilience</h1>
+          <p>Integrity · Health · Backup · Clones · AI Intelligence</p>
+        </div>
+        <div class="user-btn" id="userBtn">
+          <i class="fas fa-user-circle"></i>
+          <span id="userNameDisplay">Azure Guardian</span>
+        </div>
+      </div>
+      
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card" onclick="showToast('🛡️ System integrity status', false)">
+          <i class="fas fa-shield-alt"></i>
+          <div class="val" id="integrityStatus">100</div>
+          <div class="lbl">Integrity %</div>
+        </div>
+        <div class="stat-card" onclick="showToast('❤️ System health status', false)">
+          <i class="fas fa-heartbeat"></i>
+          <div class="val" id="systemHealth">100</div>
+          <div class="lbl">Health %</div>
+        </div>
+        <div class="stat-card" onclick="showToast('💾 Number of backups available', false)">
+          <i class="fas fa-database"></i>
+          <div class="val" id="backupCount">6</div>
+          <div class="lbl">Backups</div>
+        </div>
+        <div class="stat-card" onclick="showToast('🧬 Clones deployed', false)">
+          <i class="fas fa-clone"></i>
+          <div class="val" id="cloneCount">0</div>
+          <div class="lbl">Clones</div>
+        </div>
+      </div>
+      
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="tab-integrity">🛡️ Integrity</button>
+        <button class="tab-btn" data-tab="tab-health">❤️ Health</button>
+        <button class="tab-btn" data-tab="tab-backup">💾 Backup</button>
+        <button class="tab-btn" data-tab="tab-clone">🧬 Clones</button>
+        <button class="tab-btn" data-tab="tab-ai">🧠 AI</button>
+      </div>
+      
+      <!-- TAB 1: Integrity -->
+      <div id="tab-integrity" class="tab-content active">
+        <div class="two-col">
+          <div class="glass-panel">
+            <div class="panel-title"><i class="fas fa-fingerprint"></i> Integrity Status</div>
+            <div style="text-align:center; padding:0.3rem;">
+              <div style="font-size:1.3rem; font-weight:800;" id="integrityBadge">🟢 SECURE</div>
+              <div class="progress-bar"><div class="progress-fill" id="integrityFill" style="width:100%; background:linear-gradient(90deg,#4ade80,#00d4ff);"></div></div>
+              <div style="font-size:0.5rem; margin-top:0.2rem; color:#4a8aaa;">Hash: <span id="currentHash">a1b2c3d4e5f6...</span></div>
+            </div>
+            <div class="code-window" id="codeWindow">
+              <span class="secure">#!/usr/bin/env python3</span>
+              <span class="secure"># Phoenix Core Kernel - Secure Boot Module</span>
+              <span class="secure">class SecurityKernel:</span>
+              <span class="secure">    def __init__(self):</span>
+              <span class="secure">        self.trust_level = 100</span>
+              <span class="secure">        self.hash = "a1b2c3d4e5f6..."</span>
+              <span class="secure">    def verify(self): return True</span>
+            </div>
+          </div>
+          <div class="glass-panel">
+            <div class="panel-title"><i class="fas fa-shield-alt"></i> Controls</div>
+            <div class="action-row">
+              <button class="btn btn-danger" id="injectBtn"><i class="fas fa-skull-crosswalk"></i> Inject</button>
+              <button class="btn btn-success" id="regenerateBtn"><i class="fas fa-dragon"></i> Regenerate</button>
+              <button class="btn btn-outline" id="resetIntegrityBtn"><i class="fas fa-undo-alt"></i> Reset</button>
+            </div>
+            <div style="font-size:0.5rem; margin-top:0.3rem; color:#4a8aaa;">Golden Hash: <span id="goldenHash">a1b2c3d4e5f6...</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- TAB 2: Health -->
+      <div id="tab-health" class="tab-content">
+        <div class="two-col">
+          <div class="glass-panel">
+            <div class="panel-title"><i class="fas fa-heartbeat"></i> System Health</div>
+            <div style="text-align:center;">
+              <div style="font-size:1.8rem; font-weight:800; color:#4ade80;" id="healthPercent">100%</div>
+              <div class="damage-bar-container"><div class="damage-bar" id="healthBar" style="width:100%; background:linear-gradient(90deg,#4ade80,#00d4ff);"></div></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.3rem;">
+              <div style="background:rgba(0,0,0,0.2); border-radius:0.5rem; padding:0.3rem; text-align:center;">
+                <div style="font-size:0.5rem; color:#4a8aaa;">Self-Heal Events</div>
+                <div style="font-size:1rem; font-weight:800; color:#00d4ff;" id="healEvents">87</div>
+              </div>
+              <div style="background:rgba(0,0,0,0.2); border-radius:0.5rem; padding:0.3rem; text-align:center;">
+                <div style="font-size:0.5rem; color:#4a8aaa;">Cells Regenerated</div>
+                <div style="font-size:1rem; font-weight:800; color:#4ade80;" id="cellsRegen">12,450</div>
+              </div>
+            </div>
+            <div style="margin-top:0.3rem;">
+              <div style="font-size:0.5rem; color:#4a8aaa;">Active Agents</div>
+              <div id="agentsList" style="font-size:0.5rem; display:flex; gap:0.3rem; flex-wrap:wrap;"></div>
+            </div>
+          </div>
+          <div class="glass-panel">
+            <div class="panel-title"><i class="fas fa-cogs"></i> Controls</div>
+            <div class="action-row">
+              <button class="btn btn-primary" id="refreshHealthBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+              <button class="btn btn-outline" id="resetHealthBtn"><i class="fas fa-undo-alt"></i> Reset</button>
+            </div>
+            <div style="font-size:0.5rem; margin-top:0.3rem; color:#4a8aaa;">
+              <div>Heal Events: <span id="healEventsDisplay">87</span></div>
+              <div>Cells Regen: <span id="cellsDisplay">12,450</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- TAB 3: Backup -->
+      <div id="tab-backup" class="tab-content">
+        <div class="two-col">
+          <div class="glass-panel">
+            <div class="panel-title"><i class="fas fa-database"></i> Firmware Vault</div>
+            <div style="max-height:160px; overflow-y:auto;">
+              <table class="data-table" id="backupTable">
+                <thead><tr><th>Name</th><th>Version</th><th>Size</th><th>Status</th></tr></thead>
+                <tbody id="backupBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="glass-panel">
+            <div class="panel-title"><i class="fas fa-archive"></i> Controls</div>
+            <div class="action-row">
+              <button class="btn btn-primary" id="createBackupBtn"><i class="fas fa-plus"></i> Create</button>
+              <button class="btn btn-outline" id="resetVaultBtn"><i class="fas fa-undo-alt"></i> Reset</button>
+            </div>
+            <div style="font-size:0.5rem; margin-top:0.3rem;">
+              <div>Storage: <span id="storageUsed">0</span> GB</div>
+              <div>Total: <span id="totalBackups">6</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- TAB 4: Clones -->
+      <div id="tab-clone" class="tab-content">
+        <div class="two-col">
+          <div class="glass-panel">
+            <div class="panel-title"><i class="fas fa-clone"></i> Clone Deployment</div>
+            <div style="text-align:center;">
+              <div style="font-size:1.8rem; font-weight:800; color:#00d4ff;" id="clonePercent">0%</div>
+              <div class="progress-bar"><div class="progress-fill" id="cloneFill" style="width:0%; background:linear-gradient(90deg,#00d4ff,#4ade80);"></div></div>
+            </div>
+            <div style="font-size:0.5rem; max-height:80px; overflow-y:auto; background:rgba(0,0,0,0.2); border-radius:0.5rem; padding:0.3rem; margin-top:0.3rem; font-family:monospace;" id="cloneLog">
+              <div style="color:#4ade80;">✅ Emergency clone system ready · Threshold: 3%</div>
+            </div>
+          </div>
+          <div class="glass-panel">
+            <div class="panel-title"><i class="fas fa-server"></i> Systems</div>
+            <div style="max-height:120px; overflow-y:auto;">
+              <table class="data-table" id="systemsTable">
+                <thead><tr><th>System</th><th>Health</th></tr></thead>
+                <tbody id="systemsBody"></tbody>
+              </table>
+            </div>
+            <div class="action-row">
+              <button class="btn btn-danger" id="simulateDamageBtn"><i class="fas fa-bug"></i> Damage</button>
+              <button class="btn btn-outline" id="resetClonesBtn"><i class="fas fa-undo-alt"></i> Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- TAB 5: AI -->
+      <div id="tab-ai" class="tab-content">
+        <div class="two-col">
+          <div class="glass-panel">
+            <div class="panel-title"><i class="fas fa-brain"></i> AI Prediction</div>
+            <div style="text-align:center;">
+              <div style="font-size:1.5rem; font-weight:800; color:#00d4ff;" id="confidencePercent">12%</div>
+              <div style="font-size:0.5rem; color:#4a8aaa;">Attack Probability</div>
+              <div class="progress-bar"><div class="progress-fill" id="confidenceFill" style="width:12%; background:linear-gradient(90deg,#00d4ff,#4ade80);"></div></div>
+              <div style="font-size:0.55rem; margin-top:0.2rem;" id="attackMsg">No threats detected</div>
+            </div>
+          </div>
+          <div class="glass-panel">
+            <div class="panel-title"><i class="fas fa-chart-line"></i> Training</div>
+            <div style="font-size:0.55rem;">
+              <div>Patterns: <span id="trainedPatterns">0</span>/<span id="totalPatterns">24</span></div>
+              <div class="progress-bar"><div class="progress-fill" id="trainingFill" style="width:0%; background:linear-gradient(90deg,#00d4ff,#4ade80);"></div></div>
+            </div>
+            <div class="action-row">
+              <button class="btn btn-primary" id="trainBtn"><i class="fas fa-play"></i> Train</button>
+              <button class="btn btn-success" id="evolveBtn"><i class="fas fa-rocket"></i> Evolve</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Log -->
+      <div class="log-panel" id="logPanel">
+        <div class="log-entry success">✓ Phoenix Core Resilience Center initialized</div>
+        <div class="log-entry info">🛡️ Integrity · Health · Backup · Clones · AI</div>
+      </div>
+      
+      <footer><i class="fas fa-shield-haltered"></i> PCS-AI · Unified System Resilience · Zero-Trust Protection</footer>
+    </div>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="alertSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="successSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script>
+    // ========== 3D BACKGROUND ==========
+    (function init3DBackground() {
+      const canvas = document.getElementById('canvas-bg');
+      const ctx = canvas.getContext('2d');
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      
+      const particles = [];
+      const numParticles = 80;
+      
+      class Particle {
+        constructor() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.size = Math.random() * 2.5 + 0.5;
+          this.speedX = (Math.random() - 0.5) * 0.5;
+          this.speedY = (Math.random() - 0.5) * 0.5;
+          this.opacity = Math.random() * 0.3 + 0.1;
+          this.phase = Math.random() * Math.PI * 2;
+          this.colors = ['#00d4ff', '#4ade80', '#00ffc8'];
+          this.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+        }
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.phase += 0.015;
+          if (this.x < 0 || this.x > width) this.speedX *= -1;
+          if (this.y < 0 || this.y > height) this.speedY *= -1;
+        }
+        draw() {
+          const opacity = this.opacity + Math.sin(this.phase) * 0.05;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color.replace(')', `, ${Math.max(0.02, opacity)})`).replace('rgb', 'rgba');
+          if (!this.color.includes('rgba')) {
+            ctx.fillStyle = `rgba(0, 212, 255, ${Math.max(0.02, opacity)})`;
+          }
+          ctx.fill();
+          if (this.size > 1.8) {
+            ctx.beginPath();
+            ctx.arc(this.x + Math.sin(this.phase) * 4, this.y + Math.cos(this.phase) * 4, this.size * 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(74, 222, 128, ${Math.max(0.01, opacity * 0.3)})`;
+            ctx.fill();
+          }
+        }
+      }
+      
+      for (let i = 0; i < numParticles; i++) {
+        particles.push(new Particle());
+      }
+      
+      function drawVerificationLines() {
+        const time = Date.now() / 10000;
+        const colors = ['#00d4ff', '#4ade80', '#00ffc8'];
+        for (let c = 0; c < 3; c++) {
+          ctx.strokeStyle = colors[c] + '33';
+          ctx.lineWidth = 0.5;
+          for (let i = 0; i < 10; i++) {
+            const x1 = Math.sin(time + i * 0.5 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y1 = Math.cos(time * 0.7 + i * 0.3 + c * 0.5) * height * 0.35 + height * 0.5;
+            const x2 = Math.sin(time * 0.8 + i * 0.7 + 1 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y2 = Math.cos(time * 0.5 + i * 0.5 + 1 + c * 0.5) * height * 0.35 + height * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
+        }
+        const cx = width / 2;
+        const cy = height / 2;
+        const maxRadius = Math.min(width, height) * 0.22;
+        const colors2 = ['#00d4ff', '#4ade80', '#00ffc8'];
+        for (let r = 6; r < maxRadius; r += 5) {
+          const opacity = 0.02 + Math.sin(time * 0.5 + r * 0.025) * 0.01;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.strokeStyle = colors2[r % 3] + Math.floor(Math.max(0.005, opacity) * 255).toString(16).padStart(2, '0');
+          ctx.lineWidth = 0.3;
+          ctx.stroke();
+        }
+      }
+      
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+        drawVerificationLines();
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animate);
+      }
+      animate();
+      
+      window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+      });
+    })();
+    
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError) {
+        const sound = document.getElementById('alertSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('successSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    function addLog(msg, type = 'info') {
+      const log = document.getElementById('logPanel');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      const icons = { success: '✅', warning: '⚠️', danger: '🔴', info: '📡' };
+      entry.innerHTML = `${icons[type] || '📡'} [${new Date().toLocaleTimeString()}] ${msg}`;
+      log.insertBefore(entry, log.firstChild);
+      if (log.children.length > 8) log.removeChild(log.lastChild);
+    }
+    
+    // ========== TABS ==========
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+    
+    const userName = localStorage.getItem('pcs_ai_current_user') || "Azure Guardian";
+    document.getElementById('userNameDisplay').textContent = userName;
+    
+    // ========== INTEGRITY ==========
+    let isCompromised = false, isHealing = false;
+    const cleanCode = `<span class="secure">#!/usr/bin/env python3</span>
+<span class="secure"># Phoenix Core Kernel - Secure Boot Module</span>
+<span class="secure">class SecurityKernel:</span>
+<span class="secure">    def __init__(self):</span>
+<span class="secure">        self.trust_level = 100</span>
+<span class="secure">        self.hash = "a1b2c3d4e5f6..."</span>
+<span class="secure">    def verify(self): return True</span>`;
+    const maliciousCode = `<span class="malicious">#!/usr/bin/env python3</span>
+<span class="malicious"># === MALICIOUS INJECTION ===</span>
+<span class="malicious">import os</span>
+<span class="malicious">os.system("rm -rf /tmp/.cache &")</span>
+<span class="malicious"># BACKDOOR ACTIVATED</span>
+<span class="malicious">return False</span>`;
+    
+    document.getElementById('injectBtn').addEventListener('click', () => {
+      if (isCompromised) { addLog("Already compromised!", 'warning'); return; }
+      isCompromised = true;
+      document.getElementById('codeWindow').innerHTML = maliciousCode;
+      document.getElementById('integrityBadge').textContent = '🔴 COMPROMISED';
+      document.getElementById('integrityBadge').style.color = '#ff4444';
+      document.getElementById('integrityFill').style.width = '0%';
+      document.getElementById('integrityFill').style.background = 'linear-gradient(90deg,#ff4444,#dc2626)';
+      document.getElementById('integrityStatus').textContent = '0';
+      addLog('🚨 Malware injected! System compromised.', 'danger');
+      showToast('🚨 System compromised!', true);
+    });
+    
+    document.getElementById('regenerateBtn').addEventListener('click', () => {
+      if (!isCompromised) { addLog("System already secure!", 'success'); return; }
+      isHealing = true;
+      addLog('🔥 Phoenix Core regenerating...', 'warning');
+      setTimeout(() => {
+        isCompromised = false; isHealing = false;
+        document.getElementById('codeWindow').innerHTML = cleanCode;
+        document.getElementById('integrityBadge').textContent = '🟢 SECURE';
+        document.getElementById('integrityBadge').style.color = '#4ade80';
+        document.getElementById('integrityFill').style.width = '100%';
+        document.getElementById('integrityFill').style.background = 'linear-gradient(90deg,#4ade80,#00d4ff)';
+        document.getElementById('integrityStatus').textContent = '100';
+        addLog('✅ System regenerated! Golden image restored.', 'success');
+        showToast('✅ System regenerated!', false);
+      }, 1500);
+    });
+    
+    document.getElementById('resetIntegrityBtn').addEventListener('click', () => {
+      isCompromised = false; isHealing = false;
+      document.getElementById('codeWindow').innerHTML = cleanCode;
+      document.getElementById('integrityBadge').textContent = '🟢 SECURE';
+      document.getElementById('integrityBadge').style.color = '#4ade80';
+      document.getElementById('integrityFill').style.width = '100%';
+      document.getElementById('integrityFill').style.background = 'linear-gradient(90deg,#4ade80,#00d4ff)';
+      document.getElementById('integrityStatus').textContent = '100';
+      addLog('🔄 Integrity reset to secure state.', 'success');
+    });
+    
+    // ========== HEALTH ==========
+    let health = 100, healEvents = 87, cells = 12450;
+    const agents = ['Forensic Agent', 'Evidence Logs', 'Active Defense', 'Bug Hunter', 'Phoenix Core'];
+    document.getElementById('agentsList').innerHTML = agents.map(a => `<span style="background:rgba(74,222,128,0.05); padding:0.1rem 0.4rem; border-radius:20px; border:1px solid rgba(74,222,128,0.08);">✅ ${a}</span>`).join('');
+    
+    document.getElementById('refreshHealthBtn').addEventListener('click', () => {
+      health = Math.min(100, health + 5);
+      document.getElementById('healthPercent').textContent = health + '%';
+      document.getElementById('healthBar').style.width = health + '%';
+      document.getElementById('healthBar').style.background = health > 70 ? 'linear-gradient(90deg,#4ade80,#00d4ff)' : (health > 40 ? 'linear-gradient(90deg,#ffd700,#ff4444)' : 'linear-gradient(90deg,#ff4444,#dc2626)');
+      document.getElementById('systemHealth').textContent = health;
+      healEvents++;
+      document.getElementById('healEvents').textContent = healEvents;
+      document.getElementById('healEventsDisplay').textContent = healEvents;
+      cells += Math.floor(Math.random() * 200) + 50;
+      document.getElementById('cellsRegen').textContent = cells.toLocaleString();
+      document.getElementById('cellsDisplay').textContent = cells.toLocaleString();
+      addLog('🧬 Health refreshed +5%', 'success');
+    });
+    
+    document.getElementById('resetHealthBtn').addEventListener('click', () => {
+      health = 100; healEvents = 87; cells = 12450;
+      document.getElementById('healthPercent').textContent = '100%';
+      document.getElementById('healthBar').style.width = '100%';
+      document.getElementById('healthBar').style.background = 'linear-gradient(90deg,#4ade80,#00d4ff)';
+      document.getElementById('systemHealth').textContent = '100';
+      document.getElementById('healEvents').textContent = '87';
+      document.getElementById('healEventsDisplay').textContent = '87';
+      document.getElementById('cellsRegen').textContent = '12,450';
+      document.getElementById('cellsDisplay').textContent = '12,450';
+      addLog('🔄 Health reset to 100%', 'success');
+    });
+    
+    // ========== BACKUP ==========
+    let backups = [
+      { name: "Core Router", version: "v3.2.1", size: 128, status: "ok" },
+      { name: "Core Switch", version: "v2.8.4", size: 96, status: "ok" },
+      { name: "Database Server", version: "v4.1.2", size: 256, status: "ok" },
+      { name: "Enterprise Firewall", version: "v5.0.0", size: 192, status: "ok" },
+      { name: "Aviation System", version: "v2.1.0", size: 160, status: "ok" },
+      { name: "Marine Navigation", version: "v1.9.3", size: 144, status: "ok" }
+    ];
+    let storageUsed = backups.reduce((s,b) => s + b.size, 0);
+    
+    function renderBackups() {
+      const tbody = document.getElementById('backupBody');
+      tbody.innerHTML = backups.map(b => `
+        <tr>
+          <td>${b.name}</td>
+          <td>${b.version}</td>
+          <td>${b.size} GB</td>
+          <td class="status-ok">✅ Secure</td>
+        </tr>
+      `).join('');
+      document.getElementById('storageUsed').textContent = storageUsed;
+      document.getElementById('totalBackups').textContent = backups.length;
+      document.getElementById('backupCount').textContent = backups.length;
+    }
+    renderBackups();
+    
+    document.getElementById('createBackupBtn').addEventListener('click', () => {
+      const names = ['Security Gateway', 'DMZ Server', 'Mail Server', 'DNS Server', 'Cloud Storage', 'Backup Node'];
+      const nb = { 
+        name: names[Math.floor(Math.random() * names.length)], 
+        version: `v${Math.floor(Math.random()*9)+1}.${Math.floor(Math.random()*9)}.${Math.floor(Math.random()*9)}`, 
+        size: Math.floor(Math.random()*100)+50,
+        status: "ok"
+      };
+      backups.push(nb);
+      storageUsed += nb.size;
+      renderBackups();
+      addLog(`📀 New backup: ${nb.name} ${nb.version} · ${nb.size} GB`, 'success');
+      showToast(`📀 Backup created: ${nb.name}`, false);
+    });
+    
+    document.getElementById('resetVaultBtn').addEventListener('click', () => {
+      backups = [
+        { name: "Core Router", version: "v3.2.1", size: 128, status: "ok" },
+        { name: "Core Switch", version: "v2.8.4", size: 96, status: "ok" },
+        { name: "Database Server", version: "v4.1.2", size: 256, status: "ok" },
+        { name: "Enterprise Firewall", version: "v5.0.0", size: 192, status: "ok" },
+        { name: "Aviation System", version: "v2.1.0", size: 160, status: "ok" },
+        { name: "Marine Navigation", version: "v1.9.3", size: 144, status: "ok" }
+      ];
+      storageUsed = backups.reduce((s,b) => s + b.size, 0);
+      renderBackups();
+      addLog('🔄 Vault reset to default', 'success');
+    });
+    
+    // ========== CLONES ==========
+    let cloneProgress = 0, clonesDeployed = 0;
+    const systems = [
+      { name: "Web Server", health: 100 },
+      { name: "Database", health: 100 },
+      { name: "Auth Server", health: 100 },
+      { name: "Backup Server", health: 100 }
+    ];
+    
+    function renderSystems() {
+      const tbody = document.getElementById('systemsBody');
+      tbody.innerHTML = systems.map(s => `
+        <tr>
+          <td>${s.name}</td>
+          <td class="${s.health > 80 ? 'status-ok' : (s.health > 50 ? 'status-warning' : 'status-danger')}">${s.health}%</td>
+        </tr>
+      `).join('');
+    }
+    renderSystems();
+    
+    function checkCloneThreshold() {
+      const avgHealth = systems.reduce((sum,s) => sum + s.health, 0) / systems.length;
+      const damage = 100 - avgHealth;
+      if (damage >= 3 && cloneProgress === 0) {
+        addLog('🚨 3% damage threshold reached! Deploying clone...', 'warning');
+        cloneProgress = 0;
+        const interval = setInterval(() => {
+          cloneProgress += Math.random() * 15 + 5;
+          if (cloneProgress >= 100) {
+            cloneProgress = 100;
+            clearInterval(interval);
+            systems.forEach(s => s.health = 100);
+            clonesDeployed++;
+            document.getElementById('cloneCount').textContent = clonesDeployed;
+            renderSystems();
+            addLog('✅ Emergency clone deployed! All systems restored.', 'success');
+            showToast('✅ Clone deployed! Systems restored.', false);
+            setTimeout(() => { cloneProgress = 0; document.getElementById('cloneFill').style.width = '0%'; document.getElementById('clonePercent').textContent = '0%'; }, 2000);
+          }
+          document.getElementById('cloneFill').style.width = cloneProgress + '%';
+          document.getElementById('clonePercent').textContent = Math.floor(cloneProgress) + '%';
+        }, 200);
+      }
+    }
+    
+    document.getElementById('simulateDamageBtn').addEventListener('click', () => {
+      const target = systems[Math.floor(Math.random() * systems.length)];
+      const damage = Math.floor(Math.random() * 20) + 5;
+      target.health = Math.max(0, target.health - damage);
+      renderSystems();
+      checkCloneThreshold();
+      addLog(`⚠️ ${target.name} damaged -${damage}%`, 'danger');
+      showToast(`⚠️ ${target.name} damaged!`, true);
+    });
+    
+    document.getElementById('resetClonesBtn').addEventListener('click', () => {
+      systems.forEach(s => s.health = 100);
+      clonesDeployed = 0;
+      cloneProgress = 0;
+      document.getElementById('cloneCount').textContent = '0';
+      document.getElementById('cloneFill').style.width = '0%';
+      document.getElementById('clonePercent').textContent = '0%';
+      renderSystems();
+      addLog('🔄 Clone system reset', 'success');
+    });
+    
+    // ========== AI ==========
+    let trainedPatterns = 0;
+    const totalPatterns = 24;
+    document.getElementById('totalPatterns').textContent = totalPatterns;
+    
+    document.getElementById('trainBtn').addEventListener('click', () => {
+      if (trainedPatterns >= totalPatterns) { addLog('✅ All patterns trained!', 'success'); return; }
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 20 + 10;
+        if (progress >= 100) {
+          progress = 100; clearInterval(interval);
+          trainedPatterns++;
+          document.getElementById('trainedPatterns').textContent = trainedPatterns;
+          document.getElementById('trainingFill').style.width = (trainedPatterns/totalPatterns*100) + '%';
+          addLog(`🧠 Trained pattern ${trainedPatterns}/${totalPatterns}`, 'success');
+          if (trainedPatterns >= totalPatterns) addLog('🎉 AI training complete!', 'success');
+        }
+        document.getElementById('trainingFill').style.width = progress + '%';
+      }, 300);
+    });
+    
+    document.getElementById('evolveBtn').addEventListener('click', () => {
+      trainedPatterns = totalPatterns;
+      document.getElementById('trainedPatterns').textContent = trainedPatterns;
+      document.getElementById('trainingFill').style.width = '100%';
+      addLog('🚀 Full evolution! 10 years protection', 'success');
+      showToast('🚀 AI evolved! 10 years protection', false);
+    });
+    
+    // ========== INIT ==========
+    addLog('🛡️ Unified Resilience Center online · 5 modules active', 'success');
+    showToast('🛡️ Phoenix Core Resilience active', false);
+  </script>
+</body>
+</html>

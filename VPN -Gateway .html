@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | VPN Gateway · AI Encrypted Tunnel · Dual Auth Gatekeeper</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00d4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #0088ff; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== Main Container ===== */
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3rem;
+      min-height: 100vh;
+    }
+    
+    /* ===== Header ===== */
+    .header {
+      text-align: center;
+      padding: 1rem 0 1.5rem;
+      position: relative;
+    }
+    .header .logo-icon {
+      font-size: 3rem;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8, #0088ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: logoPulse 3s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes logoPulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0,212,255,0.3)); }
+      50% { transform: scale(1.05); filter: drop-shadow(0 0 30px rgba(0,212,255,0.6)); }
+    }
+    .header h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8, #0088ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: 2px;
+      margin-top: 4px;
+    }
+    .header .sub {
+      font-size: 0.65rem;
+      color: #4a8aaa;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .header .badge {
+      display: inline-block;
+      border: 1px solid rgba(0,212,255,0.2);
+      padding: 0.15rem 1rem;
+      border-radius: 30px;
+      font-size: 0.45rem;
+      color: #00d4ff;
+      background: rgba(0,212,255,0.05);
+      margin-top: 6px;
+      letter-spacing: 2px;
+    }
+    
+    /* ===== Divider ===== */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #00d4ff, #00ffc8, #00d4ff, transparent);
+      margin: 0.5rem 0 1.5rem;
+      opacity: 0.3;
+    }
+    
+    /* ===== Stats Bar ===== */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-item {
+      background: rgba(0, 20, 40, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 1rem;
+      padding: 0.6rem;
+      text-align: center;
+      border: 1px solid rgba(0,212,255,0.08);
+      transition: 0.3s;
+      cursor: pointer;
+    }
+    .stat-item:hover { border-color: rgba(0,212,255,0.3); transform: translateY(-2px); box-shadow: 0 0 30px rgba(0,212,255,0.05); }
+    .stat-item .stat-value {
+      font-size: 1.3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: monospace;
+    }
+    .stat-item .stat-label {
+      font-size: 0.45rem;
+      color: #4a8aaa;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+    .stat-item .stat-icon {
+      font-size: 0.8rem;
+      color: #00d4ff;
+      display: block;
+      margin-bottom: 2px;
+    }
+    
+    /* ===== Glass Panels ===== */
+    .glass-panel {
+      background: rgba(0, 20, 40, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 1.2rem;
+      padding: 1rem;
+      border: 1px solid rgba(0,212,255,0.06);
+      transition: 0.3s;
+    }
+    .glass-panel:hover { border-color: rgba(0,212,255,0.15); box-shadow: 0 0 40px rgba(0,212,255,0.02); }
+    .panel-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid #00d4ff;
+      padding-left: 10px;
+      color: #80c8e8;
+    }
+    .panel-title i { color: #00d4ff; cursor: pointer; transition: 0.3s; }
+    .panel-title i:hover { transform: scale(1.15); color: #00ffc8; }
+    .panel-title .badge-count {
+      font-size: 0.4rem;
+      background: rgba(0,212,255,0.1);
+      padding: 0.1rem 0.5rem;
+      border-radius: 30px;
+      color: #00d4ff;
+      margin-left: auto;
+    }
+    
+    /* ===== Main Grid ===== */
+    .main-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 1.2rem;
+    }
+    
+    /* ===== Traffic Monitor ===== */
+    .traffic-container {
+      background: rgba(0,0,0,0.3);
+      border-radius: 0.8rem;
+      padding: 0.6rem;
+      margin: 0.3rem 0;
+    }
+    .flow-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0.4rem 0;
+      font-size: 0.55rem;
+    }
+    .flow-bar {
+      flex: 1;
+      height: 5px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 3px;
+      overflow: hidden;
+      margin: 0 10px;
+    }
+    .flow-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00d4ff, #00ffc8);
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+    .encryption-badge {
+      background: rgba(0,212,255,0.08);
+      padding: 0.2rem 0.5rem;
+      border-radius: 20px;
+      font-size: 0.5rem;
+      font-family: monospace;
+      color: #4a8aaa;
+      display: inline-block;
+      margin-top: 0.3rem;
+    }
+    
+    /* ===== Devices Grid ===== */
+    .devices-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      gap: 0.6rem;
+      margin: 0.4rem 0;
+    }
+    .device-card {
+      background: rgba(0,0,0,0.3);
+      border-radius: 0.8rem;
+      padding: 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s;
+      border: 1px solid rgba(0,212,255,0.06);
+      position: relative;
+    }
+    .device-card:hover { transform: scale(1.05); border-color: #00d4ff; background: rgba(0,212,255,0.05); }
+    .device-card.active { border-color: #4ade80; box-shadow: 0 0 20px rgba(74,222,128,0.15); }
+    .device-icon { font-size: 1.5rem; color: #00d4ff; }
+    .device-name { font-size: 0.5rem; margin-top: 0.2rem; color: #80c8e8; }
+    .auth-status { font-size: 0.4rem; margin-top: 0.1rem; color: #4a8aaa; }
+    .auth-status.verified { color: #4ade80; }
+    .notification-dot {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 8px;
+      height: 8px;
+      background: #ff4444;
+      border-radius: 50%;
+      animation: pulseRed 1s infinite;
+      display: none;
+    }
+    @keyframes pulseRed { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    
+    /* ===== Shield Card ===== */
+    .shield-card {
+      background: rgba(0,212,255,0.03);
+      border-radius: 0.8rem;
+      padding: 0.6rem;
+      text-align: center;
+      margin: 0.3rem 0;
+      border: 1px solid rgba(0,212,255,0.06);
+    }
+    .shield-number {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: monospace;
+    }
+    
+    /* ===== Start Badge ===== */
+    .start-badge {
+      display: inline-block;
+      background: #00ffc8;
+      color: #0a0e1a;
+      font-size: 0.5rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 12px;
+      margin-left: 0.5rem;
+      animation: pulseGreen 1s infinite;
+      display: none;
+    }
+    @keyframes pulseGreen { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+    
+    /* ===== Buttons ===== */
+    .control-buttons {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      background: linear-gradient(95deg, #00d4ff, #0088ff);
+      border: none;
+      padding: 0.4rem 1.2rem;
+      border-radius: 2rem;
+      color: white;
+      cursor: pointer;
+      font-size: 0.6rem;
+      font-weight: 700;
+      transition: 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .action-btn:hover { transform: scale(1.04); box-shadow: 0 0 30px rgba(0,212,255,0.3); }
+    .action-btn.reset { background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.15); }
+    .action-btn.reset:hover { background: rgba(0,212,255,0.1); }
+    .action-btn.danger { background: linear-gradient(95deg, #ff4444, #dc2626); }
+    .action-btn.danger:hover { box-shadow: 0 0 30px rgba(255,68,68,0.3); }
+    
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      font-size: 0.4rem;
+      color: #2a5a7a;
+      padding-top: 0.8rem;
+      border-top: 1px solid rgba(0,212,255,0.05);
+      margin-top: 0.5rem;
+      letter-spacing: 2px;
+    }
+    .footer i { color: #00d4ff; }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #00d4ff;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(0,212,255,0.1);
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    .toast-notification.warning { border-left-color: #ffd700; }
+    @keyframes slideToast { from { transform: translateX(100%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) { .main-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { .stats-bar { grid-template-columns: 1fr 1fr; } .app-wrapper { padding: 1rem; } }
+    
+    .glitch-text {
+      animation: glitch 3s infinite;
+    }
+    @keyframes glitch {
+      0%, 90%, 100% { opacity: 1; }
+      92% { opacity: 0.8; transform: translateX(-2px); }
+      94% { opacity: 1; transform: translateX(2px); }
+      96% { opacity: 0.8; transform: translateX(-1px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <div class="bg-canvas"></div>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 VPN GATEWAY · ENCRYPTED TUNNEL · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 AES-256 · DUAL AUTH · SMART FILTERING SHIELD 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00d4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#00d4ff" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00d4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#00d4ff" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Main Content ===== -->
+  <div class="app-wrapper">
+    
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-icon"><i class="fas fa-shield-virus"></i></div>
+      <h1 class="glitch-text">VPN Gateway · AI Encrypted Tunnel</h1>
+      <div class="sub">AES-256 · Dual Auth Gatekeeper · Smart Filtering Shield</div>
+      <div class="badge"><i class="fas fa-shield-alt"></i> MILITARY-GRADE ENCRYPTION · ZERO TRUST · QUANTUM-SECURE</div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-item" id="encryptionStat" onclick="showToast('🔐 AES-256 Encryption: Military-grade protection active', false)">
+        <span class="stat-icon"><i class="fas fa-key"></i></span>
+        <div class="stat-value" id="encryptionLevel">256</div>
+        <div class="stat-label">Encryption (AES)</div>
+      </div>
+      <div class="stat-item" id="activeUsersStat" onclick="showToast('👥 Active devices authenticated via Dual Auth Gatekeeper', false)">
+        <span class="stat-icon"><i class="fas fa-users"></i></span>
+        <div class="stat-value" id="activeUsers">0</div>
+        <div class="stat-label">Active Devices</div>
+      </div>
+      <div class="stat-item" id="blockedAttacksStat" onclick="showToast('🛡️ Total attacks blocked at gateway by Smart Filtering Shield', false)">
+        <span class="stat-icon"><i class="fas fa-shield-alt"></i></span>
+        <div class="stat-value" id="blockedAttacks">0</div>
+        <div class="stat-label">Attacks Blocked</div>
+      </div>
+    </div>
+    
+    <!-- Main Grid -->
+    <div class="main-grid">
+      
+      <!-- Traffic Monitor -->
+      <div class="glass-panel">
+        <div class="panel-title">
+          <i class="fas fa-chart-line" onclick="showToast('📊 Real-time traffic encryption monitor', false)"></i> Traffic Encryption Monitor
+          <span class="badge-count" id="trafficBadge">🔒</span>
+        </div>
+        <div class="traffic-container">
+          <div class="flow-line">
+            <span><i class="fas fa-cloud-upload-alt"></i> Outgoing</span>
+            <div class="flow-bar"><div class="flow-fill" id="outgoingFill" style="width: 65%;"></div></div>
+            <span id="outgoingRate">65 Mbps</span>
+          </div>
+          <div class="flow-line">
+            <span><i class="fas fa-cloud-download-alt"></i> Incoming</span>
+            <div class="flow-bar"><div class="flow-fill" id="incomingFill" style="width: 42%;"></div></div>
+            <span id="incomingRate">42 Mbps</span>
+          </div>
+          <div class="flow-line">
+            <span><i class="fas fa-lock"></i> Encrypted</span>
+            <div class="flow-bar"><div class="flow-fill" id="encryptedFill" style="width: 100%; background: #4ade80;"></div></div>
+            <span>100%</span>
+          </div>
+        </div>
+        <div class="encryption-badge"><i class="fas fa-key"></i> AES-256-GCM · TLS 1.3 · Perfect Forward Secrecy</div>
+      </div>
+      
+      <!-- Dual Auth Gatekeeper -->
+      <div class="glass-panel">
+        <div class="panel-title">
+          <i class="fas fa-fingerprint" onclick="showToast('🔐 Dual Auth Gatekeeper: Biometric + OTP · Zero Trust Architecture', false)"></i> Dual Auth Gatekeeper
+          <span class="badge-count" id="authBadge">🔓</span>
+        </div>
+        <div class="devices-grid" id="devicesGrid">
+          <div class="device-card" data-device="iphone" onclick="authenticateDevice('iphone')">
+            <div class="device-icon"><i class="fas fa-mobile-alt"></i></div>
+            <div class="device-name">iPhone</div>
+            <div class="auth-status">🔓 Pending</div>
+            <div class="notification-dot"></div>
+          </div>
+          <div class="device-card" data-device="ipad" onclick="authenticateDevice('ipad')">
+            <div class="device-icon"><i class="fas fa-tablet-alt"></i></div>
+            <div class="device-name">iPad</div>
+            <div class="auth-status">🔓 Pending</div>
+            <div class="notification-dot"></div>
+          </div>
+          <div class="device-card" data-device="laptop" onclick="authenticateDevice('laptop')">
+            <div class="device-icon"><i class="fas fa-laptop"></i></div>
+            <div class="device-name">Laptop</div>
+            <div class="auth-status">🔓 Pending</div>
+            <div class="notification-dot"></div>
+          </div>
+          <div class="device-card" data-device="server" onclick="authenticateDevice('server')">
+            <div class="device-icon"><i class="fas fa-server"></i></div>
+            <div class="device-name">Secure Server</div>
+            <div class="auth-status">🔓 Pending</div>
+            <div class="notification-dot"></div>
+          </div>
+        </div>
+        <div class="encryption-badge"><i class="fas fa-shield-alt"></i> Biometric + OTP · Zero Trust Architecture</div>
+      </div>
+      
+      <!-- Smart Filtering Shield -->
+      <div class="glass-panel">
+        <div class="panel-title">
+          <i class="fas fa-shield-alt" onclick="showToast('🛡️ Smart Filtering Shield: AI-Powered Pre-Filtering · 99.97% Accuracy', false)"></i> Smart Filtering Shield
+          <span class="badge-count" id="shieldBadge">🛡️</span>
+        </div>
+        <div class="shield-card">
+          <div class="shield-number" id="blockedCount">0</div>
+          <div style="font-size:0.55rem; color:#4a8aaa;">Total Attacks Blocked at Gateway</div>
+          <div style="font-size:0.45rem; color:#4a8aaa; margin-top:0.2rem;">🚫 DDoS · SQLi · XSS · Malware</div>
+        </div>
+        <div class="encryption-badge"><i class="fas fa-robot"></i> AI-Powered Pre-Filtering · 99.97% Accuracy</div>
+      </div>
+    </div>
+    
+    <!-- Control Buttons -->
+    <div class="control-buttons">
+      <button class="action-btn" id="startVPNBtn"><i class="fas fa-play"></i> START VPN TUNNEL</button>
+      <button class="action-btn reset" id="resetVPNBtn"><i class="fas fa-undo-alt"></i> RESET GATEWAY</button>
+      <button class="action-btn danger" id="simulateAttackBtn"><i class="fas fa-bug"></i> SIMULATE ATTACK</button>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <i class="fas fa-shield-haltered"></i> PCS-AI · VPN Gateway · AI Encrypted Tunnel · 
+      <span style="color:#00d4ff;">AES-256 · Dual Auth · Smart Filtering</span>
+    </div>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="iphoneSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2124/2124-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="ipadSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="laptopSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="serverSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="successSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="alertSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script>
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError) {
+        const sound = document.getElementById('alertSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('successSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    function playSound(sound) {
+      if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+    }
+    
+    function playDeviceSound(device) {
+      const sounds = {
+        iphone: document.getElementById('iphoneSound'),
+        ipad: document.getElementById('ipadSound'),
+        laptop: document.getElementById('laptopSound'),
+        server: document.getElementById('serverSound')
+      };
+      playSound(sounds[device]);
+    }
+    
+    // ========== VPN GATEWAY STATE ==========
+    let vpnActive = false;
+    let activeDevices = 0;
+    let blockedAttacks = 0;
+    let outgoingRate = 65;
+    let incomingRate = 42;
+    const deviceNames = { iphone: 'iPhone', ipad: 'iPad', laptop: 'Laptop', server: 'Secure Server' };
+    
+    function updateStats() {
+      document.getElementById('activeUsers').textContent = activeDevices;
+      document.getElementById('blockedAttacks').textContent = blockedAttacks;
+      document.getElementById('blockedCount').textContent = blockedAttacks;
+      document.getElementById('outgoingFill').style.width = outgoingRate + '%';
+      document.getElementById('incomingFill').style.width = incomingRate + '%';
+      document.getElementById('outgoingRate').textContent = Math.floor(outgoingRate) + ' Mbps';
+      document.getElementById('incomingRate').textContent = Math.floor(incomingRate) + ' Mbps';
+    }
+    
+    function showNotificationDot(device, show) {
+      const card = document.querySelector(`.device-card[data-device="${device}"]`);
+      if(card) {
+        const dot = card.querySelector('.notification-dot');
+        if(dot) dot.style.display = show ? 'block' : 'none';
+      }
+    }
+    
+    // ========== AUTHENTICATE DEVICE ==========
+    window.authenticateDevice = function(device) {
+      if (!vpnActive) {
+        showToast(`⚠️ ${deviceNames[device]} requires VPN tunnel first! Click START VPN`, true);
+        playSound(document.getElementById('alertSound'));
+        return;
+      }
+      
+      const card = document.querySelector(`.device-card[data-device="${device}"]`);
+      if (card.classList.contains('active')) {
+        showToast(`🔓 ${deviceNames[device]} is already authenticated`, false);
+        return;
+      }
+      
+      playDeviceSound(device);
+      showNotificationDot(device, true);
+      
+      setTimeout(() => {
+        card.classList.add('active');
+        card.querySelector('.auth-status').textContent = '🔒 Verified ✅';
+        card.querySelector('.auth-status').className = 'auth-status verified';
+        showNotificationDot(device, false);
+        activeDevices++;
+        updateStats();
+        playSound(document.getElementById('successSound'));
+        showToast(`✅ ${deviceNames[device]} authenticated via Gatekeeper · Secure access granted`, false);
+      }, 800);
+    };
+    
+    // ========== START VPN ==========
+    document.getElementById('startVPNBtn').addEventListener('click', function() {
+      if (vpnActive) {
+        showToast('⚠️ VPN Tunnel already active', true);
+        playSound(document.getElementById('alertSound'));
+        return;
+      }
+      vpnActive = true;
+      playSound(document.getElementById('successSound'));
+      
+      outgoingRate = 85;
+      incomingRate = 72;
+      updateStats();
+      
+      document.getElementById('trafficBadge').textContent = '🔒 ACTIVE';
+      document.getElementById('authBadge').textContent = '🔑 READY';
+      document.getElementById('shieldBadge').textContent = '🛡️ ACTIVE';
+      
+      showToast('🚀 VPN Gateway Activated · Secure Tunnel Established · AES-256 Engaged', false);
+    });
+    
+    // ========== RESET VPN ==========
+    document.getElementById('resetVPNBtn').addEventListener('click', function() {
+      vpnActive = false;
+      activeDevices = 0;
+      outgoingRate = 65;
+      incomingRate = 42;
+      blockedAttacks = 0;
+      
+      document.querySelectorAll('.device-card').forEach(card => {
+        card.classList.remove('active');
+        card.querySelector('.auth-status').textContent = '🔓 Pending';
+        card.querySelector('.auth-status').className = 'auth-status';
+        showNotificationDot(card.dataset.device, false);
+      });
+      
+      document.getElementById('trafficBadge').textContent = '🔒';
+      document.getElementById('authBadge').textContent = '🔓';
+      document.getElementById('shieldBadge').textContent = '🛡️';
+      
+      updateStats();
+      playSound(document.getElementById('alertSound'));
+      showToast('🔄 VPN Gateway Reset · Tunnel closed · All devices de-authenticated', false);
+    });
+    
+    // ========== SIMULATE ATTACK ==========
+    document.getElementById('simulateAttackBtn').addEventListener('click', function() {
+      const attackTypes = ['DDoS Attack', 'SQL Injection', 'Cross-Site Scripting', 'Malware Payload', 'Phishing Attempt', 'Zero-Day Exploit'];
+      const randomAttack = attackTypes[Math.floor(Math.random() * attackTypes.length)];
+      
+      playSound(document.getElementById('alertSound'));
+      
+      if (vpnActive) {
+        blockedAttacks++;
+        updateStats();
+        showToast(`🛡️ ${randomAttack} BLOCKED at Gateway · AI Shield Active`, false);
+        const shieldCard = document.querySelector('.shield-card');
+        shieldCard.style.animation = 'borderPulse 0.3s ease';
+        setTimeout(() => shieldCard.style.animation = '', 300);
+      } else {
+        showToast(`⚠️ ${randomAttack} DETECTED! Start VPN Tunnel for protection`, true);
+      }
+    });
+    
+    // ========== AUTO TRAFFIC ==========
+    setInterval(() => {
+      if (vpnActive) {
+        outgoingRate = Math.min(100, outgoingRate + (Math.random() - 0.5) * 4);
+        incomingRate = Math.min(100, incomingRate + (Math.random() - 0.5) * 3);
+        if (outgoingRate < 10) outgoingRate = 10;
+        if (incomingRate < 8) incomingRate = 8;
+        updateStats();
+      }
+    }, 3000);
+    
+    // ========== INITIAL UPDATE ==========
+    updateStats();
+    
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 's' || e.key === 'S') {
+        document.getElementById('startVPNBtn').click();
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        document.getElementById('resetVPNBtn').click();
+      }
+      if (e.key === 'a' || e.key === 'A') {
+        document.getElementById('simulateAttackBtn').click();
+      }
+    });
+  </script>
+</body>
+</html>

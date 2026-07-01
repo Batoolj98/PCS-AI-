@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Financial Fraud Shield · Live Auto-Scan & Market Defense</title>
+  <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    #canvas-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00d4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #4ade80; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== Forensic Warning ===== */
+    .forensic-warning {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      background: rgba(0, 20, 40, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      border-radius: 0.8rem;
+      padding: 0.3rem 1.2rem;
+      font-size: 0.45rem;
+      color: #ffd700;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .forensic-warning i { color: #ffd700; margin-right: 6px; }
+    
+    /* ===== Laser Scanner ===== */
+    .laser-scanner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 3;
+      overflow: hidden;
+    }
+    .laser-line {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #ffd700, #ffd700, #ffd700, transparent);
+      box-shadow: 0 0 20px #ffd700, 0 0 40px rgba(255, 215, 0, 0.3);
+      top: 0;
+      animation: laserScan 4.5s ease-in-out infinite;
+      opacity: 0.3;
+    }
+    .laser-line2 {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #ffd700, #ffd700, #ffd700, transparent);
+      box-shadow: 0 0 20px #ffd700, 0 0 40px rgba(255, 215, 0, 0.2);
+      top: 0;
+      animation: laserScan2 5.5s ease-in-out infinite;
+      opacity: 0.2;
+    }
+    @keyframes laserScan {
+      0% { top: 2%; opacity: 0.1; }
+      25% { top: 30%; opacity: 0.5; }
+      50% { top: 55%; opacity: 0.8; }
+      75% { top: 80%; opacity: 0.5; }
+      100% { top: 2%; opacity: 0.1; }
+    }
+    @keyframes laserScan2 {
+      0% { top: 10%; opacity: 0.05; }
+      30% { top: 45%; opacity: 0.4; }
+      60% { top: 70%; opacity: 0.6; }
+      90% { top: 90%; opacity: 0.3; }
+      100% { top: 10%; opacity: 0.05; }
+    }
+    
+    /* ===== App Wrapper ===== */
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    /* ===== Sidebar ===== */
+    .sidebar {
+      width: 260px;
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(20px);
+      border-right: 2px solid rgba(0, 212, 255, 0.08);
+      padding: 1.2rem 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    .sidebar::-webkit-scrollbar { width: 3px; }
+    .sidebar::-webkit-scrollbar-track { background: rgba(0,212,255,0.05); }
+    .sidebar::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 4px; }
+    
+    .sidebar-logo {
+      text-align: center;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid rgba(0,212,255,0.08);
+      margin-bottom: 0.6rem;
+    }
+    .sidebar-logo i {
+      font-size: 2.8rem;
+      background: linear-gradient(135deg, #00d4ff, #4ade80, #00ffc8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: floatLogo 3s infinite ease-in-out;
+      cursor: pointer;
+    }
+    @keyframes floatLogo { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .sidebar-logo h3 {
+      font-size: 0.95rem;
+      background: linear-gradient(135deg, #00d4ff, #4ade80);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.7rem;
+      color: #80c8e8;
+      font-weight: 500;
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: 0.3s;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(0,212,255,0.04);
+    }
+    .nav-item i { width: 22px; font-size: 0.8rem; color: #00d4ff; transition: 0.3s; animation: navIconPulse 2s infinite; }
+    @keyframes navIconPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+    .nav-item:hover {
+      background: linear-gradient(95deg, #00d4ff, #4ade80);
+      color: #0a0e1a;
+      transform: translateX(4px);
+    }
+    .nav-item:hover i { color: #0a0e1a; }
+    .nav-item.logout { margin-top: auto; border-color: rgba(255,68,68,0.08); }
+    .nav-item.logout:hover { background: #ff4444; }
+    
+    /* ===== Main Content ===== */
+    .main-content {
+      flex: 1;
+      padding: 1.2rem;
+      overflow-y: auto;
+      max-height: 100vh;
+    }
+    
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+    .top-bar h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #4ade80, #00ffc8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    .top-bar p { font-size: 0.6rem; color: #4a8aaa; }
+    .user-btn {
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(0,212,255,0.08);
+      border-radius: 3rem;
+      padding: 0.3rem 1rem 0.3rem 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+    .user-btn i { font-size: 1.5rem; color: #00d4ff; animation: iconPulse 2s infinite; }
+    @keyframes iconPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .user-btn span { font-size: 0.65rem; font-weight: 600; color: #80c8e8; }
+    
+    /* ===== Stats ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+    .stat-card {
+      background: rgba(0, 20, 40, 0.4);
+      backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      padding: 0.6rem;
+      text-align: center;
+      border: 1px solid rgba(0,212,255,0.04);
+      transition: 0.3s;
+      cursor: pointer;
+    }
+    .stat-card:hover { transform: translateY(-3px); border-color: #00d4ff; }
+    .stat-card .val {
+      font-size: 1.3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #4ade80);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: monospace;
+    }
+    .stat-card .lbl { font-size: 0.5rem; color: #4a8aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card i { font-size: 0.9rem; color: #00d4ff; display: block; margin-bottom: 2px; animation: statIconPulse 3s infinite; }
+    @keyframes statIconPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    
+    /* ===== Glass Panel ===== */
+    .glass-panel {
+      background: rgba(0, 20, 40, 0.4);
+      backdrop-filter: blur(16px);
+      border-radius: 1.2rem;
+      padding: 1rem;
+      border: 1px solid rgba(0,212,255,0.04);
+      margin-bottom: 1.2rem;
+    }
+    .panel-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid #00d4ff;
+      padding-left: 10px;
+      color: #80c8e8;
+    }
+    .panel-title i { color: #00d4ff; animation: titleIconPulse 2s infinite; }
+    @keyframes titleIconPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    /* ===== 3 Pillars ===== */
+    .three-pillars {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+    .pillar-card {
+      background: rgba(0,0,0,0.2);
+      border-radius: 1rem;
+      padding: 0.6rem;
+      text-align: center;
+      border: 1px solid rgba(0,212,255,0.04);
+      transition: 0.3s;
+      cursor: pointer;
+    }
+    .pillar-card:hover { transform: translateY(-3px); border-color: #00d4ff; }
+    .pillar-card i { font-size: 1.6rem; color: #00d4ff; margin-bottom: 0.2rem; display: block; animation: pillarIconFloat 3s infinite; }
+    @keyframes pillarIconFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    .pillar-card h4 { font-size: 0.6rem; font-weight: 700; color: #80c8e8; margin-bottom: 0.2rem; }
+    .pillar-card p { font-size: 0.5rem; color: #4a8aaa; }
+    
+    /* ===== Live Auto-Scan Chart ===== */
+    .chart-preview {
+      display: flex;
+      justify-content: center;
+      gap: 0.3rem;
+      padding: 0.5rem;
+      background: rgba(0,0,0,0.2);
+      border-radius: 0.8rem;
+      margin-top: 0.3rem;
+      position: relative;
+      overflow: hidden;
+      min-height: 100px;
+    }
+    .chart-preview .scan-overlay {
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0,212,255,0.05), transparent);
+      animation: scanOverlay 3s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes scanOverlay {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+    .bar {
+      width: 20px;
+      height: 40px;
+      background: linear-gradient(180deg, #00d4ff, #4ade80);
+      border-radius: 4px 4px 0 0;
+      transition: height 0.5s ease;
+      position: relative;
+      z-index: 1;
+    }
+    .bar:nth-child(1) { height: 45px; }
+    .bar:nth-child(2) { height: 30px; }
+    .bar:nth-child(3) { height: 55px; }
+    .bar:nth-child(4) { height: 38px; }
+    .bar:nth-child(5) { height: 48px; }
+    .bar:nth-child(6) { height: 25px; }
+    .bar:nth-child(7) { height: 60px; }
+    .bar.manipulated { background: linear-gradient(180deg, #ff4444, #ff6666); }
+    .bar.restored { background: linear-gradient(180deg, #4ade80, #86efac); }
+    .bar.scanning { animation: barScan 0.8s infinite alternate; }
+    @keyframes barScan {
+      0% { opacity: 0.6; transform: scaleY(0.9); }
+      100% { opacity: 1; transform: scaleY(1); }
+    }
+    .chart-status {
+      font-size: 0.5rem;
+      color: #4a8aaa;
+      margin-top: 4px;
+      text-align: center;
+      transition: 0.3s;
+    }
+    .chart-status.scanning { color: #ffd700; animation: statusPulse 0.8s infinite; }
+    .chart-status.clean { color: #4ade80; }
+    .chart-status.danger { color: #ff4444; }
+    @keyframes statusPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+    
+    /* ===== Log Table ===== */
+    .log-table-wrap { overflow-x: auto; }
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.6rem;
+    }
+    .log-table th {
+      text-align: left;
+      padding: 0.4rem 0.3rem;
+      background: rgba(0,212,255,0.03);
+      color: #00d4ff;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(0,212,255,0.04);
+    }
+    .log-table td {
+      padding: 0.3rem 0.3rem;
+      border-bottom: 1px solid rgba(0,212,255,0.02);
+      color: #80c8e8;
+    }
+    .log-table .fraud { color: #ff4444; font-weight: 700; }
+    .log-table .restored { color: #4ade80; font-weight: 700; }
+    .log-table .scam { color: #ffd700; font-weight: 600; }
+    
+    /* ===== Alert Banner ===== */
+    .alert-banner {
+      display: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.8rem;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+      font-size: 0.65rem;
+      animation: alertPulse 0.6s ease;
+    }
+    .alert-banner.show { display: flex; align-items: center; gap: 10px; }
+    .alert-banner.danger { background: rgba(255,68,68,0.03); border: 1px solid rgba(255,68,68,0.1); color: #ff4444; }
+    .alert-banner.success { background: rgba(74,222,128,0.03); border: 1px solid rgba(74,222,128,0.08); color: #4ade80; }
+    .alert-banner.warning { background: rgba(255,215,0,0.03); border: 1px solid rgba(255,215,0,0.08); color: #ffd700; }
+    @keyframes alertPulse { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    
+    /* ===== Buttons ===== */
+    .action-row {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+      margin-top: 0.8rem;
+    }
+    .btn {
+      padding: 0.4rem 1.2rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      font-size: 0.6rem;
+      cursor: pointer;
+      transition: 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+    }
+    .btn-primary {
+      background: linear-gradient(95deg, #00d4ff, #4ade80);
+      color: #0a0e1a;
+    }
+    .btn-primary:hover { transform: scale(1.04); box-shadow: 0 0 30px rgba(0,212,255,0.15); }
+    .btn-danger {
+      background: linear-gradient(95deg, rgba(255,68,68,0.2), rgba(255,68,68,0.1));
+      border: 1px solid rgba(255,68,68,0.15);
+      color: #ff4444;
+    }
+    .btn-danger:hover { transform: scale(1.04); box-shadow: 0 0 20px rgba(255,68,68,0.05); }
+    .btn-success {
+      background: linear-gradient(95deg, rgba(74,222,128,0.15), rgba(74,222,128,0.05));
+      border: 1px solid rgba(74,222,128,0.1);
+      color: #4ade80;
+    }
+    .btn-success:hover { transform: scale(1.04); box-shadow: 0 0 20px rgba(74,222,128,0.05); }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(0,212,255,0.1);
+      color: #4a8aaa;
+    }
+    .btn-outline:hover { border-color: #00d4ff; color: #80c8e8; }
+    
+    /* ===== Footer ===== */
+    footer {
+      text-align: center;
+      font-size: 0.45rem;
+      color: #2a5a7a;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid rgba(0,212,255,0.02);
+    }
+    footer i { color: #00d4ff; }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #4ade80;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(0,212,255,0.1);
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    @keyframes slideToast { from { transform: translateX(100%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) {
+      .sidebar { width: 220px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .three-pillars { grid-template-columns: 1fr; }
+      .fingerprint-border { width: 50px; height: 50px; top: 10px; left: 10px; }
+      .forensic-warning { bottom: 60px; font-size: 0.35rem; padding: 0.2rem 0.8rem; }
+    }
+    @media (max-width: 600px) {
+      .sidebar { width: 180px; padding: 0.6rem; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .action-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <canvas id="canvas-bg"></canvas>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Laser Scanner ===== -->
+  <div class="laser-scanner">
+    <div class="laser-line"></div>
+    <div class="laser-line2"></div>
+  </div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 FINANCIAL FRAUD SHIELD · LIVE AUTO-SCAN · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 AUTONOMOUS ECONOMIC DEFENSE · REAL-TIME FRAUD DETECTION 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00d4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#4ade80" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00d4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#4ade80" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#4ade80" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Forensic Warning ===== */
+  <div class="forensic-warning">
+    <i class="fas fa-exclamation-triangle"></i> FINANCIAL FRAUD SHIELD · LIVE AUTO-SCAN ACTIVE · AUDIT TRAIL ACTIVE
+    <i class="fas fa-fingerprint" style="margin-left:8px;"></i>
+  </div>
+  
+  <!-- ===== Main App ===== -->
+  <div class="app-wrapper">
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <i class="fas fa-shield-haltered" onclick="location.href='Phoenix Dashboard.html'"></i>
+        <h3>PCS-AI Shield</h3>
+      </div>
+      <div class="nav-item" onclick="location.href='Security Operations Center (SOC).html '"><i class="fas fa-home"></i> Dashboard</div>
+      <div class="nav-item" onclick="location.href='AI Camera Shield.html'"><i class="fas fa-camera"></i> Camera Shield</div>
+      <div class="nav-item" onclick="location.href='Live-Global-Attack-Map.html'"><i class="fas fa-globe"></i> Attack Map</div>
+      <div class="nav-item" style="background:linear-gradient(95deg, rgba(0,212,255,0.05), rgba(74,222,128,0.02)); border-color:rgba(0,212,255,0.05);">
+        <i class="fas fa-coins"></i> Financial Shield
+      </div>
+      <div class="nav-item" onclick="location.href='active-defense.html'"><i class="fas fa-shield-virus"></i> Active Defense</div>
+      <div class="nav-item" onclick="location.href='System-Final-Report.html'"><i class="fas fa-file-alt"></i> Reports</div>
+      <div class="nav-item" onclick="location.href='AI Call & SMS Malicious.html'"><i class="fas fa-phone"></i> SMS Shield</div>
+      <div class="nav-item logout" onclick="location.href='logout.html'"><i class="fas fa-sign-out-alt"></i> Logout</div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+      
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div>
+          <h1>💰 AI Financial Fraud & Live Auto-Scan</h1>
+          <p>Autonomous Economic Defense · Real-time Fraud Detection · Live Market Integrity Scan</p>
+        </div>
+        <div class="user-btn" id="userBtn">
+          <i class="fas fa-user-circle"></i>
+          <span id="userNameDisplay">Financial Guardian</span>
+        </div>
+      </div>
+      
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card" onclick="showToast('📊 Total fraud attempts blocked', false)">
+          <i class="fas fa-ban"></i>
+          <div class="val" id="fraudBlocked">0</div>
+          <div class="lbl">Fraud Attempts</div>
+        </div>
+        <div class="stat-card" onclick="showToast('📊 Data records restored to golden image', false)">
+          <i class="fas fa-database"></i>
+          <div class="val" id="dataRestored">0</div>
+          <div class="lbl">Data Restored</div>
+        </div>
+        <div class="stat-card" onclick="showToast('📊 Scam ads blocked', false)">
+          <i class="fas fa-ad"></i>
+          <div class="val" id="scamsBlocked">0</div>
+          <div class="lbl">Scams Blocked</div>
+        </div>
+        <div class="stat-card" onclick="showToast('📈 Current security score', false)">
+          <i class="fas fa-shield-alt"></i>
+          <div class="val" id="securityScore">100</div>
+          <div class="lbl">Security Score</div>
+        </div>
+      </div>
+      
+      <!-- 3 Pillars -->
+      <div class="glass-panel">
+        <div class="three-pillars">
+          <div class="pillar-card" onclick="showToast('💰 Financial Fraud: Real-time monitoring of suspicious transfers', false)">
+            <i class="fas fa-hand-holding-usd"></i>
+            <h4>Financial Fraud</h4>
+            <p>Real-time monitoring of suspicious transfers and shell company routing</p>
+          </div>
+          <div class="pillar-card" onclick="showToast('📊 Data Falsification: Live comparison against golden images', false)">
+            <i class="fas fa-chart-bar"></i>
+            <h4>Data Falsification</h4>
+            <p>Live comparison against golden images · Instant restoration of manipulated data</p>
+          </div>
+          <div class="pillar-card" onclick="showToast('📢 Malicious Scams: Automatic blocking of fake investment ads', false)">
+            <i class="fas fa-ad"></i>
+            <h4>Malicious Scams</h4>
+            <p>Automatic blocking of fake investment ads and ransomware campaigns</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Alert Banner -->
+      <div id="alertBanner" class="alert-banner">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="alertText">Threat detected and neutralized!</span>
+      </div>
+      
+      <!-- Live Auto-Scan Chart -->
+      <div class="glass-panel">
+        <div class="panel-title">
+          <i class="fas fa-chart-line"></i> Live Auto-Scan · Market Integrity Monitor
+          <span style="font-size:0.45rem; color:#ffd700; margin-left:auto; animation: statusPulse 1s infinite;">
+            <i class="fas fa-circle" style="color:#ffd700; font-size:0.3rem;"></i> AUTO-SCANNING
+          </span>
+        </div>
+        <div class="chart-preview" id="chartContainer">
+          <div class="scan-overlay"></div>
+          <div class="bar" id="bar1"></div>
+          <div class="bar" id="bar2"></div>
+          <div class="bar" id="bar3"></div>
+          <div class="bar" id="bar4"></div>
+          <div class="bar" id="bar5"></div>
+          <div class="bar" id="bar6"></div>
+          <div class="bar" id="bar7"></div>
+        </div>
+        <div class="chart-status clean" id="chartStatus">✅ Data Integrity Verified · Golden Image Matched</div>
+      </div>
+      
+      <!-- Log Panel -->
+      <div class="glass-panel">
+        <div class="panel-title"><i class="fas fa-list-ul"></i> Financial Security Log · Real-time Events</div>
+        <div class="log-table-wrap">
+          <table class="log-table" id="threatLog">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Source / Target</th>
+                <th>Detection</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="logBody">
+              <tr>
+                <td colspan="5" style="text-align:center; color:#4a8aaa; padding:1rem;">
+                  <i class="fas fa-shield-alt"></i> No threats detected · Financial system secure
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Action Buttons -->
+      <div class="action-row">
+        <button class="btn btn-primary" id="triggerScanBtn"><i class="fas fa-sync-alt"></i> TRIGGER AUTO-SCAN</button>
+        <button class="btn btn-success" id="restoreDataBtn"><i class="fas fa-undo-alt"></i> RESTORE GOLDEN IMAGE</button>
+        <button class="btn btn-outline" id="clearLogBtn"><i class="fas fa-trash-alt"></i> CLEAR LOG</button>
+      </div>
+      
+      <footer><i class="fas fa-shield-haltered"></i> PCS-AI · Autonomous Financial Fraud Shield · Live Auto-Scan · Zero-Trust Economic Defense</footer>
+    </div>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="alertSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="restoreSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="scanSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script>
+    // ========== 3D BACKGROUND ==========
+    (function init3DBackground() {
+      const canvas = document.getElementById('canvas-bg');
+      const ctx = canvas.getContext('2d');
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      
+      const particles = [];
+      const numParticles = 80;
+      
+      class Particle {
+        constructor() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.size = Math.random() * 2.5 + 0.5;
+          this.speedX = (Math.random() - 0.5) * 0.5;
+          this.speedY = (Math.random() - 0.5) * 0.5;
+          this.opacity = Math.random() * 0.3 + 0.1;
+          this.phase = Math.random() * Math.PI * 2;
+          this.colors = ['#00d4ff', '#4ade80', '#00ffc8'];
+          this.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+        }
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.phase += 0.015;
+          if (this.x < 0 || this.x > width) this.speedX *= -1;
+          if (this.y < 0 || this.y > height) this.speedY *= -1;
+        }
+        draw() {
+          const opacity = this.opacity + Math.sin(this.phase) * 0.05;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color.replace(')', `, ${Math.max(0.02, opacity)})`).replace('rgb', 'rgba');
+          if (!this.color.includes('rgba')) {
+            ctx.fillStyle = `rgba(0, 212, 255, ${Math.max(0.02, opacity)})`;
+          }
+          ctx.fill();
+          if (this.size > 1.8) {
+            ctx.beginPath();
+            ctx.arc(this.x + Math.sin(this.phase) * 4, this.y + Math.cos(this.phase) * 4, this.size * 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(74, 222, 128, ${Math.max(0.01, opacity * 0.3)})`;
+            ctx.fill();
+          }
+        }
+      }
+      
+      for (let i = 0; i < numParticles; i++) {
+        particles.push(new Particle());
+      }
+      
+      function drawVerificationLines() {
+        const time = Date.now() / 10000;
+        const colors = ['#00d4ff', '#4ade80', '#00ffc8'];
+        for (let c = 0; c < 3; c++) {
+          ctx.strokeStyle = colors[c] + '33';
+          ctx.lineWidth = 0.5;
+          for (let i = 0; i < 10; i++) {
+            const x1 = Math.sin(time + i * 0.5 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y1 = Math.cos(time * 0.7 + i * 0.3 + c * 0.5) * height * 0.35 + height * 0.5;
+            const x2 = Math.sin(time * 0.8 + i * 0.7 + 1 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y2 = Math.cos(time * 0.5 + i * 0.5 + 1 + c * 0.5) * height * 0.35 + height * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
+        }
+        const cx = width / 2;
+        const cy = height / 2;
+        const maxRadius = Math.min(width, height) * 0.22;
+        const colors2 = ['#00d4ff', '#4ade80', '#00ffc8'];
+        for (let r = 6; r < maxRadius; r += 5) {
+          const opacity = 0.02 + Math.sin(time * 0.5 + r * 0.025) * 0.01;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.strokeStyle = colors2[r % 3] + Math.floor(Math.max(0.005, opacity) * 255).toString(16).padStart(2, '0');
+          ctx.lineWidth = 0.3;
+          ctx.stroke();
+        }
+      }
+      
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+        drawVerificationLines();
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animate);
+      }
+      animate();
+      
+      window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+      });
+    })();
+    
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError) {
+        const sound = document.getElementById('alertSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('restoreSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    // ========== MAIN LOGIC ==========
+    let fraudCount = 0;
+    let dataRestored = 0;
+    let scamsBlocked = 0;
+    let totalEvents = 0;
+    let isCompromised = false;
+    let isScanning = false;
+    
+    const logBody = document.getElementById('logBody');
+    const alertBanner = document.getElementById('alertBanner');
+    const alertText = document.getElementById('alertText');
+    
+    const barElements = [1,2,3,4,5,6,7].map(i => document.getElementById('bar'+i));
+    const chartStatus = document.getElementById('chartStatus');
+    
+    const fraudScenarios = [
+      { type: '💳 Wire Fraud', source: 'Shell Company #4721', target: 'Offshore Account', detection: 'Unverified beneficiary' },
+      { type: '💳 Wire Fraud', source: 'Shell Company #8834', target: 'Crypto Wallet', detection: 'Suspicious routing' },
+      { type: '📊 Data Tampering', source: 'Market Data Feed', target: 'Stock Chart', detection: 'Hash mismatch' },
+      { type: '📊 Data Tampering', source: 'SQL Database', target: 'Balance Sheet', detection: 'Unauthorized modification' },
+      { type: '📢 Scam Ad', source: 'fake-investment.xyz', target: 'User Browser', detection: 'Malicious domain' },
+      { type: '📢 Scam Ad', source: 'profit-finder.cc', target: 'User Browser', detection: 'Phishing pattern' }
+    ];
+    
+    function showAlert(message, type = 'danger') {
+      alertBanner.className = 'alert-banner show ' + type;
+      alertText.innerText = message;
+      if (type === 'danger' || type === 'warning') {
+        const sound = document.getElementById('alertSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('restoreSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+      setTimeout(() => { alertBanner.classList.remove('show'); }, 5000);
+    }
+    
+    function addLogEntry(type, source, target, detection, action, isFraud = false, isScam = false) {
+      const now = new Date();
+      const time = now.toLocaleTimeString();
+      const row = document.createElement('tr');
+      const actionClass = action === 'BLOCKED' || action === 'FROZEN' ? 'fraud' : (action === 'RESTORED' ? 'restored' : 'scam');
+      
+      row.innerHTML = `
+        <td style="white-space:nowrap; color:#4a8aaa;">${time}</td>
+        <td style="color:#00d4ff;">${type}</td>
+        <td style="color:#80c8e8;">${source} → ${target}</td>
+        <td style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#80c8e8;">${detection}</td>
+        <td class="${actionClass}">${action}</td>
+      `;
+      
+      if (logBody.firstChild && logBody.firstChild.tagName === 'TR' && logBody.firstChild.cells.length === 5) {
+        logBody.insertBefore(row, logBody.firstChild);
+      } else {
+        logBody.prepend(row);
+      }
+      
+      while (logBody.children.length > 20) {
+        logBody.removeChild(logBody.lastChild);
+      }
+      
+      if (isFraud) fraudCount++;
+      else if (isScam) scamsBlocked++;
+      else dataRestored++;
+      
+      totalEvents++;
+      updateStats();
+    }
+    
+    function updateStats() {
+      document.getElementById('fraudBlocked').textContent = fraudCount;
+      document.getElementById('dataRestored').textContent = dataRestored;
+      document.getElementById('scamsBlocked').textContent = scamsBlocked;
+      const score = Math.max(0, 100 - Math.floor(totalEvents * 0.3));
+      document.getElementById('securityScore').textContent = Math.min(100, score);
+    }
+    
+    function manipulateChart() {
+      const heights = [25, 35, 45, 55, 65, 40, 50];
+      barElements.forEach((bar, i) => {
+        const newHeight = heights[i] + Math.floor(Math.random() * 30 - 10);
+        bar.style.height = Math.max(15, Math.min(80, newHeight)) + 'px';
+        bar.className = 'bar manipulated';
+      });
+      chartStatus.textContent = '⚠️ DATA MANIPULATED · Hash mismatch detected!';
+      chartStatus.className = 'chart-status danger';
+      isCompromised = true;
+    }
+    
+    function restoreChart() {
+      const heights = [45, 30, 55, 38, 48, 25, 60];
+      barElements.forEach((bar, i) => {
+        bar.style.height = heights[i] + 'px';
+        bar.className = 'bar restored';
+        setTimeout(() => { bar.className = 'bar'; }, 600);
+      });
+      chartStatus.textContent = '✅ Data Integrity Verified · Golden Image Restored';
+      chartStatus.className = 'chart-status clean';
+      isCompromised = false;
+    }
+    
+    function performAutoScan() {
+      if (isScanning) return;
+      isScanning = true;
+      const sound = document.getElementById('scanSound');
+      if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      
+      chartStatus.textContent = '🔍 Scanning market data for anomalies...';
+      chartStatus.className = 'chart-status scanning';
+      
+      barElements.forEach(bar => bar.classList.add('scanning'));
+      
+      setTimeout(() => {
+        barElements.forEach(bar => bar.classList.remove('scanning'));
+        
+        // Random detection
+        const detect = Math.random();
+        if (detect > 0.65) {
+          // Found anomaly
+          const scenario = fraudScenarios[Math.floor(Math.random() * fraudScenarios.length)];
+          const isFraud = scenario.type.includes('Wire Fraud');
+          const isScam = scenario.type.includes('Scam');
+          const isData = scenario.type.includes('Data Tampering');
+          
+          if (isData) {
+            manipulateChart();
+            addLogEntry(scenario.type, scenario.source, scenario.target, scenario.detection, 'RESTORED', false, false);
+            showAlert(`📊 Data tampering detected! Golden image restored.`, 'success');
+            setTimeout(() => restoreChart(), 800);
+            dataRestored++;
+          } else if (isFraud) {
+            addLogEntry(scenario.type, scenario.source, scenario.target, scenario.detection, 'BLOCKED', true, false);
+            showAlert(`💰 Fraudulent transfer from ${scenario.source} BLOCKED!`, 'danger');
+            fraudCount++;
+          } else {
+            addLogEntry(scenario.type, scenario.source, scenario.target, scenario.detection, 'BLOCKED', false, true);
+            showAlert(`📢 Scam ad from ${scenario.source} BLOCKED!`, 'warning');
+            scamsBlocked++;
+          }
+          updateStats();
+          chartStatus.textContent = '⚠️ Anomaly detected and neutralized!';
+          chartStatus.className = 'chart-status danger';
+        } else {
+          chartStatus.textContent = '✅ No anomalies detected · Market integrity verified';
+          chartStatus.className = 'chart-status clean';
+        }
+        
+        setTimeout(() => {
+          isScanning = false;
+        }, 500);
+      }, 3000);
+    }
+    
+    function triggerManualScan() {
+      if (isScanning) {
+        showToast('⚠️ Auto-scan already in progress', false);
+        return;
+      }
+      performAutoScan();
+    }
+    
+    function restoreData() {
+      if (!isCompromised) {
+        showAlert('✅ Data already verified · No manipulation detected', 'success');
+        return;
+      }
+      restoreChart();
+      addLogEntry('🔄 System Restore', 'Golden Image', 'Database', 'Manual restoration triggered', 'RESTORED', false, false);
+      showAlert('📊 Data restored to golden image!', 'success');
+      const sound = document.getElementById('restoreSound');
+      if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      dataRestored++;
+      updateStats();
+    }
+    
+    function clearLog() {
+      while (logBody.children.length > 0) {
+        logBody.removeChild(logBody.lastChild);
+      }
+      const emptyRow = document.createElement('tr');
+      emptyRow.innerHTML = `<td colspan="5" style="text-align:center; color:#4a8aaa; padding:1rem;">
+        <i class="fas fa-shield-alt"></i> No threats detected · Financial system secure
+      </td>`;
+      logBody.appendChild(emptyRow);
+      showToast('🧹 Financial log cleared successfully', 'success');
+    }
+    
+    // ========== EVENT LISTENERS ==========
+    document.getElementById('triggerScanBtn').addEventListener('click', triggerManualScan);
+    document.getElementById('restoreDataBtn').addEventListener('click', restoreData);
+    document.getElementById('clearLogBtn').addEventListener('click', clearLog);
+    
+    const userName = localStorage.getItem('pcs_ai_current_user') || "Financial Guardian";
+    document.getElementById('userNameDisplay').textContent = userName;
+    
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 's' || e.key === 'S') document.getElementById('triggerScanBtn').click();
+      if (e.key === 'r' || e.key === 'R') document.getElementById('restoreDataBtn').click();
+      if (e.key === 'c' || e.key === 'C') document.getElementById('clearLogBtn').click();
+    });
+    
+    // ========== INITIALIZATION ==========
+    updateStats();
+    showToast('🛡️ Financial Fraud Shield active · Live Auto-Scan running', false);
+    
+    // Auto-scan every 10 seconds
+    setInterval(performAutoScan, 10000);
+  </script>
+</body>
+</html>

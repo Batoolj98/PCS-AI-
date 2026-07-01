@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | National Cybersecurity Infrastructure</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2340c4ff'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Blue Forensic Background ===== */
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0a1a2e 0%, #050a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #40c4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #4ade80; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #0a0e1a 20px,
+        #0a0e1a 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #0a0e1a 20px,
+        #0a0e1a 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(10, 14, 26, 0.85);
+      padding: 0.1rem 1.2rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      border-bottom: 2px solid #ffd700;
+      backdrop-filter: blur(8px);
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(10, 14, 26, 0.85);
+      padding: 0.1rem 1.2rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      border-top: 2px solid #ffd700;
+      backdrop-filter: blur(8px);
+    }
+    
+    #cubeCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+    }
+    .glow-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 40%, rgba(64,196,255,0.05), rgba(100,160,255,0.05), transparent 75%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      width: 280px;
+      background: rgba(10, 14, 26, 0.75);
+      backdrop-filter: blur(18px);
+      border-right: 2px solid rgba(64,196,255,0.15);
+      padding: 1rem 0.7rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      transition: 0.3s;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: rgba(64,196,255,0.05); }
+    .sidebar::-webkit-scrollbar-thumb { background: #40c4ff; border-radius: 4px; }
+    .sidebar-logo {
+      text-align: center;
+      padding-bottom: 0.8rem;
+      border-bottom: 2px solid rgba(64,196,255,0.1);
+      margin-bottom: 0.4rem;
+      cursor: pointer;
+    }
+    .sidebar-logo i {
+      font-size: 2.8rem;
+      background: linear-gradient(135deg, #40c4ff, #7dd3fc, #8892ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: floatLogo 3s infinite ease-in-out;
+    }
+    @keyframes floatLogo { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    .sidebar-logo h3 {
+      font-size: 1rem;
+      background: linear-gradient(135deg, #40c4ff, #7a8cff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      margin-top: 2px;
+    }
+    .sidebar-logo .sub {
+      font-size: 0.45rem;
+      color: #4a8aaa;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .section-header {
+      font-size: 0.55rem;
+      font-weight: 800;
+      margin: 0.15rem 0 0.05rem 0;
+      padding: 0.2rem 0.5rem;
+      background: rgba(64,196,255,0.05);
+      border-radius: 0.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      color: #7ab8d4;
+      border: 1px solid rgba(64,196,255,0.05);
+    }
+    .section-header:hover { background: rgba(64,196,255,0.1); border-color: rgba(64,196,255,0.15); }
+    .section-header .info-icon { font-size: 0.5rem; color: #40c4ff; opacity: 0.5; cursor: help; margin-left: 4px; }
+    .section-header .info-icon:hover { opacity: 1; }
+    .section-arrow { font-size: 0.6rem; color: #4a8aaa; transition: transform 0.25s; }
+    .section-arrow.collapsed { transform: rotate(-90deg); }
+    .section-content {
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+      margin-left: 0.3rem;
+      padding-left: 0.2rem;
+    }
+    .section-content.collapsed { display: none; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0.3rem 0.7rem;
+      border-radius: 0.7rem;
+      color: #8ab8d4;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.6rem;
+      cursor: pointer;
+      transition: 0.25s;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(64,196,255,0.05);
+    }
+    .nav-item i { width: 20px; font-size: 0.7rem; color: #40c4ff; }
+    .nav-item .page-info {
+      font-size: 0.45rem;
+      color: #4a7a8a;
+      margin-left: auto;
+      opacity: 0.4;
+      cursor: help;
+    }
+    .nav-item .page-info:hover { opacity: 1; color: #40c4ff; }
+    .nav-item:hover {
+      background: linear-gradient(95deg, rgba(64,196,255,0.15), rgba(136,146,255,0.15));
+      color: #e0f2fe;
+      transform: translateX(4px);
+      border-color: rgba(64,196,255,0.2);
+    }
+    .nav-item:hover i { color: #7dd3fc; }
+    .nav-item:hover .page-info { color: #7dd3fc; opacity: 1; }
+    .nav-item.logout { margin-top: 0.4rem; border-color: rgba(239,68,68,0.15); }
+    .nav-item.logout:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); }
+    .nav-item.logout:hover i { color: #ef4444; }
+    .main-content {
+      flex: 1;
+      padding: 1.2rem;
+      overflow-y: auto;
+      max-height: 100vh;
+      background: rgba(10, 14, 26, 0.3);
+    }
+    
+    /* ===== HEADER ===== */
+    .page-header {
+      text-align: center;
+      margin-bottom: 1.2rem;
+      position: relative;
+    }
+    .page-header h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #40c4ff, #7dd3fc, #8892ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .page-header .subtitle {
+      font-size: 0.65rem;
+      color: #5a8aaa;
+      margin-top: 2px;
+      letter-spacing: 1px;
+    }
+    .page-header .badge {
+      display: inline-block;
+      background: rgba(64,196,255,0.08);
+      border: 1px solid rgba(64,196,255,0.15);
+      padding: 0.15rem 0.8rem;
+      border-radius: 30px;
+      font-size: 0.5rem;
+      color: #7ab8d4;
+      margin-top: 4px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .page-header .badge:hover { transform: scale(1.02); background: rgba(64,196,255,0.15); }
+    
+    /* ===== GLASS PANELS ===== */
+    .glass-panel {
+      background: rgba(10, 14, 26, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 1.2rem;
+      padding: 1rem;
+      border: 1px solid rgba(64,196,255,0.06);
+      transition: 0.3s;
+      cursor: default;
+    }
+    .glass-panel:hover { border-color: rgba(64,196,255,0.15); box-shadow: 0 0 40px rgba(64,196,255,0.02); }
+    .panel-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid #40c4ff;
+      padding-left: 10px;
+      color: #80c8e8;
+    }
+    .panel-title i { color: #40c4ff; cursor: pointer; transition: 0.3s; }
+    .panel-title i:hover { transform: scale(1.15); color: #7dd3fc; }
+    .panel-title .info-tip {
+      font-size: 0.5rem;
+      color: #4a7a8a;
+      cursor: help;
+      margin-left: auto;
+      opacity: 0.4;
+      transition: 0.3s;
+    }
+    .panel-title .info-tip:hover { opacity: 1; color: #40c4ff; transform: scale(1.1); }
+    
+    /* ===== SECTIONS GRID ===== */
+    .sections-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 1100px) { .sections-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { .sidebar { width: 200px; padding: 0.4rem 0.2rem; } }
+    
+    /* ===== AI Cyber Camera Shield ===== */
+    .camera-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+    .camera-feed {
+      background: rgba(0,0,0,0.3);
+      border-radius: 0.8rem;
+      padding: 0.5rem;
+      text-align: center;
+      position: relative;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(64,196,255,0.08);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .camera-feed:hover { border-color: #40c4ff; transform: scale(1.02); background: rgba(64,196,255,0.03); }
+    .camera-feed .cam-label {
+      font-size: 0.45rem;
+      color: #5a8aaa;
+      margin-top: 4px;
+    }
+    .camera-feed .cam-icon {
+      font-size: 1.8rem;
+      color: #40c4ff;
+      transition: 0.3s;
+      animation: camPulse 2s infinite;
+    }
+    @keyframes camPulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.1); opacity: 1; }
+    }
+    .camera-feed:hover .cam-icon { color: #7dd3fc; transform: scale(1.15); }
+    .camera-feed .detection-box {
+      position: absolute;
+      border: 2px solid #dc2626;
+      border-radius: 4px;
+      animation: pulseBox 0.8s infinite;
+      background: rgba(220,38,38,0.1);
+    }
+    @keyframes pulseBox { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+    .camera-feed .detection-label {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      background: rgba(220,38,38,0.8);
+      color: white;
+      font-size: 0.4rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .camera-feed .zone-label {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      background: rgba(64,196,255,0.6);
+      color: white;
+      font-size: 0.35rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .camera-feed .cam-status {
+      font-size: 0.4rem;
+      margin-top: 2px;
+    }
+    .cam-status.online { color: #4ade80; }
+    .cam-status.alert { color: #dc2626; animation: pulseAlert 1s infinite; }
+    @keyframes pulseAlert { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+    
+    /* ===== Quantum Encryption Vault ===== */
+    .quantum-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+    .quantum-item {
+      background: rgba(255,255,255,0.03);
+      border-radius: 0.8rem;
+      padding: 0.4rem;
+      text-align: center;
+      border: 1px solid rgba(64,196,255,0.04);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .quantum-item:hover { border-color: #40c4ff; transform: scale(1.03); background: rgba(64,196,255,0.03); }
+    .quantum-item .q-value {
+      font-size: 1rem;
+      font-weight: 800;
+      font-family: monospace;
+      color: #40c4ff;
+      animation: valuePulse 3s infinite;
+    }
+    @keyframes valuePulse {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; }
+    }
+    .quantum-item .q-label {
+      font-size: 0.45rem;
+      color: #4a8aaa;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .quantum-item .q-status {
+      font-size: 0.5rem;
+      font-weight: 600;
+    }
+    .quantum-item .q-status.secure { color: #4ade80; }
+    .quantum-item .q-status.warning { color: #f59e0b; }
+    .quantum-item .q-status.critical { color: #dc2626; }
+    
+    /* ===== Drone Defense Center ===== */
+    .drone-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+    .drone-card {
+      background: rgba(255,255,255,0.03);
+      border-radius: 0.8rem;
+      padding: 0.4rem;
+      text-align: center;
+      border: 1px solid rgba(64,196,255,0.04);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .drone-card:hover { border-color: #40c4ff; transform: scale(1.03); background: rgba(64,196,255,0.03); }
+    .drone-card .drone-icon {
+      font-size: 1.5rem;
+      color: #40c4ff;
+      transition: 0.3s;
+      animation: droneFloat 3s infinite;
+    }
+    @keyframes droneFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    .drone-card:hover .drone-icon { color: #7dd3fc; transform: scale(1.1); }
+    .drone-card .drone-name { font-size: 0.55rem; font-weight: 700; color: #80c8e8; }
+    .drone-card .drone-status { font-size: 0.45rem; }
+    .drone-card .drone-status.online { color: #4ade80; }
+    .drone-card .drone-status.warning { color: #f59e0b; animation: pulseAlert 1s infinite; }
+    .drone-card .drone-status.offline { color: #dc2626; }
+    .drone-card .drone-signal {
+      font-size: 0.4rem;
+      color: #4a8aaa;
+      margin-top: 2px;
+    }
+    
+    /* ===== Smart City Protection ===== */
+    .city-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 0.5rem;
+    }
+    .city-sector {
+      background: rgba(255,255,255,0.03);
+      border-radius: 0.8rem;
+      padding: 0.4rem;
+      text-align: center;
+      border: 1px solid rgba(64,196,255,0.04);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .city-sector:hover { border-color: #40c4ff; transform: scale(1.05); background: rgba(64,196,255,0.03); }
+    .city-sector .sector-icon {
+      font-size: 1.2rem;
+      color: #40c4ff;
+      transition: 0.3s;
+      animation: iconPulse 2s infinite;
+    }
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .city-sector:hover .sector-icon { color: #7dd3fc; transform: scale(1.15); }
+    .city-sector .sector-name { font-size: 0.5rem; font-weight: 700; color: #80c8e8; }
+    .city-sector .sector-status { font-size: 0.4rem; }
+    .city-sector .sector-status.secure { color: #4ade80; }
+    .city-sector .sector-status.warning { color: #f59e0b; animation: pulseAlert 1s infinite; }
+    .city-sector .sector-status.critical { color: #dc2626; animation: pulseAlert 1s infinite; }
+    
+    /* ===== TOAST ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(10, 14, 26, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #4ade80;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(64,196,255,0.1);
+    }
+    .toast-notification.error { border-left-color: #dc2626; }
+    @keyframes slideToast { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    
+    /* ===== FOOTER ===== */
+    .footer {
+      text-align: center;
+      font-size: 0.45rem;
+      color: #4a7a8a;
+      margin-top: 0.6rem;
+      padding-top: 0.3rem;
+      border-top: 1px solid rgba(64,196,255,0.05);
+    }
+    .footer i { color: #40c4ff; cursor: pointer; transition: 0.3s; }
+    .footer i:hover { color: #7dd3fc; transform: scale(1.2); }
+    .footer .highlight { color: #40c4ff; font-weight: 600; }
+    
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 1100px) { .city-grid { grid-template-columns: 1fr 1fr; } .camera-grid { grid-template-columns: 1fr; } .drone-grid { grid-template-columns: 1fr; } .quantum-metrics { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { .sidebar { width: 200px; padding: 0.4rem 0.2rem; } .city-grid { grid-template-columns: 1fr; } }
+    
+    /* Clickable icon pulse */
+    .clickable-icon {
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .clickable-icon:hover {
+      transform: scale(1.2);
+      color: #7dd3fc;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="cubeCanvas"></canvas>
+  <div class="glow-overlay"></div>
+  <div class="bg-canvas"></div>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 NATIONAL CYBERSECURITY INFRASTRUCTURE · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 PHYSICAL-CYBER CONVERGENCE · QUANTUM-READY 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#40c4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#40c4ff" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#40c4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#40c4ff" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#40c4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#40c4ff" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#40c4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <div class="app-wrapper">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-logo" onclick="showToast('🛡️ Azure Phoenix · National Cybersecurity Infrastructure', false)">
+        <i class="fas fa-shield-haltered"></i>
+        <h3>Azure Phoenix</h3>
+        <div class="sub">National Cybersecurity Infrastructure</div>
+      </div>
+      
+      <div class="section-header" data-section="zeroTrust">
+        <span><i class="fas fa-fingerprint"></i> 🔐 ZERO TRUST <i class="fas fa-info-circle info-icon" title="Zero Trust security model - Never trust, always verify"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-zeroTrust"></i>
+      </div>
+      <div class="section-content" id="content-zeroTrust">
+        <div class="nav-item" onclick="showToast('🔐 Login · Secure authentication portal', false)"><i class="fas fa-sign-in-alt"></i> Login <span class="page-info" title="Secure authentication">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📝 Register · Create new account', false)"><i class="fas fa-user-plus"></i> Register <span class="page-info" title="Create account">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('👤 Face Gate · Biometric facial recognition', false)"><i class="fas fa-camera"></i> Face Gate <span class="page-info" title="Biometric verification">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🌐 AirGap · Air-gapped security isolation', false)"><i class="fas fa-globe"></i> AirGap <span class="page-info" title="Air-gapped security">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="cyberShield">
+        <span><i class="fas fa-shield-alt"></i> 📊 CYBER SHIELD <i class="fas fa-info-circle info-icon" title="Cyber defense monitoring and protection"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-cyberShield"></i>
+      </div>
+      <div class="section-content" id="content-cyberShield">
+        <div class="nav-item" onclick="showToast('📊 Dashboard · Main control panel', false)"><i class="fas fa-tachometer-alt"></i> Dashboard <span class="page-info" title="Main control panel">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📹 AI Cyber Camera Shield · Smart surveillance', false)"><i class="fas fa-camera"></i> Camera Shield <span class="page-info" title="AI Cyber Camera Shield">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🗺️ Attack Map · Global threat visualization', false)"><i class="fas fa-globe"></i> Attack Map <span class="page-info" title="Global threats">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🛡️ Active Defense · Proactive threat neutralization', false)"><i class="fas fa-shield-virus"></i> Active Defense <span class="page-info" title="Proactive protection">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🔒 VPN Gateway · Secure encrypted tunnel', false)"><i class="fas fa-lock"></i> VPN Gateway <span class="page-info" title="Secure VPN">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('☁️ Cloud Security · Cloud infrastructure protection', false)"><i class="fas fa-cloud-upload-alt"></i> Cloud Security <span class="page-info" title="Cloud protection">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📡 Network Simulation · Network behavior analysis', false)"><i class="fas fa-chart-network"></i> Network Sim <span class="page-info" title="Network simulation">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('💻 API & SDK · Developer integration tools', false)"><i class="fas fa-code"></i> API & SDK <span class="page-info" title="Developer tools">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📱 Device Management · Device inventory control', false)"><i class="fas fa-laptop"></i> Device Mgmt <span class="page-info" title="Device control">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('👥 Users & Permissions · Role management', false)"><i class="fas fa-users"></i> Users & Permissions <span class="page-info" title="Role management">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="phoenixCore">
+        <span><i class="fas fa-dragon"></i> 🧬 PHOENIX CORE <i class="fas fa-info-circle info-icon" title="Self-healing AI core engine"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-phoenixCore"></i>
+      </div>
+      <div class="section-content" id="content-phoenixCore">
+        <div class="nav-item" onclick="showToast('🧠 Phoenix Core Unit · Central AI processing', false)"><i class="fas fa-archive"></i> Core Unit <span class="page-info" title="AI processing">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🔬 Hardware Unit · Security modules', false)"><i class="fas fa-microchip"></i> Hardware Unit <span class="page-info" title="Security modules">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📀 Systems Clone · System replication and backup', false)"><i class="fas fa-clone"></i> Systems Clone <span class="page-info" title="System backup">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🛡️ DMZ Isolation · Demilitarized zone isolation', false)"><i class="fas fa-shield-virus"></i> DMZ Isolation <span class="page-info" title="Isolation zone">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('💾 Backup & Recovery · Data restoration', false)"><i class="fas fa-database"></i> Backup & Recovery <span class="page-info" title="Data restoration">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('❤️ System Health · Health monitoring', false)"><i class="fas fa-heartbeat"></i> System Health <span class="page-info" title="Health monitoring">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🔍 Forensic Agent · Digital forensics investigation', false)"><i class="fas fa-search"></i> Forensic Agent <span class="page-info" title="Digital forensics">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📋 Evidence Logs · Security event logging', false)"><i class="fas fa-database"></i> Evidence Logs <span class="page-info" title="Event logging">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🐛 Bug Hunter · Vulnerability discovery', false)"><i class="fas fa-bug"></i> Bug Hunter <span class="page-info" title="Vulnerability discovery">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🧪 Malware Lab · Malware analysis environment', false)"><i class="fas fa-biohazard"></i> Malware Lab <span class="page-info" title="Malware analysis">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🚢 Marine Systems · Maritime security', false)"><i class="fas fa-ship"></i> Marine Systems <span class="page-info" title="Maritime security">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('✈️ Critical Sectors · Infrastructure protection', false)"><i class="fas fa-plane"></i> Critical Sectors <span class="page-info" title="Infrastructure protection">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="advancedMonitoring">
+        <span><i class="fas fa-chart-line"></i> 🎯 ADVANCED MONITORING <i class="fas fa-info-circle info-icon" title="Advanced analytics and monitoring"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-advancedMonitoring"></i>
+      </div>
+      <div class="section-content" id="content-advancedMonitoring">
+        <div class="nav-item" onclick="showToast('📄 System Report · Comprehensive system report', false)"><i class="fas fa-file-alt"></i> System Report <span class="page-info" title="Comprehensive report">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🖥️ Servers Management · Server infrastructure', false)"><i class="fas fa-server"></i> Servers Mgmt <span class="page-info" title="Server management">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🗺️ Network Topology · Network structure visualization', false)"><i class="fas fa-sitemap"></i> Network Topology <span class="page-info" title="Network structure">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('👁️ Devices Overview · All connected devices', false)"><i class="fas fa-eye"></i> Devices Overview <span class="page-info" title="All devices">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📡 Network Simulation · Network tools', false)"><i class="fas fa-chart-network"></i> Network Sim <span class="page-info" title="Network tools">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🧪 Malware Lab · Advanced malware analysis', false)"><i class="fas fa-flask"></i> Malware Lab <span class="page-info" title="Malware analysis">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="cyberDeception">
+        <span><i class="fas fa-mask"></i> 👁️ CYBER DECEPTION <i class="fas fa-info-circle info-icon" title="Deception technology and honeypots"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-cyberDeception"></i>
+      </div>
+      <div class="section-content" id="content-cyberDeception">
+        <div class="nav-item" onclick="showToast('🔔 Honeypot Alert · Honeypot intrusion alerts', false)"><i class="fas fa-bell"></i> Honeypot Alert <span class="page-info" title="Honeypot alerts">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📱 Deception Vault · Deception strategy vault', false)"><i class="fas fa-qrcode"></i> Deception Vault <span class="page-info" title="Deception strategy">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🎭 Secret Overlay · Secret alert overlay system', false)"><i class="fas fa-mask"></i> Secret Overlay <span class="page-info" title="Secret alerts">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="advancedProtection">
+        <span><i class="fas fa-shield-haltered"></i> 🛡️ ADVANCED PROTECTION <i class="fas fa-info-circle info-icon" title="Next-generation protection mechanisms"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-advancedProtection"></i>
+      </div>
+      <div class="section-content" id="content-advancedProtection">
+        <div class="nav-item" onclick="showToast('⚙️ Security Policies · Policy management', false)"><i class="fas fa-sliders-h"></i> Security Policies <span class="page-info" title="Policy management">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🚀 Mission Control · Command center', false)"><i class="fas fa-rocket"></i> Mission Control <span class="page-info" title="Command center">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('🧪 Cyber Simulation · Attack simulation', false)"><i class="fas fa-flask"></i> Cyber Simulation <span class="page-info" title="Attack simulation">ℹ️</span></div>
+      </div>
+      
+      <div class="section-header" data-section="unifiedDefense">
+        <span><i class="fas fa-shield-haltered"></i> 🧩 UNIFIED DEFENSE <i class="fas fa-info-circle info-icon" title="Unified defense suite"></i></span>
+        <i class="fas fa-chevron-down section-arrow" id="arrow-unifiedDefense"></i>
+      </div>
+      <div class="section-content" id="content-unifiedDefense">
+        <div class="nav-item" onclick="showToast('🛡️ Unified Shield · Unified protection layer', false)"><i class="fas fa-shield-alt"></i> Unified Shield <span class="page-info" title="Unified protection">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('💻 Unified Devices · Unified device management', false)"><i class="fas fa-laptop"></i> Unified Devices <span class="page-info" title="Device management">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('📊 Threat Intel · Unified threat intelligence', false)"><i class="fas fa-chart-line"></i> Threat Intel <span class="page-info" title="Threat intelligence">ℹ️</span></div>
+        <div class="nav-item" onclick="showToast('👥 User Management · Unified user management', false)"><i class="fas fa-users"></i> User Mgmt <span class="page-info" title="User management">ℹ️</span></div>
+      </div>
+      
+      <div class="nav-item logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout <span class="page-info" title="Sign out">ℹ️</span></div>
+    </div>
+    
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      
+      <!-- Page Header -->
+      <div class="page-header">
+        <h1>🛡️ National Cybersecurity Infrastructure</h1>
+        <div class="subtitle">Physical-Cyber Convergence · Quantum-Ready · Smart City Protection · Drone Defense</div>
+        <div class="badge" onclick="showToast('🛡️ Strategic Mission: Protecting National Digital & Physical Assets', false)">
+          <i class="fas fa-shield-haltered"></i> Strategic Mission: Protecting National Digital & Physical Assets
+        </div>
+      </div>
+      
+      <!-- ===== ROW 1: AI Cyber Camera Shield + Quantum Encryption Vault ===== -->
+      <div class="sections-grid">
+        
+        <!-- AI Cyber Camera Shield -->
+        <div class="glass-panel" style="border-left: 4px solid #40c4ff;">
+          <div class="panel-title">
+            <i class="fas fa-video" onclick="showToast('📹 AI Cyber Camera Shield · Physical-Cyber Security Convergence', false)"></i> AI Cyber Camera Shield
+            <span class="info-tip" title="Physical-Cyber Security Convergence · Smart surveillance with AI computer vision">ℹ️</span>
+          </div>
+          <div class="camera-grid">
+            <div class="camera-feed" onclick="showToast('🚨 ALERT: Suspicious object detected at Airport Terminal · Gate A12', true)">
+              <i class="fas fa-video cam-icon"></i>
+              <div class="detection-box" style="top:20%;left:25%;width:40%;height:35%;"></div>
+              <div class="detection-label">🚨 Suspicious Object</div>
+              <div class="zone-label">⚠️ Restricted Zone</div>
+              <div class="cam-label">🛫 Airport Terminal · Gate A12</div>
+              <div class="cam-status alert">🔴 ALERT</div>
+            </div>
+            <div class="camera-feed" onclick="showToast('⚠️ Unauthorized person detected at Port Authority · Dock 7', true)">
+              <i class="fas fa-video cam-icon"></i>
+              <div class="detection-box" style="top:40%;left:35%;width:25%;height:20%;border-color:#f59e0b;"></div>
+              <div class="detection-label" style="background:rgba(245,158,11,0.8);">⚠️ Unauthorized Person</div>
+              <div class="cam-label">⚓ Port Authority · Dock 7</div>
+              <div class="cam-status alert">🟡 WARNING</div>
+            </div>
+            <div class="camera-feed" onclick="showToast('✅ All Clear · Construction Site · Zone B', false)">
+              <i class="fas fa-video cam-icon"></i>
+              <div class="cam-label">🏗️ Construction Site · Zone B</div>
+              <div class="cam-status online" style="font-size:0.4rem;margin-top:4px;">✅ All Clear</div>
+            </div>
+            <div class="camera-feed" onclick="showToast('🚨 CRITICAL: Intrusion detected at Server Room · Restricted Area', true)">
+              <i class="fas fa-video cam-icon"></i>
+              <div class="detection-box" style="top:10%;left:45%;width:15%;height:25%;border-color:#dc2626;"></div>
+              <div class="detection-label">🚨 Intrusion Detected</div>
+              <div class="cam-label">🔐 Server Room · Restricted</div>
+              <div class="cam-status alert">🔴 CRITICAL</div>
+            </div>
+          </div>
+          <div style="font-size:0.45rem;color:#4a8aaa;margin-top:0.3rem;text-align:center;">
+            <i class="fas fa-shield-alt" style="color:#40c4ff;cursor:pointer;" onclick="showToast('🛡️ AI Detection: Suspicious Objects · Unauthorized Persons · Restricted Zone Intrusion', false)"></i> 
+            <span class="highlight">AI Detection:</span> Suspicious Objects · Unauthorized Persons · Restricted Zone Intrusion
+          </div>
+        </div>
+        
+        <!-- Quantum Encryption Vault -->
+        <div class="glass-panel" style="border-left: 4px solid #7dd3fc;">
+          <div class="panel-title">
+            <i class="fas fa-atom" onclick="showToast('⚛️ Quantum Encryption Vault · Post-Quantum Cryptography', false)"></i> Quantum Encryption Vault
+            <span class="info-tip" title="Post-Quantum Cryptography · Quantum-resistant encryption for future threats">ℹ️</span>
+          </div>
+          <div class="quantum-metrics">
+            <div class="quantum-item" onclick="showToast('🔒 Quantum Entropy: 98.7% · Highly secure random key generation', false)">
+              <div class="q-value" id="quantumEntropy">98.7%</div>
+              <div class="q-label">Quantum Entropy</div>
+              <div class="q-status secure">🔒 Secure</div>
+            </div>
+            <div class="quantum-item" onclick="showToast('🔑 Quantum Keys Generated: 2,847 · Active encryption keys', false)">
+              <div class="q-value" id="quantumKeys">2,847</div>
+              <div class="q-label">Quantum Keys Generated</div>
+              <div class="q-status secure">✅ Active</div>
+            </div>
+            <div class="quantum-item" onclick="showToast('🛡️ Quantum Attacks Blocked: 0 · Shield active', false)">
+              <div class="q-value" id="quantumAttacks">0</div>
+              <div class="q-label">Quantum Attacks Blocked</div>
+              <div class="q-status secure">🛡️ Shield Active</div>
+            </div>
+            <div class="quantum-item" onclick="showToast('🔐 Top-Secret Assets: 143 · Fully encrypted', false)">
+              <div class="q-value" id="quantumAssets">143</div>
+              <div class="q-label">Top-Secret Assets</div>
+              <div class="q-status secure">🔐 Encrypted</div>
+            </div>
+          </div>
+          <div style="font-size:0.45rem;color:#4a8aaa;margin-top:0.3rem;text-align:center;">
+            <i class="fas fa-shield-alt" style="color:#40c4ff;cursor:pointer;" onclick="showToast('🛡️ Post-Quantum Cryptography: AES-256 · Kyber · Dilithium · Falcon', false)"></i> 
+            <span class="highlight">Post-Quantum Cryptography:</span> AES-256 · Kyber · Dilithium · Falcon
+          </div>
+        </div>
+      </div>
+      
+      <!-- ===== ROW 2: Drone Defense Center + Smart City Protection ===== -->
+      <div class="sections-grid">
+        
+        <!-- Drone Defense Center -->
+        <div class="glass-panel" style="border-left: 4px solid #8892ff;">
+          <div class="panel-title">
+            <i class="fas fa-drone" onclick="showToast('🛩️ Drone Defense Center · Anti-spoofing · GPS jamming protection', false)"></i> Drone Defense Center
+            <span class="info-tip" title="Anti-spoofing · GPS jamming protection · Secure drone fleet management">ℹ️</span>
+          </div>
+          <div class="drone-grid">
+            <div class="drone-card" onclick="showToast('🛩️ Scout-01 · Online · 98% Signal · Flight Path Secure', false)">
+              <div class="drone-icon"><i class="fas fa-drone"></i></div>
+              <div class="drone-name">🛩️ Scout-01</div>
+              <div class="drone-status online">🟢 Online · 98% Signal</div>
+              <div class="drone-signal">📍 Flight Path: Secure · Altitude: 120m</div>
+            </div>
+            <div class="drone-card" onclick="showToast('🛩️ Guardian-02 · Online · 94% Signal · Flight Path Secure', false)">
+              <div class="drone-icon"><i class="fas fa-drone"></i></div>
+              <div class="drone-name">🛩️ Guardian-02</div>
+              <div class="drone-status online">🟢 Online · 94% Signal</div>
+              <div class="drone-signal">📍 Flight Path: Secure · Altitude: 85m</div>
+            </div>
+            <div class="drone-card" style="border-color:rgba(245,158,11,0.2);" onclick="showToast('⚠️ Recon-03 · GPS Spoofing Attempt Detected · Mitigating', true)">
+              <div class="drone-icon"><i class="fas fa-drone"></i></div>
+              <div class="drone-name">🛩️ Recon-03</div>
+              <div class="drone-status warning">🟡 GPS Spoofing Attempt · Mitigating</div>
+              <div class="drone-signal">⚠️ Anti-Spoofing Protocol Active</div>
+            </div>
+            <div class="drone-card" onclick="showToast('🛩️ Hunter-04 · Online · 100% Signal · Returning to Base', false)">
+              <div class="drone-icon"><i class="fas fa-drone"></i></div>
+              <div class="drone-name">🛩️ Hunter-04</div>
+              <div class="drone-status online">🟢 Online · 100% Signal</div>
+              <div class="drone-signal">📍 Return to Base · Secure</div>
+            </div>
+          </div>
+          <div style="font-size:0.45rem;color:#4a8aaa;margin-top:0.3rem;text-align:center;">
+            <i class="fas fa-shield-alt" style="color:#40c4ff;cursor:pointer;" onclick="showToast('🛡️ Anti-Spoofing: GPS Jamming Detection · Signal Authentication · Autonomous Return', false)"></i> 
+            <span class="highlight">Anti-Spoofing:</span> GPS Jamming Detection · Signal Authentication · Autonomous Return
+          </div>
+        </div>
+        
+        <!-- Smart City Protection -->
+        <div class="glass-panel" style="border-left: 4px solid #60a5fa;">
+          <div class="panel-title">
+            <i class="fas fa-city" onclick="showToast('🏙️ Smart City Protection · Critical Infrastructure Protection', false)"></i> Smart City Protection
+            <span class="info-tip" title="Critical Infrastructure Protection · Traffic · CCTV · Power · Water">ℹ️</span>
+          </div>
+          <div class="city-grid">
+            <div class="city-sector" onclick="showToast('🚦 Traffic Grid · Secure · All signals operational', false)">
+              <div class="sector-icon"><i class="fas fa-traffic-light"></i></div>
+              <div class="sector-name">Traffic Grid</div>
+              <div class="sector-status secure">✅ Secure</div>
+            </div>
+            <div class="city-sector" onclick="showToast('📹 City CCTV · Secure · All cameras online', false)">
+              <div class="sector-icon"><i class="fas fa-video"></i></div>
+              <div class="sector-name">City CCTV</div>
+              <div class="sector-status secure">✅ Secure</div>
+            </div>
+            <div class="city-sector" style="border-color:rgba(245,158,11,0.2);" onclick="showToast('⚡ Power Grid · Anomaly Detected · Investigating', true)">
+              <div class="sector-icon"><i class="fas fa-bolt"></i></div>
+              <div class="sector-name">Power Grid</div>
+              <div class="sector-status warning">⚠️ Anomaly Detected</div>
+            </div>
+            <div class="city-sector" onclick="showToast('💧 Water Supply · Secure · All pumps operational', false)">
+              <div class="sector-icon"><i class="fas fa-water"></i></div>
+              <div class="sector-name">Water Supply</div>
+              <div class="sector-status secure">✅ Secure</div>
+            </div>
+          </div>
+          <div style="font-size:0.45rem;color:#4a8aaa;margin-top:0.3rem;text-align:center;">
+            <i class="fas fa-shield-alt" style="color:#40c4ff;cursor:pointer;" onclick="showToast('🛡️ Critical Infrastructure: Traffic · CCTV · Power · Water — All Protected', false)"></i> 
+            <span class="highlight">Critical Infrastructure:</span> Traffic · CCTV · Power · Water — All Protected
+          </div>
+        </div>
+      </div>
+      
+      <!-- ===== DARK WEB + INSIDER THREAT ===== -->
+      <div class="sections-grid" style="margin-bottom:0.8rem;">
+        
+        <!-- Dark Web Intelligence -->
+        <div class="glass-panel" style="border-left: 4px solid #93d5f8;">
+          <div class="panel-title">
+            <i class="fas fa-globe" onclick="showToast('🌐 Dark Web Intelligence Center · Proactive dark web monitoring', false)"></i> Dark Web Intelligence Center
+            <span class="info-tip" title="Proactive dark web monitoring and threat intelligence">ℹ️</span>
+          </div>
+          <div style="font-size:0.55rem;font-weight:600;color:#80c8e8;margin-bottom:0.3rem;">
+            <i class="fas fa-database" style="color:#40c4ff;cursor:pointer;" onclick="showToast('📊 Live Leak Monitor · Real-time dark web data breach scanning', false)"></i> Live Leak Monitor
+          </div>
+          <div style="overflow-x:auto;font-size:0.5rem;">
+            <table style="width:100%;border-collapse:collapse;">
+              <thead><tr style="background:rgba(64,196,255,0.05);"><th style="padding:0.15rem 0.3rem;text-align:left;color:#5a8aaa;">Org</th><th style="padding:0.15rem 0.3rem;text-align:left;color:#5a8aaa;">Data</th><th style="padding:0.15rem 0.3rem;text-align:left;color:#5a8aaa;">Records</th><th style="padding:0.15rem 0.3rem;text-align:left;color:#5a8aaa;">Status</th></tr></thead>
+              <tbody id="leakTableBody">
+                <tr onclick="showToast('⚠️ Global Bank · 2.4M PII records actively leaking on dark web', true)"><td style="color:#80c8e8;">Global Bank</td><td style="color:#80c8e8;">PII</td><td style="color:#80c8e8;">2.4M</td><td style="color:#dc2626;cursor:pointer;">⚠️ Active</td></tr>
+                <tr onclick="showToast('🟡 HealthNet · 850K medical records verified on dark web', true)"><td style="color:#80c8e8;">HealthNet</td><td style="color:#80c8e8;">Medical</td><td style="color:#80c8e8;">850K</td><td style="color:#f59e0b;cursor:pointer;">🟡 Verified</td></tr>
+                <tr onclick="showToast('🔵 TechInnovate · 120K source code files under review', false)"><td style="color:#80c8e8;">TechInnovate</td><td style="color:#80c8e8;">Source</td><td style="color:#80c8e8;">120K</td><td style="color:#40c4ff;cursor:pointer;">🔵 Review</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="font-size:0.45rem;color:#4a8aaa;margin-top:0.2rem;">
+            <i class="fas fa-shield-alt" style="color:#40c4ff;cursor:pointer;" onclick="showToast('🛡️ Early Threat Alerts: Real-time dark web monitoring active', false)"></i> 
+            <span class="highlight">Early Threat Alerts:</span> Real-time dark web monitoring
+          </div>
+        </div>
+        
+        <!-- Insider Threat Monitor -->
+        <div class="glass-panel" style="border-left: 4px solid #7dd3fc;">
+          <div class="panel-title">
+            <i class="fas fa-user-shield" onclick="showToast('👥 Insider Threat Monitor · Behavioral analytics · User behavior monitoring', false)"></i> Insider Threat Monitor
+            <span class="info-tip" title="Behavioral analytics · User behavior monitoring · Insider threat detection">ℹ️</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem;padding:0.2rem 0;">
+            <div style="width:70px;height:70px;border-radius:50%;background:conic-gradient(#4ade80 0% 65%, #f59e0b 65% 82%, #dc2626 82% 100%);display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="showToast('📊 Risk Score: 72 · Medium Risk · Unusual login detected', false)">
+              <div style="width:48px;height:48px;border-radius:50%;background:rgba(10,14,26,0.8);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;color:#d0f0ff;" id="insiderScore">72</div>
+            </div>
+            <div>
+              <div style="font-size:0.55rem;font-weight:700;color:#80c8e8;" id="insiderUser">👤 John Anderson (Finance)</div>
+              <div style="font-size:0.45rem;color:#4a8aaa;">📍 Unusual Login: 3:15 AM · Moscow</div>
+              <div style="font-size:0.5rem;font-weight:600;color:#f59e0b;background:rgba(245,158,11,0.08);padding:0.1rem 0.5rem;border-radius:30px;display:inline-block;margin-top:2px;cursor:pointer;border:1px solid rgba(245,158,11,0.15);" onclick="showToast('⚠️ Medium Risk · User behavior flagged for review', true)">⚠️ Medium Risk</div>
+            </div>
+          </div>
+          <div style="font-size:0.45rem;color:#4a8aaa;margin-top:0.2rem;text-align:center;">
+            <i class="fas fa-shield-alt" style="color:#40c4ff;cursor:pointer;" onclick="showToast('🛡️ Zero-Trust Response: Session Termination · Access Revocation · Device Lockdown', false)"></i> 
+            <span class="highlight">Zero-Trust Response:</span> Session Termination · Access Revocation · Device Lockdown
+          </div>
+        </div>
+      </div>
+      
+      <!-- Footer -->
+      <div class="footer">
+        <i class="fas fa-shield-haltered" onclick="showToast('🛡️ PCS-AI · Azure Phoenix · National Cybersecurity Infrastructure', false)"></i> PCS-AI · Azure Phoenix · National Cybersecurity Infrastructure · 
+        <span class="highlight">Physical-Cyber Convergence · Quantum-Ready · Smart City Protection</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Audio -->
+  <audio id="alertSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="successSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script type="importmap">{ "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js" } }</script>
+  <script type="module">
+    import * as THREE from 'three';
+    const canvas = document.getElementById('cubeCanvas');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0e1a);
+    scene.fog = new THREE.FogExp2(0x0a0e1a, 0.004);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(2.5, 2.2, 14);
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    const ambient = new THREE.AmbientLight(0x112244, 0.4);
+    scene.add(ambient);
+    const cyanLight = new THREE.PointLight(0x40c4ff, 0.6);
+    cyanLight.position.set(3, 4, 3);
+    scene.add(cyanLight);
+    const blueLight = new THREE.PointLight(0x60a5fa, 0.5);
+    blueLight.position.set(-2, 3, 4);
+    scene.add(blueLight);
+    const fillLight = new THREE.DirectionalLight(0x4488aa, 0.3);
+    fillLight.position.set(1,2,2);
+    scene.add(fillLight);
+    const coreMat = new THREE.MeshStandardMaterial({ color: 0x40c4ff, emissive: 0x7dd3fc, emissiveIntensity: 0.3 });
+    const coreMesh = new THREE.Mesh(new THREE.IcosahedronGeometry(0.7,0), coreMat);
+    scene.add(coreMesh);
+    const cubeGroup = new THREE.Group();
+    const colors = [0x40c4ff, 0x7dd3fc, 0x60a5fa, 0x38bdf8, 0x93d5f8];
+    const cubesList = [];
+    for (let i=0; i<200; i++) {
+      const size = 0.08 + Math.random() * 0.14;
+      const material = new THREE.MeshStandardMaterial({ color: colors[Math.floor(Math.random()*colors.length)], emissive: 0x2266aa, emissiveIntensity: 0.08, transparent: true, opacity: 0.3+Math.random()*0.3 });
+      const cube = new THREE.Mesh(new THREE.BoxGeometry(size,size,size), material);
+      const radius = 5 + Math.random() * 5.5;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2*Math.random() -1);
+      cube.position.set(radius * Math.sin(phi) * Math.cos(theta), radius * Math.sin(phi) * Math.sin(theta)*0.7, radius * Math.cos(phi) - 1);
+      cube.userData = { speedX: (Math.random()-0.5)*0.008, speedY: (Math.random()-0.5)*0.008, speedZ: (Math.random()-0.5)*0.008, rotX: (Math.random()-0.5)*0.025, rotY: (Math.random()-0.5)*0.025 };
+      cubeGroup.add(cube);
+      cubesList.push(cube);
+    }
+    scene.add(cubeGroup);
+    const starGeo = new THREE.BufferGeometry();
+    const starPositions = [];
+    for (let i=0; i<1500; i++) { starPositions.push((Math.random()-0.5)*200, (Math.random()-0.5)*120, (Math.random()-0.5)*90 - 40); }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(starPositions), 3));
+    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0x7dd3fc, size: 0.04 }));
+    scene.add(stars);
+    const ringCyan = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.03, 128, 200), new THREE.MeshStandardMaterial({ color: 0x40c4ff, emissive: 0x38bdf8, transparent: true, opacity: 0.3 }));
+    ringCyan.rotation.x = Math.PI / 2;
+    scene.add(ringCyan);
+    const ringBlue = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.025, 128, 200), new THREE.MeshStandardMaterial({ color: 0x60a5fa, emissive: 0x38bdf8, transparent: true, opacity: 0.2 }));
+    ringBlue.rotation.z = 0.8; ringBlue.rotation.x = 0.5;
+    scene.add(ringBlue);
+    let time = 0;
+    function animateScene() {
+      requestAnimationFrame(animateScene);
+      time += 0.012;
+      cubeGroup.rotation.y += 0.0025;
+      cubeGroup.rotation.x += 0.0018;
+      cubesList.forEach(cube => {
+        cube.position.x += cube.userData.speedX;
+        cube.position.y += cube.userData.speedY;
+        cube.position.z += cube.userData.speedZ;
+        cube.rotation.x += cube.userData.rotX;
+        cube.rotation.y += cube.userData.rotY;
+        if (Math.abs(cube.position.x) > 12) cube.userData.speedX *= -1;
+        if (Math.abs(cube.position.y) > 9) cube.userData.speedY *= -1;
+        if (Math.abs(cube.position.z) > 13) cube.userData.speedZ *= -1;
+      });
+      const scaleCore = 1 + Math.sin(time * 5) * 0.07;
+      coreMesh.scale.set(scaleCore, scaleCore, scaleCore);
+      coreMesh.rotation.x += 0.008;
+      coreMesh.rotation.y += 0.012;
+      stars.rotation.y += 0.0004;
+      ringCyan.rotation.z += 0.008;
+      ringBlue.rotation.y += 0.006;
+      cyanLight.intensity = 0.5 + Math.sin(time * 2.5) * 0.15;
+      blueLight.intensity = 0.4 + Math.sin(time * 2) * 0.15;
+      renderer.render(scene, camera);
+    }
+    animateScene();
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+  </script>
+  
+  <script>
+    // ========== SIDEBAR TOGGLE ==========
+    const sections = ['zeroTrust','cyberShield','phoenixCore','advancedMonitoring','cyberDeception','advancedProtection','unifiedDefense'];
+    sections.forEach(section => {
+      const content = document.getElementById(`content-${section}`);
+      const arrow = document.getElementById(`arrow-${section}`);
+      const saved = localStorage.getItem(`sidebar_${section}`);
+      if (saved === 'collapsed') { content.classList.add('collapsed'); arrow.classList.add('collapsed'); }
+      const header = document.querySelector(`.section-header[data-section="${section}"]`);
+      if (header) {
+        header.addEventListener('click', () => {
+          content.classList.toggle('collapsed');
+          arrow.classList.toggle('collapsed');
+          localStorage.setItem(`sidebar_${section}`, content.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+        });
+      }
+    });
+    
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError) {
+        const sound = document.getElementById('alertSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('successSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    // ========== LOGOUT ==========
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('pcs_ai_current_user');
+      showToast('👋 Logged out successfully', false);
+    });
+    
+    // ========== QUANTUM METRICS SIMULATION ==========
+    setInterval(() => {
+      const entropy = 95 + Math.random() * 4.9;
+      document.getElementById('quantumEntropy').textContent = entropy.toFixed(1) + '%';
+      const keys = parseInt(document.getElementById('quantumKeys').textContent.replace(/,/g, ''));
+      document.getElementById('quantumKeys').textContent = (keys + Math.floor(Math.random() * 5) + 1).toLocaleString();
+    }, 3000);
+    
+    // ========== LEAK TABLE UPDATES ==========
+    const leakData = [
+      { org: 'FinTech Global', type: 'PII', records: '1.8M', status: '⚠️ Active' },
+      { org: 'HealthCare Plus', type: 'Medical', records: '620K', status: '🟡 Verified' },
+      { org: 'E-Commerce Hub', type: 'Payment', records: '340K', status: '🟡 Verified' },
+      { org: 'Energy Corp', type: 'Internal', records: '95K', status: '🔵 Review' },
+    ];
+    let leakIndex = 0;
+    setInterval(() => {
+      const data = leakData[leakIndex % leakData.length];
+      const tbody = document.getElementById('leakTableBody');
+      const row = document.createElement('tr');
+      const statusColor = data.status === '⚠️ Active' ? '#dc2626' : data.status === '🟡 Verified' ? '#f59e0b' : '#40c4ff';
+      row.innerHTML = `<td style="cursor:pointer;color:#80c8e8;" onclick="showToast('${data.org} · ${data.records} ${data.type} records ${data.status}', ${data.status === '⚠️ Active'})">${data.org}</td><td style="color:#80c8e8;">${data.type}</td><td style="color:#80c8e8;">${data.records}</td><td style="color:${statusColor};cursor:pointer;" onclick="showToast('${data.status} · ${data.org} ${data.type} records', ${data.status === '⚠️ Active'})">${data.status}</td>`;
+      tbody.prepend(row);
+      if (tbody.children.length > 6) tbody.removeChild(tbody.lastChild);
+      leakIndex++;
+    }, 8000);
+    
+    // ========== INSIDER THREAT SIMULATION ==========
+    let insiderRisk = 72;
+    setInterval(() => {
+      insiderRisk = Math.min(95, Math.max(15, insiderRisk + (Math.random() - 0.5) * 10));
+      document.getElementById('insiderScore').textContent = Math.round(insiderRisk);
+      const userEl = document.getElementById('insiderUser');
+      const riskStatus = document.querySelector('.gauge-risk');
+      if (insiderRisk > 80) {
+        userEl.textContent = '👤 John Anderson (Finance) · 🚨 Suspicious';
+        if (riskStatus) {
+          riskStatus.textContent = '🔴 Critical Risk';
+          riskStatus.style.color = '#dc2626';
+          riskStatus.style.background = 'rgba(220,38,38,0.08)';
+        }
+      } else if (insiderRisk > 60) {
+        userEl.textContent = '👤 John Anderson (Finance)';
+        if (riskStatus) {
+          riskStatus.textContent = '⚠️ Medium Risk';
+          riskStatus.style.color = '#f59e0b';
+          riskStatus.style.background = 'rgba(245,158,11,0.08)';
+        }
+      } else {
+        userEl.textContent = '👤 John Anderson (Finance)';
+        if (riskStatus) {
+          riskStatus.textContent = '✅ Low Risk';
+          riskStatus.style.color = '#4ade80';
+          riskStatus.style.background = 'rgba(74,222,128,0.08)';
+        }
+      }
+    }, 5000);
+    
+    // ========== ALERT SIMULATION ==========
+    const alerts = [
+      '🔴 Dark web forum discussing your infrastructure',
+      '🟡 Credentials for your domain being sold',
+      '🔵 New ransomware variant targeting your sector',
+      '🟠 Internal docs detected on dark web',
+    ];
+    let alertIndex = 0;
+    setInterval(() => {
+      const msg = alerts[alertIndex % alerts.length];
+      if (msg.includes('🔴')) {
+        showToast(`⚠️ Dark web alert: ${msg}`, true);
+      }
+      alertIndex++;
+    }, 12000);
+  </script>
+</body>
+</html>

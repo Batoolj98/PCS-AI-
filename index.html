@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Biometric Nexus · Forensic Blue</title>
+  <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2340c4ff'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/></svg>">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      background: #0a0e1a;
+    }
+
+    #canvas-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0a1a2e 0%, #050a14 70%, #020408 100%);
+    }
+
+    /* ===== CRIME TAPE ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 30;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #0a0e1a 20px,
+        #0a0e1a 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 30;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #0a0e1a 20px,
+        #0a0e1a 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 31;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(10, 14, 26, 0.85);
+      padding: 0.1rem 1.2rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      border-bottom: 2px solid #ffd700;
+      backdrop-filter: blur(8px);
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 31;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(10, 14, 26, 0.85);
+      padding: 0.1rem 1.2rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      border-top: 2px solid #ffd700;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Purple Laser Effect - Animated lines */
+    .laser-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .laser-line {
+      position: absolute;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #40c4ff, #7dd3fc, #40c4ff, transparent);
+      border-radius: 50%;
+      opacity: 0.2;
+      animation: laserMove 8s linear infinite;
+      filter: drop-shadow(0 0 8px #40c4ff);
+    }
+
+    .laser-line:nth-child(1) { top: 10%; left: -10%; width: 30%; animation-duration: 6s; animation-delay: 0s; }
+    .laser-line:nth-child(2) { top: 30%; left: -20%; width: 40%; animation-duration: 9s; animation-delay: 1s; }
+    .laser-line:nth-child(3) { top: 50%; left: -15%; width: 35%; animation-duration: 7s; animation-delay: 2s; }
+    .laser-line:nth-child(4) { top: 70%; left: -25%; width: 45%; animation-duration: 8s; animation-delay: 0.5s; }
+    .laser-line:nth-child(5) { top: 90%; left: -10%; width: 30%; animation-duration: 10s; animation-delay: 1.5s; }
+    .laser-line:nth-child(6) { top: 20%; right: -10%; width: 30%; animation-duration: 7.5s; animation-delay: 0.8s; }
+    .laser-line:nth-child(7) { top: 45%; right: -20%; width: 40%; animation-duration: 8.5s; animation-delay: 2.2s; }
+    .laser-line:nth-child(8) { top: 65%; right: -15%; width: 35%; animation-duration: 6.5s; animation-delay: 1.2s; }
+
+    @keyframes laserMove {
+      0% { transform: translateX(0) rotate(0deg); opacity: 0.05; }
+      20% { opacity: 0.3; }
+      80% { opacity: 0.3; }
+      100% { transform: translateX(120vw) rotate(2deg); opacity: 0.05; }
+    }
+
+    .glow-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 40%, rgba(64, 196, 255, 0.05), rgba(64, 196, 255, 0.03), transparent 75%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.015) 2px,
+        rgba(0, 200, 255, 0.015) 4px
+      );
+    }
+
+    /* Sticker Icon Container - Floating in background */
+    .sticker-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .sticker {
+      position: absolute;
+      font-size: 2.2rem;
+      opacity: 0.15;
+      animation: floatSticker 20s infinite linear;
+      filter: drop-shadow(0 0 5px rgba(64, 196, 255, 0.1));
+      user-select: none;
+    }
+
+    .sticker:nth-child(1) { top: 8%; left: 5%; animation-duration: 22s; opacity: 0.12; font-size: 2.5rem; }
+    .sticker:nth-child(2) { top: 15%; right: 8%; animation-duration: 18s; animation-delay: 2s; opacity: 0.15; font-size: 2.8rem; }
+    .sticker:nth-child(3) { top: 45%; left: 2%; animation-duration: 25s; animation-delay: 4s; opacity: 0.12; font-size: 2.2rem; }
+    .sticker:nth-child(4) { top: 60%; right: 3%; animation-duration: 20s; animation-delay: 1s; opacity: 0.18; font-size: 2.6rem; }
+    .sticker:nth-child(5) { top: 30%; left: 12%; animation-duration: 28s; animation-delay: 3s; opacity: 0.12; font-size: 2.4rem; }
+    .sticker:nth-child(6) { top: 75%; left: 20%; animation-duration: 16s; animation-delay: 5s; opacity: 0.15; font-size: 2.7rem; }
+    .sticker:nth-child(7) { top: 5%; left: 45%; animation-duration: 24s; animation-delay: 1.5s; opacity: 0.12; font-size: 2.3rem; }
+    .sticker:nth-child(8) { top: 50%; left: 50%; animation-duration: 19s; animation-delay: 3.5s; opacity: 0.1; font-size: 3rem; }
+    .sticker:nth-child(9) { top: 85%; right: 25%; animation-duration: 21s; animation-delay: 2.5s; opacity: 0.12; font-size: 2.5rem; }
+    .sticker:nth-child(10) { top: 10%; right: 30%; animation-duration: 26s; animation-delay: 0.5s; opacity: 0.18; font-size: 2.8rem; }
+    .sticker:nth-child(11) { top: 40%; left: 30%; animation-duration: 17s; animation-delay: 4.5s; opacity: 0.12; font-size: 2.2rem; }
+    .sticker:nth-child(12) { top: 70%; left: 70%; animation-duration: 23s; animation-delay: 1.8s; opacity: 0.15; font-size: 2.6rem; }
+    .sticker:nth-child(13) { top: 20%; left: 60%; animation-duration: 14s; animation-delay: 6s; opacity: 0.12; font-size: 2.4rem; }
+    .sticker:nth-child(14) { top: 80%; left: 45%; animation-duration: 27s; animation-delay: 0.8s; opacity: 0.1; font-size: 2.9rem; }
+    .sticker:nth-child(15) { top: 55%; left: 85%; animation-duration: 19s; animation-delay: 3.2s; opacity: 0.12; font-size: 2.3rem; }
+
+    @keyframes floatSticker {
+      0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+      25% { transform: translate(35px, -45px) rotate(12deg) scale(1.1); }
+      50% { transform: translate(-25px, 25px) rotate(-8deg) scale(0.9); }
+      75% { transform: translate(45px, 35px) rotate(10deg) scale(1.05); }
+      100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    }
+
+    /* Main Container - Square Frame */
+    .hero-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 520px;
+      max-width: 92vw;
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: floatContainer 5s ease-in-out infinite;
+    }
+
+    @keyframes floatContainer {
+      0% { transform: translate(-50%, -50%) translateY(0px); }
+      50% { transform: translate(-50%, -50%) translateY(-8px); }
+      100% { transform: translate(-50%, -50%) translateY(0px); }
+    }
+
+    /* Square Fingerprint Frame */
+    .fingerprint-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1/1;
+      border-radius: 24px;
+      background: rgba(10, 14, 26, 0.6);
+      backdrop-filter: blur(24px);
+      padding: 16px;
+      box-shadow: 0 30px 80px rgba(64, 196, 255, 0.12), 0 10px 30px rgba(64, 196, 255, 0.08);
+      border: 2px solid rgba(64, 196, 255, 0.2);
+      transition: all 0.4s ease;
+    }
+
+    .fingerprint-frame:hover {
+      box-shadow: 0 35px 90px rgba(64, 196, 255, 0.2), 0 15px 40px rgba(64, 196, 255, 0.12);
+      border-color: rgba(64, 196, 255, 0.4);
+    }
+
+    /* Corner Fingerprint Icons */
+    .fp-corner {
+      position: absolute;
+      font-size: 1.8rem;
+      color: rgba(64, 196, 255, 0.15);
+      pointer-events: none;
+      z-index: 3;
+    }
+    .fp-corner-tl { top: 10px; left: 10px; }
+    .fp-corner-tr { top: 10px; right: 10px; transform: scaleX(-1); }
+    .fp-corner-bl { bottom: 10px; left: 10px; transform: scaleY(-1); }
+    .fp-corner-br { bottom: 10px; right: 10px; transform: scale(-1, -1); }
+
+    /* Video Inside Frame */
+    .video-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      z-index: 2;
+      box-shadow: inset 0 0 30px rgba(64, 196, 255, 0.05);
+      background: rgba(0,0,0,0.3);
+    }
+
+    .video-container video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      border-radius: 16px;
+    }
+
+    /* Floating Dots */
+    .floating-dots {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      z-index: 3;
+      pointer-events: none;
+    }
+    .dot-cyan { background: #40c4ff; box-shadow: 0 0 20px rgba(64, 196, 255, 0.5); top: -5px; left: 50%; transform: translateX(-50%); }
+    .dot-purple { background: #7dd3fc; box-shadow: 0 0 20px rgba(125, 211, 252, 0.4); bottom: -5px; left: 50%; transform: translateX(-50%); }
+
+    /* Content Below */
+    .content {
+      text-align: center;
+      margin-top: 1.8rem;
+      animation: fadeSlideUp 0.9s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(35px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .content h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #40c4ff, #7dd3fc, #60a5fa, #40c4ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: 2px;
+      text-shadow: 0 0 30px rgba(64, 196, 255, 0.15);
+    }
+
+    .content p {
+      font-size: 0.85rem;
+      color: #ffffff;
+      letter-spacing: 1.5px;
+      margin: 0.5rem 0 1.8rem 0;
+      backdrop-filter: blur(4px);
+      display: inline-block;
+      padding: 0.2rem 1.5rem;
+      border-radius: 40px;
+      background: rgba(255, 255, 255, 0.05);
+      border-left: 2px solid rgba(255, 255, 255, 0.3);
+      border-right: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-enter {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      background: linear-gradient(105deg, #38bdf8, #60a5fa);
+      border: none;
+      padding: 0.9rem 2.8rem;
+      border-radius: 3rem;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #0a0e1a;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      font-family: inherit;
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.2);
+      animation: btnPulse 2.5s infinite alternate;
+    }
+
+    @keyframes btnPulse {
+      0% { box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); transform: scale(1); }
+      100% { box-shadow: 0 0 40px rgba(56, 189, 248, 0.3); transform: scale(1.03); }
+    }
+
+    .btn-enter:hover {
+      transform: scale(1.08);
+      background: linear-gradient(105deg, #7dd3fc, #38bdf8);
+      box-shadow: 0 0 50px rgba(56, 189, 248, 0.4);
+      animation: none;
+    }
+
+    .footer-text {
+      position: fixed;
+      bottom: 60px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.3);
+      z-index: 20;
+      letter-spacing: 1.5px;
+    }
+
+    /* ===== BATOOL BADGE - Program Manager & Digital Forensics Lead ===== */
+    .batool-badge {
+      position: fixed;
+      top: 65px;
+      right: 20px;
+      z-index: 35;
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(64, 196, 255, 0.2);
+      border-radius: 12px;
+      padding: 12px 18px;
+      max-width: 280px;
+      box-shadow: 0 4px 30px rgba(64, 196, 255, 0.08);
+      transition: 0.3s;
+      cursor: default;
+      border-left: 3px solid #ffd700;
+    }
+    .batool-badge:hover {
+      border-color: rgba(64, 196, 255, 0.4);
+      box-shadow: 0 4px 40px rgba(64, 196, 255, 0.15);
+    }
+    .batool-badge .badge-title {
+      font-size: 0.5rem;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .batool-badge .badge-name {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .batool-badge .badge-name i {
+      color: #40c4ff;
+      font-size: 0.8rem;
+    }
+    .batool-badge .badge-role {
+      font-size: 0.55rem;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+    .batool-badge .badge-divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.2), transparent);
+      margin: 5px 0;
+    }
+    .batool-badge .badge-mission {
+      font-size: 0.5rem;
+      color: #ffffff;
+      line-height: 1.5;
+    }
+    .batool-badge .badge-mission span {
+      color: #40c4ff;
+    }
+    .batool-badge .badge-id {
+      font-size: 0.4rem;
+      color: #ffffff;
+      margin-top: 3px;
+      font-family: monospace;
+      letter-spacing: 0.5px;
+    }
+    .batool-badge .badge-specialty {
+      font-size: 0.45rem;
+      color: #ffffff;
+      margin-top: 3px;
+      letter-spacing: 0.3px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 3px;
+    }
+    .batool-badge .badge-specialty i {
+      color: #40c4ff;
+      margin-right: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .batool-badge {
+        top: 55px;
+        right: 10px;
+        max-width: 240px;
+        padding: 10px 14px;
+      }
+      .batool-badge .badge-name { font-size: 0.8rem; }
+      .batool-badge .badge-title { font-size: 0.45rem; }
+      .batool-badge .badge-role { font-size: 0.5rem; }
+      .batool-badge .badge-mission { font-size: 0.45rem; }
+      .batool-badge .badge-id { font-size: 0.35rem; }
+      .batool-badge .badge-specialty { font-size: 0.4rem; }
+    }
+
+    @media (max-width: 480px) {
+      .batool-badge {
+        top: 48px;
+        right: 5px;
+        max-width: 200px;
+        padding: 8px 10px;
+        border-radius: 8px;
+      }
+      .batool-badge .badge-name { font-size: 0.65rem; }
+      .batool-badge .badge-title { font-size: 0.4rem; }
+      .batool-badge .badge-role { font-size: 0.4rem; }
+      .batool-badge .badge-mission { font-size: 0.35rem; }
+      .batool-badge .badge-id { font-size: 0.3rem; }
+      .batool-badge .badge-specialty { font-size: 0.35rem; }
+    }
+
+    @media (max-width: 768px) {
+      .hero-container { width: 380px; }
+      .content h1 { font-size: 1.8rem; }
+      .content p { font-size: 0.7rem; color:#ffffff; }
+      .btn-enter { padding: 0.6rem 1.8rem; font-size: 0.85rem; }
+      .fp-corner { font-size: 1.2rem; }
+      .sticker { font-size: 1.5rem !important; opacity: 0.1 !important; }
+      .crime-tape-label { font-size: 0.35rem; letter-spacing: 2px; padding: 0.05rem 0.6rem; }
+      .crime-tape-label-bottom { font-size: 0.35rem; letter-spacing: 2px; padding: 0.05rem 0.6rem; }
+    }
+
+    @media (max-width: 480px) {
+      .hero-container { width: 300px; }
+      .fingerprint-frame { padding: 10px; border-radius: 16px; }
+      .content h1 { font-size: 1.4rem; }
+      .fp-corner { display: none; }
+      .footer-text { font-size: 0.5rem; bottom: 50px; }
+      .sticker { display: none; }
+      .crime-tape-label { font-size: 0.3rem; letter-spacing: 1px; padding: 0.05rem 0.4rem; top: 4px; }
+      .crime-tape-label-bottom { font-size: 0.3rem; letter-spacing: 1px; padding: 0.05rem 0.4rem; bottom: 4px; }
+      .crime-tape { height: 4px; }
+      .crime-tape-bottom { height: 4px; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="canvas-bg"></canvas>
+  <div class="glow-overlay"></div>
+  <div class="scanlines"></div>
+
+  <!-- ===== CRIME TAPE ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 FORENSIC BIOMETRIC NEXUS · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 ZERO-TRUST · FINGERPRINT VERIFICATION · ACTIVE DEFENSE 🔒</div>
+
+  <!-- ===== BATOOL BADGE (Program Manager & Digital Forensics Lead) ===== -->
+  <div class="batool-badge">
+    <div class="badge-title"><i class="fas fa-shield-haltered"></i> Program Director</div>
+    <div class="badge-name">
+      <i class="fas fa-user-circle"></i> Batool Jameel Nahma Rashid Al-Bakanm
+    </div>
+    <div class="badge-role">🛡️ Chief of  Engineering Cybersecurity & Digital Forensics</div>
+    <div class="badge-divider"></div>
+    <div class="badge-mission">
+      <i class="fas fa-fingerprint" style="color:#ffd700;font-size:0.45rem;"></i>
+      <span>PCS-AI</span> · Full Program Management · Cyber Defense · Digital Forensics · Evidence & Incident Response
+    </div>
+    <div class="badge-specialty">
+      <i class="fas fa-graduation-cap"></i> Specialty: Engineering Cybersecurity  & Digital Forensics
+    </div>
+    <div class="badge-id">🆔 ID: BJNR-2026-PCSAI  E: 202121189@gcet.edu.om</div>
+    <!-- LEGAL COPYRIGHT WARNING BLOCK -->
+<div style="background: rgba(255, 0, 0, 0.05); border: 1px solid #ff4444; padding: 15px; border-radius: 6px; margin: 20px auto; max-width: 750px; font-family: 'Share Tech Mono', monospace; font-size: 13px; color: #ff8888;">
+    <strong style="color: #ff4444;">⚠️ LEGAL NOTICE & COPYRIGHT PROTECTION (OMAN LAW):</strong><br>
+    "All source codes, architecture, and 40 integrated modules within the APPLACTION PCS-AI framework are the exclusive intellectual property of the Lead Developer, **Batul Jameel Neamah Rashid**. Under the Laws of the Sultanate of Oman (Copyright Law No. 65/2008 & Cyber Crime Law No. 12/2011), any unauthorized plagiarism, duplication, or claim of ownership of this work is strictly prohibited and subject to immediate legal prosecution and criminal penalties."
+</div>
+  </div>
+
+  <!-- BLUE LASER EFFECTS -->
+  <div class="laser-container">
+    <div class="laser-line"></div>
+    <div class="laser-line"></div>
+    <div class="laser-line"></div>
+    <div class="laser-line"></div>
+    <div class="laser-line"></div>
+    <div class="laser-line"></div>
+    <div class="laser-line"></div>
+    <div class="laser-line"></div>
+  </div>
+
+  <!-- FLOATING STICKER ICONS -->
+  <div class="sticker-container">
+    <div class="sticker">🧬</div>
+    <div class="sticker">🔰</div>
+    <div class="sticker">🛠️</div>
+    <div class="sticker">🕵️‍♀️</div>
+    <div class="sticker">👮‍♀️</div>
+    <div class="sticker">👩‍💻</div>
+    <div class="sticker">🧑‍💻</div>
+    <div class="sticker">🧑‍🚀</div>
+    <div class="sticker">👨‍✈️</div>
+    <div class="sticker">🔐</div>
+    <div class="sticker">💻</div>
+    <div class="sticker">🛡️</div>
+    <div class="sticker">🚀</div>
+    <div class="sticker">🛸</div>
+    <div class="sticker">🤖</div>
+  </div>
+
+  <!-- HERO CONTAINER -->
+  <div class="hero-container">
+
+    <!-- Square Fingerprint Frame -->
+    <div class="fingerprint-frame">
+
+      <!-- Corner Fingerprint Icons -->
+      <div class="fp-corner fp-corner-tl"><i class="fas fa-fingerprint"></i></div>
+      <div class="fp-corner fp-corner-tr"><i class="fas fa-fingerprint"></i></div>
+      <div class="fp-corner fp-corner-bl"><i class="fas fa-fingerprint"></i></div>
+      <div class="fp-corner fp-corner-br"><i class="fas fa-fingerprint"></i></div>
+
+      <!-- Floating Dots -->
+      <div class="floating-dots dot-cyan"></div>
+      <div class="floating-dots dot-purple"></div>
+
+      <!-- VIDEO INSIDE FRAME -->
+      <div class="video-container">
+        <video id="introVideo" autoplay muted loop playsinline>
+          <source src="logo 3 .mp4" type="video/mp4">
+          Your browser does not support video.
+        </video>
+      </div>
+
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <h1>PCS-AI</h1>
+      <p>Biometric Fingerprint · Malware Defense · AI Shield</p>
+      <a href="registration.html" class="btn-enter">
+      <i>🔷</i>  ENTER  Registration  <i>🔷</i>
+     </a>
+    </div>
+
+  </div>
+
+  <div class="footer-text">
+    <i>🛡️</i> Phoenix Core · Fingerprint Technology · Self-Healing AI <i>🔷</i>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.128.0/build/three.module.js"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    const canvas = document.getElementById('canvas-bg');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0e1a);
+    scene.fog = new THREE.FogExp2(0x0a0e1a, 0.004);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(4, 2.5, 12);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+
+    // Lights
+    const ambient = new THREE.AmbientLight(0x112244, 0.4);
+    scene.add(ambient);
+    const cyanLight = new THREE.PointLight(0x40c4ff, 0.6);
+    cyanLight.position.set(2, 3, 3);
+    scene.add(cyanLight);
+    const blueLight = new THREE.PointLight(0x60a5fa, 0.5);
+    blueLight.position.set(-2, 2, 4);
+    scene.add(blueLight);
+    const fillLight = new THREE.DirectionalLight(0x4488aa, 0.3);
+    fillLight.position.set(1, 4, 2);
+    scene.add(fillLight);
+
+    // 3D Fingerprint Particles
+    const fpGroup = new THREE.Group();
+    const fpColors = [0x40c4ff, 0x7dd3fc, 0x60a5fa, 0x38bdf8, 0x93d5f8];
+    for (let i = 0; i < 150; i++) {
+      const size = 0.04 + Math.random() * 0.1;
+      const mat = new THREE.MeshStandardMaterial({
+        color: fpColors[Math.floor(Math.random() * fpColors.length)],
+        emissive: 0x2266aa,
+        emissiveIntensity: 0.2,
+        transparent: true,
+        opacity: 0.3 + Math.random() * 0.5,
+        metalness: 0.2
+      });
+      const shape = new THREE.Mesh(new THREE.TorusGeometry(size * 2, size * 0.3, 6, 12), mat);
+      shape.scale.x = 1.3 + Math.random() * 0.3;
+      const radius = 3.5 + Math.random() * 3.5;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      shape.position.set(radius * Math.sin(phi) * Math.cos(theta), radius * Math.sin(phi) * Math.sin(theta) * 0.7, radius * Math.cos(phi) - 0.5);
+      shape.rotation.set(Math.random() * 6, Math.random() * 6, Math.random() * 6);
+      shape.userData = { speed: 0.001 + Math.random() * 0.003 };
+      fpGroup.add(shape);
+    }
+    scene.add(fpGroup);
+
+    // 3D Virus / Malware particles
+    const virusGroup = new THREE.Group();
+    for (let i = 0; i < 30; i++) {
+      const size = 0.08 + Math.random() * 0.15;
+      const mat = new THREE.MeshStandardMaterial({
+        color: 0xef4444,
+        emissive: 0xaa2222,
+        emissiveIntensity: 0.2,
+        transparent: true,
+        opacity: 0.3 + Math.random() * 0.3
+      });
+      const virus = new THREE.Mesh(new THREE.SphereGeometry(size, 8, 8), mat);
+      const radius = 4.5 + Math.random() * 2.5;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      virus.position.set(radius * Math.sin(phi) * Math.cos(theta), radius * Math.sin(phi) * Math.sin(theta) * 0.6, radius * Math.cos(phi) - 1);
+      virus.userData = { speed: 0.002 + Math.random() * 0.004 };
+      virusGroup.add(virus);
+    }
+    scene.add(virusGroup);
+
+    // 3D Airplane
+    const planeGroup = new THREE.Group();
+    const planeMat = new THREE.MeshStandardMaterial({
+      color: 0x40c4ff,
+      emissive: 0x7dd3fc,
+      emissiveIntensity: 0.2,
+      metalness: 0.6
+    });
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.3, 6), planeMat);
+    body.rotation.x = Math.PI / 2;
+    planeGroup.add(body);
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.02, 0.04), planeMat);
+    wing.position.y = 0.03;
+    planeGroup.add(wing);
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.06, 0.02), planeMat);
+    tail.position.z = -0.15;
+    tail.position.y = 0.02;
+    planeGroup.add(tail);
+    planeGroup.scale.set(1.5, 1.5, 1.5);
+    planeGroup.position.set(2, 1, -3);
+    planeGroup.userData = { angle: 0, radius: 5, speed: 0.005 };
+    scene.add(planeGroup);
+
+    // 3D Ships
+    const shipGroup = new THREE.Group();
+    const shipMat = new THREE.MeshStandardMaterial({
+      color: 0x60a5fa,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 0.2,
+      metalness: 0.5
+    });
+    for (let i = 0; i < 3; i++) {
+      const ship = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.2, 6), shipMat);
+      const radius = 4 + i * 1.5;
+      const angle = Math.random() * Math.PI * 2;
+      ship.position.set(Math.cos(angle) * radius, Math.sin(angle) * 0.5, Math.sin(angle) * radius - 1);
+      ship.rotation.z = Math.PI / 2;
+      ship.userData = { angle: angle, radius: radius, speed: 0.008 + i * 0.003 };
+      shipGroup.add(ship);
+    }
+    scene.add(shipGroup);
+
+    // Background cubes
+    const cubeGroup = new THREE.Group();
+    const cubes = [];
+    const colors = [0x40c4ff, 0x7dd3fc, 0x60a5fa, 0x38bdf8, 0x93d5f8];
+    for (let i = 0; i < 120; i++) {
+      const size = 0.08 + Math.random() * 0.16;
+      const col = colors[Math.floor(Math.random() * colors.length)];
+      const mat = new THREE.MeshStandardMaterial({
+        color: col,
+        emissive: 0x2266aa,
+        emissiveIntensity: 0.08,
+        transparent: true,
+        opacity: 0.2 + Math.random() * 0.3
+      });
+      const cube = new THREE.Mesh(new THREE.BoxGeometry(size, size, size), mat);
+      const radius = 4.8 + Math.random() * 3.5;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      cube.position.set(radius * Math.sin(phi) * Math.cos(theta), radius * Math.sin(phi) * Math.sin(theta) * 0.7, radius * Math.cos(phi) - 1);
+      cube.userData = { speedX: (Math.random() - 0.5)*0.005, speedY: (Math.random() - 0.5)*0.005, rotX: (Math.random()-0.5)*0.01, rotY: (Math.random()-0.5)*0.01 };
+      cubeGroup.add(cube);
+      cubes.push(cube);
+    }
+    scene.add(cubeGroup);
+
+    // Stars
+    const starCount = 2000;
+    const starGeo = new THREE.BufferGeometry();
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+      starPos[i*3] = (Math.random() - 0.5) * 180;
+      starPos[i*3+1] = (Math.random() - 0.5) * 100;
+      starPos[i*3+2] = (Math.random() - 0.5) * 70 - 30;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const starMat = new THREE.PointsMaterial({
+      color: 0x7dd3fc,
+      size: 0.04,
+      transparent: true,
+      opacity: 0.4,
+      blending: THREE.AdditiveBlending
+    });
+    const stars = new THREE.Points(starGeo, starMat);
+    scene.add(stars);
+
+    // Central core
+    const coreGeo = new THREE.IcosahedronGeometry(0.6, 0);
+    const coreMat = new THREE.MeshStandardMaterial({
+      color: 0x40c4ff,
+      emissive: 0x60a5fa,
+      emissiveIntensity: 0.4,
+      transparent: true,
+      opacity: 0.8
+    });
+    const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+    scene.add(coreMesh);
+
+    // Blue Rings
+    const ringBlue1 = new THREE.Mesh(new THREE.TorusGeometry(1.8, 0.03, 128, 300), new THREE.MeshStandardMaterial({ color: 0x40c4ff, emissive: 0x38bdf8, emissiveIntensity: 0.2, transparent: true, opacity: 0.4 }));
+    ringBlue1.rotation.x = Math.PI / 2;
+    scene.add(ringBlue1);
+    const ringBlue2 = new THREE.Mesh(new THREE.TorusGeometry(2.4, 0.025, 128, 300), new THREE.MeshStandardMaterial({ color: 0x60a5fa, emissive: 0x38bdf8, emissiveIntensity: 0.2, transparent: true, opacity: 0.3 }));
+    ringBlue2.rotation.z = 0.8;
+    ringBlue2.rotation.x = 0.7;
+    scene.add(ringBlue2);
+
+    let t = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      t += 0.014;
+
+      cubeGroup.rotation.y += 0.002;
+      cubeGroup.rotation.x += 0.001;
+      cubes.forEach(c => {
+        c.position.x += c.userData.speedX;
+        c.position.y += c.userData.speedY;
+        if (Math.abs(c.position.x) > 8) c.userData.speedX *= -1;
+        if (Math.abs(c.position.y) > 6) c.userData.speedY *= -1;
+        c.rotation.x += c.userData.rotX;
+        c.rotation.y += c.userData.rotY;
+      });
+
+      fpGroup.rotation.y += 0.0015;
+      fpGroup.rotation.x += 0.0008;
+      virusGroup.rotation.y += 0.002;
+      virusGroup.rotation.x += 0.001;
+
+      const plane = planeGroup;
+      plane.userData.angle += plane.userData.speed;
+      const r = plane.userData.radius;
+      plane.position.x = Math.sin(plane.userData.angle) * r;
+      plane.position.z = Math.cos(plane.userData.angle) * r - 1;
+      plane.position.y = 1.5 + Math.sin(plane.userData.angle * 1.3) * 0.8;
+      plane.rotation.y = -plane.userData.angle;
+      plane.rotation.z = Math.sin(plane.userData.angle * 1.3) * 0.1;
+
+      shipGroup.children.forEach(ship => {
+        ship.userData.angle += ship.userData.speed;
+        const sr = ship.userData.radius;
+        ship.position.x = Math.sin(ship.userData.angle) * sr;
+        ship.position.z = Math.cos(ship.userData.angle) * sr - 1;
+        ship.position.y = Math.sin(ship.userData.angle * 0.5) * 0.5;
+        ship.rotation.x = Math.sin(ship.userData.angle * 0.5) * 0.2;
+      });
+
+      ringBlue1.rotation.z += 0.005;
+      ringBlue2.rotation.y += 0.004;
+      ringBlue2.rotation.x += 0.003;
+
+      const s = 1 + Math.sin(t * 5) * 0.06;
+      coreMesh.scale.set(s, s, s);
+      stars.rotation.y += 0.0004;
+
+      cyanLight.intensity = 0.5 + Math.sin(t * 2) * 0.15;
+      blueLight.intensity = 0.4 + Math.sin(t * 1.8 + 0.5) * 0.15;
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+
+  <script>
+    document.getElementById('introVideo')?.play().catch(e => console.log("autoplay"));
+    const btn = document.querySelector('.btn-enter');
+    btn?.addEventListener('click', () => btn.style.transform = 'scale(0.98)');
+    setTimeout(() => { if(btn) btn.style.transform = ''; }, 200);
+  </script>
+</body>
+</html>

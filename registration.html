@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Register · Phoenix Core · Corporate Token</title>
+  <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'><path d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    #canvas-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00d4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #4ade80; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== Forensic Warning ===== */
+    .forensic-warning {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      background: rgba(0, 20, 40, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      border-radius: 0.8rem;
+      padding: 0.3rem 1.2rem;
+      font-size: 0.45rem;
+      color: #ffd700;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .forensic-warning i { color: #ffd700; margin-right: 6px; }
+    
+    /* ===== Laser Scanner ===== */
+    .laser-scanner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 3;
+      overflow: hidden;
+    }
+    .laser-line {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #ffd700, #ffd700, #ffd700, transparent);
+      box-shadow: 0 0 20px #ffd700, 0 0 40px rgba(255, 215, 0, 0.3);
+      top: 0;
+      animation: laserScan 4s ease-in-out infinite;
+      opacity: 0.3;
+    }
+    @keyframes laserScan {
+      0% { top: 5%; opacity: 0.1; }
+      25% { top: 30%; opacity: 0.5; }
+      50% { top: 55%; opacity: 0.8; }
+      75% { top: 80%; opacity: 0.5; }
+      100% { top: 5%; opacity: 0.1; }
+    }
+    .laser-line::after {
+      content: '';
+      position: absolute;
+      right: -20px;
+      top: -10px;
+      width: 25px;
+      height: 22px;
+      background: radial-gradient(circle, #ffd700, transparent);
+      border-radius: 50%;
+      filter: blur(8px);
+    }
+    .laser-line::before {
+      content: '';
+      position: absolute;
+      left: -20px;
+      top: -10px;
+      width: 25px;
+      height: 22px;
+      background: radial-gradient(circle, #ffd700, transparent);
+      border-radius: 50%;
+      filter: blur(8px);
+    }
+    
+    /* ===== BATOOL BADGE - Program Manager & Digital Forensics Lead ===== */
+    .batool-badge {
+      position: fixed;
+      top: 65px;
+      right: 20px;
+      z-index: 35;
+      background: rgba(10, 14, 26, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 212, 255, 0.25);
+      border-radius: 16px;
+      padding: 16px 20px;
+      max-width: 300px;
+      box-shadow: 0 8px 40px rgba(0, 212, 255, 0.12), inset 0 1px 0 rgba(0,212,255,0.05);
+      transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: default;
+      border-left: 4px solid #ffd700;
+    }
+    .batool-badge:hover {
+      border-color: rgba(0, 212, 255, 0.5);
+      box-shadow: 0 8px 50px rgba(0, 212, 255, 0.25);
+      transform: translateX(-4px);
+    }
+    .batool-badge .badge-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, rgba(0,212,255,0.15), rgba(74,222,128,0.05));
+      border-radius: 50%;
+      border: 1px solid rgba(0,212,255,0.15);
+      margin-right: 10px;
+      float: left;
+    }
+    .batool-badge .badge-icon i {
+      font-size: 1rem;
+      color: #00d4ff;
+    }
+    .batool-badge .badge-title {
+      font-size: 0.5rem;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .batool-badge .badge-title .shield-icon {
+      color: #00d4ff;
+      font-size: 0.6rem;
+    }
+    .batool-badge .badge-name {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      line-height: 1.2;
+    }
+    .batool-badge .badge-name i {
+      color: #00d4ff;
+      font-size: 0.8rem;
+    }
+    .batool-badge .badge-role {
+      font-size: 0.55rem;
+      color: #8ab8d4;
+      letter-spacing: 0.3px;
+      margin-top: 3px;
+      padding-left: 46px;
+      line-height: 1.3;
+    }
+    .batool-badge .badge-role .role-icon {
+      color: #ffd700;
+      margin-right: 4px;
+    }
+    .batool-badge .badge-divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(0,212,255,0.25), rgba(255,215,0,0.1), transparent);
+      margin: 6px 0 6px 46px;
+    }
+    .batool-badge .badge-mission {
+      font-size: 0.5rem;
+      color: #7ab8d4;
+      line-height: 1.5;
+      padding-left: 46px;
+    }
+    .batool-badge .badge-mission span {
+      color: #00d4ff;
+      font-weight: 600;
+    }
+    .batool-badge .badge-mission .highlight-gold {
+      color: #ffd700;
+    }
+    .batool-badge .badge-specialty {
+      font-size: 0.45rem;
+      color: #8ab8d4;
+      margin-top: 4px;
+      padding-left: 46px;
+      border-top: 1px solid rgba(0,212,255,0.08);
+      padding-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .batool-badge .badge-specialty i {
+      color: #ffd700;
+      font-size: 0.5rem;
+    }
+    .batool-badge .badge-id {
+      font-size: 0.4rem;
+      color: #5a8aaa;
+      margin-top: 4px;
+      padding-left: 46px;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.3px;
+      opacity: 0.7;
+    }
+    .batool-badge .badge-id .id-icon {
+      color: #00d4ff;
+      margin-right: 4px;
+    }
+    .batool-badge .badge-email {
+      font-size: 0.4rem;
+      color: #5a8aaa;
+      padding-left: 46px;
+      font-family: 'Courier New', monospace;
+      opacity: 0.6;
+      margin-top: 1px;
+    }
+    .batool-badge .badge-email .email-icon {
+      color: #00d4ff;
+      margin-right: 4px;
+    }
+
+    /* ===== NAVIGATION BUTTON - DASHBOARD ===== */
+    .nav-dashboard-btn {
+      position: fixed;
+      top: 18px;
+      right: 20px;
+      z-index: 40;
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(0, 212, 255, 0.15);
+      border-radius: 40px;
+      padding: 0.4rem 1.2rem;
+      color: #00d4ff;
+      font-size: 0.55rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      cursor: pointer;
+      transition: 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 4px 20px rgba(0, 212, 255, 0.05);
+    }
+    .nav-dashboard-btn:hover {
+      background: rgba(0, 212, 255, 0.08);
+      border-color: rgba(0, 212, 255, 0.3);
+      transform: scale(1.02);
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.08);
+    }
+    .nav-dashboard-btn i {
+      font-size: 0.7rem;
+    }
+    .nav-dashboard-btn .badge-dot {
+      width: 6px;
+      height: 6px;
+      background: #4ade80;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 15px #4ade80;
+      animation: dotPulse 1.5s infinite;
+    }
+    @keyframes dotPulse {
+      0%, 100% { opacity: 0.5; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    @media (max-width: 768px) {
+      .nav-dashboard-btn {
+        top: 12px;
+        right: 10px;
+        padding: 0.3rem 0.8rem;
+        font-size: 0.45rem;
+      }
+      .nav-dashboard-btn span { display: none; }
+    }
+
+    @media (max-width: 480px) {
+      .nav-dashboard-btn {
+        top: 10px;
+        right: 5px;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.4rem;
+      }
+      .nav-dashboard-btn i { font-size: 0.5rem; }
+    }
+
+    /* ===== Register Container ===== */
+    .register-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 1400px;
+      margin: 2rem;
+      animation: fadeSlideUp 0.8s ease-out;
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .glass-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      background: rgba(10, 14, 26, 0.7);
+      backdrop-filter: blur(20px);
+      border-radius: 2.5rem;
+      border: 1px solid rgba(0, 212, 255, 0.1);
+      padding: 2rem;
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* ===== Form Column ===== */
+    .form-col {
+      flex: 1;
+      min-width: 320px;
+      background: rgba(0, 20, 40, 0.3);
+      border-radius: 2rem;
+      padding: 1.8rem;
+      border: 1px solid rgba(0, 212, 255, 0.04);
+    }
+    
+    /* ===== Right Column ===== */
+    .right-col {
+      flex: 0.9;
+      min-width: 300px;
+      background: rgba(0, 20, 40, 0.3);
+      border-radius: 2rem;
+      padding: 1.8rem;
+      border: 1px solid rgba(0, 212, 255, 0.04);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    
+    /* ===== Robot Icon ===== */
+    .robot-circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(74, 222, 128, 0.05));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+      border: 2px solid rgba(0, 212, 255, 0.15);
+      box-shadow: 0 0 25px rgba(0, 212, 255, 0.05);
+      animation: robotPulse 2s infinite alternate;
+    }
+    @keyframes robotPulse {
+      0% { box-shadow: 0 0 10px rgba(0,212,255,0.05); border-color: rgba(0,212,255,0.15); transform: scale(1); }
+      100% { box-shadow: 0 0 35px rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.2); transform: scale(1.02); }
+    }
+    .robot-icon { font-size: 3.5rem; color: #00d4ff; animation: robotGlow 1.8s infinite alternate; }
+    @keyframes robotGlow {
+      0% { text-shadow: 0 0 5px rgba(0,212,255,0.3); }
+      100% { text-shadow: 0 0 20px rgba(74,222,128,0.4), 0 0 10px rgba(0,212,255,0.3); }
+    }
+    .robot-text { font-size: 0.6rem; color: #aabbcc; margin-top: 0.3rem; letter-spacing: 2px; }
+    
+    /* ===== Corporate Token Circle ===== */
+    .token-circle {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(74, 222, 128, 0.05));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 1rem 0;
+      border: 2px solid rgba(0, 212, 255, 0.15);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.05);
+      cursor: pointer;
+      transition: 0.3s;
+      animation: tokenPulse 1.5s infinite alternate;
+    }
+    .token-circle:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 40px rgba(74,222,128,0.1);
+    }
+    @keyframes tokenPulse {
+      0% { box-shadow: 0 0 10px rgba(0,212,255,0.05); border-color: rgba(0,212,255,0.15); }
+      100% { box-shadow: 0 0 30px rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.2); }
+    }
+    .token-icon { font-size: 3rem; color: #00d4ff; }
+    .token-status { font-size: 0.5rem; margin-top: 6px; color: #aabbcc; }
+    
+    /* ===== Option Card ===== */
+    .options-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin: 1rem 0 0.6rem;
+      color: #d0e8f0;
+      border-bottom: 2px solid rgba(0,212,255,0.1);
+      display: inline-block;
+      padding-bottom: 5px;
+    }
+    .option-card {
+      width: 100%;
+      background: linear-gradient(135deg, rgba(0,212,255,0.03), rgba(74,222,128,0.03));
+      border-radius: 1.2rem;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      transition: 0.3s;
+      border: 1px solid rgba(0,212,255,0.04);
+    }
+    .option-card .option-icon { font-size: 2rem; color: #00d4ff; }
+    .option-card .option-text h4 {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #ffffff;
+    }
+    .option-card .option-text p { font-size: 0.5rem; color: #aabbcc; }
+    
+    /* ===== Form Styles ===== */
+    .form-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 1.2rem;
+      color: #ffffff;
+    }
+    .form-title span { background: linear-gradient(135deg, #00d4ff, #4ade80); background-clip: text; -webkit-background-clip: text; color: transparent; }
+    
+    .input-group { margin-bottom: 1rem; position: relative; }
+    .input-group label {
+      display: block;
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+      color: #aabbcc;
+    }
+    .input-field {
+      width: 100%;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(0,212,255,0.06);
+      padding: 0.6rem 2.5rem 0.6rem 1rem;
+      border-radius: 2rem;
+      font-family: 'Inter', monospace;
+      color: #ffffff;
+      font-size: 0.8rem;
+      outline: none;
+      transition: 0.3s;
+    }
+    .input-field::placeholder { color: #5a6a7a; }
+    .input-field:focus { border-color: #00d4ff; box-shadow: 0 0 15px rgba(0,212,255,0.05); }
+    .input-field.token-field { font-family: monospace; font-weight: 700; letter-spacing: 2px; }
+    .password-toggle {
+      position: absolute;
+      right: 15px;
+      bottom: 10px;
+      cursor: pointer;
+      color: #aabbcc;
+      font-size: 0.9rem;
+    }
+    .password-toggle:hover { color: #00d4ff; }
+    
+    .register-btn {
+      width: 100%;
+      background: linear-gradient(95deg, #00d4ff, #4ade80);
+      border: none;
+      padding: 0.7rem;
+      border-radius: 3rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #0a0e1a;
+      cursor: pointer;
+      transition: 0.3s;
+      margin-top: 0.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .register-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(0,212,255,0.15); }
+    .status-message { margin-top: 0.8rem; text-align: center; font-size: 0.65rem; min-height: 2rem; color: #aabbcc; }
+    .login-link { text-align: center; margin-top: 0.8rem; font-size: 0.6rem; }
+    .login-link a { color: #aabbcc; text-decoration: none; }
+    .login-link a:hover { color: #00d4ff; }
+    .footer { text-align: center; margin-top: 1.5rem; font-size: 0.5rem; color: #4a5a6a; }
+    .footer i { color: #00d4ff; }
+    
+    /* ===== Token Alert ===== */
+    .token-alert {
+      display: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.8rem;
+      margin-top: 0.4rem;
+      font-weight: 600;
+      font-size: 0.6rem;
+      animation: alertPulse 0.6s ease;
+      color: #ffffff;
+    }
+    .token-alert.show { display: flex; align-items: center; gap: 8px; }
+    .token-alert.danger { background: rgba(255,68,68,0.05); border: 1px solid rgba(255,68,68,0.15); color: #ff6666; }
+    .token-alert.success { background: rgba(74,222,128,0.05); border: 1px solid rgba(74,222,128,0.1); color: #66ff88; }
+    .token-alert.warning { background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.1); color: #ffd700; }
+    @keyframes alertPulse { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    
+    /* ===== Forensic Badge ===== */
+    .forensic-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,212,255,0.02);
+      border: 1px solid rgba(0,212,255,0.04);
+      border-radius: 2rem;
+      padding: 0.1rem 0.7rem;
+      font-size: 0.45rem;
+      color: #aabbcc;
+      margin-top: 0.3rem;
+    }
+    .forensic-badge i { color: #ffd700; }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #4ade80;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #ffffff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(0,212,255,0.1);
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    @keyframes slideToast { from { transform: translateX(100%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
+    
+    /* ===== Copyright Block ===== */
+    .copyright-block {
+      background: rgba(255, 0, 0, 0.05);
+      border: 1px solid #ff4444;
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin: 20px auto 0;
+      max-width: 750px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.55rem;
+      color: #ff8888;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .copyright-block strong {
+      color: #ff4444;
+      font-weight: 800;
+    }
+    .copyright-block .legal-icon {
+      color: #ffd700;
+      margin-right: 6px;
+    }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) {
+      .glass-panel { flex-direction: column; }
+      .register-container { margin: 1rem; }
+      .fingerprint-border { width: 50px; height: 50px; top: 10px; left: 10px; }
+      .forensic-warning { bottom: 60px; font-size: 0.35rem; padding: 0.2rem 0.8rem; }
+    }
+    @media (max-width: 600px) {
+      .form-col { min-width: auto; padding: 1rem; }
+      .right-col { min-width: auto; padding: 1rem; }
+      .robot-circle { width: 70px; height: 70px; }
+      .robot-icon { font-size: 2.5rem; }
+      .token-circle { width: 90px; height: 90px; }
+      .token-icon { font-size: 2.2rem; }
+      .option-card { flex-direction: column; text-align: center; }
+      .copyright-block { font-size: 0.45rem; padding: 10px 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <canvas id="canvas-bg"></canvas>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Laser Scanner ===== -->
+  <div class="laser-scanner">
+    <div class="laser-line"></div>
+  </div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 FORENSIC REGISTRATION · CORPORATE IDENTITY · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 ZERO-TRUST · BIOMETRIC VERIFICATION · TOKEN REQUIRED 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00d4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#4ade80" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00d4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#4ade80" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#4ade80" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== NAVIGATION BUTTON - DASHBOARD ===== -->
+  <a href="index.html" class="nav-dashboard-btn" id="navDashboardBtn">
+    <span class="badge-dot"></span>
+    <i class="fas fa-cube"></i>
+    <span>NEXUSAR DASHBOARD</span>
+    <i class="fas fa-arrow-right" style="font-size:0.5rem; opacity:0.6;"></i>
+  </a>
+  
+  <!-- ===== Forensic Warning ===== -->
+  <div class="forensic-warning">
+    <i class="fas fa-exclamation-triangle"></i> FORENSIC REGISTRATION · IDENTITY VERIFICATION REQUIRED · AUDIT TRAIL ACTIVE
+    <i class="fas fa-fingerprint" style="margin-left:8px;"></i>
+  </div>
+
+  <!-- ===== BATOOL BADGE (Program Manager & Digital Forensics Lead) ===== -->
+  <div class="batool-badge">
+    <div class="badge-title">
+      <span class="shield-icon"><i class="fas fa-shield-haltered"></i></span> Program Director
+      <span style="margin-left:auto;color:#00d4ff;font-size:0.45rem;"><i class="fas fa-verified"></i></span>
+    </div>
+    <div class="badge-name">
+      <span class="badge-icon"><i class="fas fa-user-shield"></i></span>
+      Batool Jameel Nahma Rashid Al-Bakanm Al-Shammar
+    </div>
+    <div class="badge-role">
+      <span class="role-icon"><i class="fas fa-crown"></i></span> Chief of Engineering Cybersecurity & Digital Forensics
+    </div>
+    <div class="badge-divider"></div>
+    <div class="badge-mission">
+      <span>PCS-AI</span> · Full Program Management · Cyber Defense · Digital Forensics · Evidence & Incident Response
+    </div>
+    <div class="badge-specialty">
+      <i class="fas fa-graduation-cap"></i> Specialty: Engineering Cybersecurity & Digital Forensics
+    </div>
+    <div class="badge-id">
+      <span class="id-icon"><i class="fas fa-id-card"></i></span> ID: BJNR-2026-PCSAI
+    </div>
+    <div class="badge-email">
+      <span class="email-icon"><i class="fas fa-envelope"></i></span> 202121189@gcet.edu.om
+    </div>
+  </div>
+  
+  <!-- ===== Main Container ===== -->
+  <div class="register-container">
+    <div class="glass-panel">
+
+      <!-- LEFT: Registration Form -->
+      <div class="form-col">
+        <div class="form-title">
+          <span><i class="fas fa-user-plus"></i> FORENSIC REGISTRATION</span>
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:center; margin-bottom:0.8rem;">
+          <span class="forensic-badge"><i class="fas fa-fingerprint"></i> Biometric Required</span>
+          <span class="forensic-badge"><i class="fas fa-shield-alt"></i> Zero-Trust</span>
+          <span class="forensic-badge"><i class="fas fa-vault"></i> Encrypted</span>
+        </div>
+        <form id="registerForm" onsubmit="return false;">
+          <div class="input-group">
+            <label><i class="fas fa-user"></i> Username</label>
+            <input type="text" id="regUsername" class="input-field" placeholder="Choose username" autocomplete="off" required>
+          </div>
+          <div class="input-group">
+            <label><i class="fas fa-envelope"></i> Email Address</label>
+            <input type="email" id="regEmail" class="input-field" placeholder="you@example.com" autocomplete="off" required>
+          </div>
+          <div class="input-group">
+            <label><i class="fas fa-lock"></i> Password</label>
+            <input type="password" id="regPassword" class="input-field" placeholder="Minimum 6 characters" required>
+            <i class="fas fa-eye password-toggle" id="togglePassword"></i>
+          </div>
+          <div class="input-group">
+            <label><i class="fas fa-check-circle"></i> Confirm Password</label>
+            <input type="password" id="regConfirm" class="input-field" placeholder="Re-enter password" required>
+            <i class="fas fa-eye password-toggle" id="toggleConfirm"></i>
+          </div>
+          <div class="input-group">
+            <label><i class="fas fa-key"></i> Corporate Identity Token</label>
+            <input type="text" id="regToken" class="input-field token-field" placeholder="e.g. PCS-AI-2026-X7K9" autocomplete="off" required>
+            <div id="tokenAlert" class="token-alert">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span id="tokenAlertText">Invalid token!</span>
+            </div>
+          </div>
+          <button type="submit" id="registerBtn" class="register-btn"><i class="fas fa-robot"></i> REGISTER & ACTIVATE</button>
+          <div id="statusMessage" class="status-message"></div>
+          <div class="login-link">
+            <i class="fas fa-arrow-left" style="font-size:0.5rem; opacity:0.4;"></i>
+            <a href="login.html">GO TO NEXUSAR login →</a>
+          </div>
+        </form>
+      </div>
+
+      <!-- RIGHT: Robot + Token + PCS-AI -->
+      <div class="right-col">
+        <!-- Robot -->
+        <div class="robot-circle">
+          <i class="fas fa-robot robot-icon"></i>
+        </div>
+        <div class="robot-text">
+          <i class="fas fa-microchip"></i> AI REGISTRATION AGENT
+        </div>
+
+        <!-- Corporate Token Circle (Clickable) -->
+        <div class="token-circle" id="tokenBtn">
+          <i class="fas fa-key token-icon" id="tokenIcon"></i>
+          <div class="token-status" id="tokenStatus">GENERATE TOKEN</div>
+        </div>
+
+        <div class="options-title">PCS-AI MODULE</div>
+
+        <div class="option-card">
+          <div class="option-icon"><i class="fas fa-shield-haltered"></i></div>
+          <div class="option-text">
+            <h4>PCS-AI · PHOENIX CORE</h4>
+            <p>Self-Healing AI · Active Defense · Forensics · Bug Hunter · Auto-Regeneration</p>
+          </div>
+        </div>
+
+        <div class="robot-text" style="margin-top: 0.8rem; font-size: 0.5rem; color:#aabbcc;">
+          <i class="fas fa-fingerprint"></i> Corporate Token Required · Anti-Bot Protection
+        </div>
+        <div class="forensic-badge" style="margin-top:0.3rem;">
+          <i class="fas fa-microscope"></i> Digital Forensics Active
+        </div>
+      </div>
+    </div>
+    
+    <!-- ===== LEGAL COPYRIGHT WARNING BLOCK ===== -->
+    <div class="copyright-block">
+      <strong>⚠️ LEGAL NOTICE &amp; COPYRIGHT PROTECTION (OMAN LAW):</strong><br>
+      "All source codes, architecture, and 40 integrated modules within the APPLICATION PCS-AI framework are the exclusive intellectual property of the Lead Developer, <strong>Batool Jameel Nahma Rashid Al-Bakanm Al-Shammar</strong>. Under the Laws of the Sultanate of Oman (Copyright Law No. 65/2008 &amp; Cyber Crime Law No. 12/2011), any unauthorized plagiarism, duplication, or claim of ownership of this work is strictly prohibited and subject to immediate legal prosecution and criminal penalties."
+    </div>
+    
+    <div class="footer">
+      <i class="fas fa-robot"></i> PCS-AI · Corporate Identity Token · Zero-Trust Registration
+    </div>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="alertSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="successSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+
+  <script>
+    // ========== 3D BACKGROUND ==========
+    (function init3DBackground() {
+      const canvas = document.getElementById('canvas-bg');
+      const ctx = canvas.getContext('2d');
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      
+      const particles = [];
+      const numParticles = 80;
+      
+      class Particle {
+        constructor() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.size = Math.random() * 2.5 + 0.5;
+          this.speedX = (Math.random() - 0.5) * 0.5;
+          this.speedY = (Math.random() - 0.5) * 0.5;
+          this.opacity = Math.random() * 0.3 + 0.1;
+          this.phase = Math.random() * Math.PI * 2;
+          this.colors = ['#00d4ff', '#4ade80', '#00ffc8'];
+          this.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+        }
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.phase += 0.015;
+          if (this.x < 0 || this.x > width) this.speedX *= -1;
+          if (this.y < 0 || this.y > height) this.speedY *= -1;
+        }
+        draw() {
+          const opacity = this.opacity + Math.sin(this.phase) * 0.05;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color.replace(')', `, ${Math.max(0.02, opacity)})`).replace('rgb', 'rgba');
+          if (!this.color.includes('rgba')) {
+            ctx.fillStyle = `rgba(0, 212, 255, ${Math.max(0.02, opacity)})`;
+          }
+          ctx.fill();
+          if (this.size > 1.8) {
+            ctx.beginPath();
+            ctx.arc(this.x + Math.sin(this.phase) * 4, this.y + Math.cos(this.phase) * 4, this.size * 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(74, 222, 128, ${Math.max(0.01, opacity * 0.3)})`;
+            ctx.fill();
+          }
+        }
+      }
+      
+      for (let i = 0; i < numParticles; i++) {
+        particles.push(new Particle());
+      }
+      
+      function drawVerificationLines() {
+        const time = Date.now() / 10000;
+        const colors = ['#00d4ff', '#4ade80', '#00ffc8'];
+        for (let c = 0; c < 3; c++) {
+          ctx.strokeStyle = colors[c] + '33';
+          ctx.lineWidth = 0.5;
+          for (let i = 0; i < 10; i++) {
+            const x1 = Math.sin(time + i * 0.5 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y1 = Math.cos(time * 0.7 + i * 0.3 + c * 0.5) * height * 0.35 + height * 0.5;
+            const x2 = Math.sin(time * 0.8 + i * 0.7 + 1 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y2 = Math.cos(time * 0.5 + i * 0.5 + 1 + c * 0.5) * height * 0.35 + height * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
+        }
+        const cx = width / 2;
+        const cy = height / 2;
+        const maxRadius = Math.min(width, height) * 0.22;
+        const colors2 = ['#00d4ff', '#4ade80', '#00ffc8'];
+        for (let r = 6; r < maxRadius; r += 5) {
+          const opacity = 0.02 + Math.sin(time * 0.5 + r * 0.025) * 0.01;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.strokeStyle = colors2[r % 3] + Math.floor(Math.max(0.005, opacity) * 255).toString(16).padStart(2, '0');
+          ctx.lineWidth = 0.3;
+          ctx.stroke();
+        }
+      }
+      
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+        drawVerificationLines();
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animate);
+      }
+      animate();
+      
+      window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+      });
+    })();
+    
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError) {
+        const sound = document.getElementById('alertSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('successSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    // ========== TOGGLE PASSWORD ==========
+    const togglePassword = document.getElementById('togglePassword');
+    const toggleConfirm = document.getElementById('toggleConfirm');
+    const passwordField = document.getElementById('regPassword');
+    const confirmField = document.getElementById('regConfirm');
+
+    togglePassword.addEventListener('click', function() {
+      const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordField.setAttribute('type', type);
+      this.classList.toggle('fa-eye-slash');
+    });
+    toggleConfirm.addEventListener('click', function() {
+      const type = confirmField.getAttribute('type') === 'password' ? 'text' : 'password';
+      confirmField.setAttribute('type', type);
+      this.classList.toggle('fa-eye-slash');
+    });
+
+    // ========== CORPORATE TOKEN SYSTEM ==========
+    const VALID_TOKENS = [
+      'PCS-AI-2026-X7K9', 'PHOENIX-2026-A1B2', 'CORP-TOKEN-2026',
+      'PCS-AI-SECURE', 'PHOENIX-CORE-AI', 'PCS-AI-2026'
+    ];
+    const tokenBtn = document.getElementById('tokenBtn');
+    const tokenIcon = document.getElementById('tokenIcon');
+    const tokenStatus = document.getElementById('tokenStatus');
+    const regToken = document.getElementById('regToken');
+    const tokenAlert = document.getElementById('tokenAlert');
+    const tokenAlertText = document.getElementById('tokenAlertText');
+    let tokenAttempts = 0;
+    let isTokenLocked = false;
+    let tokenLockTimer = null;
+
+    function showTokenAlert(message, type = 'danger') {
+      tokenAlert.className = 'token-alert show ' + type;
+      tokenAlertText.innerText = message;
+      setTimeout(() => { tokenAlert.classList.remove('show'); }, 4000);
+    }
+
+    function generateToken() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let token = 'PCS-AI-';
+      for (let i = 0; i < 4; i++) {
+        token += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      token += '-';
+      for (let i = 0; i < 4; i++) {
+        token += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return token;
+    }
+
+    function generateAndFillToken() {
+      if (isTokenLocked) {
+        showTokenAlert('🔒 Token system LOCKED due to multiple invalid attempts!', 'danger');
+        showToast('🔒 Token system LOCKED! Please wait.', true);
+        return;
+      }
+      const newToken = generateToken();
+      regToken.value = newToken;
+      tokenIcon.style.color = '#4ade80';
+      tokenStatus.innerHTML = '<i class="fas fa-check-circle"></i> TOKEN GENERATED';
+      showTokenAlert('✅ Corporate Token generated successfully!', 'success');
+      showToast('✅ Corporate Token generated!', false);
+      setTimeout(() => {
+        tokenIcon.style.color = '#00d4ff';
+        tokenStatus.innerHTML = 'GENERATE TOKEN';
+      }, 3000);
+    }
+
+    tokenBtn.addEventListener('click', generateAndFillToken);
+
+    function validateToken(token) {
+      if (isTokenLocked) {
+        showTokenAlert('🔒 System LOCKED! Contact administrator.', 'danger');
+        return false;
+      }
+
+      const isValid = VALID_TOKENS.some(t => t.toUpperCase() === token.toUpperCase().trim());
+      
+      if (isValid) {
+        tokenAttempts = 0;
+        showTokenAlert('✅ Corporate Token Verified!', 'success');
+        return true;
+      } else {
+        tokenAttempts++;
+        showTokenAlert(`❌ Invalid Token! Attempt ${tokenAttempts}/3`, 'danger');
+        
+        if (tokenAttempts >= 3) {
+          isTokenLocked = true;
+          showTokenAlert('🚨 TOKEN SYSTEM LOCKED! Multiple failed attempts detected. Attack simulation triggered.', 'danger');
+          showToast('🚨 TOKEN SYSTEM LOCKED! Attack detected.', true);
+          const sound = document.getElementById('alertSound');
+          if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+          regToken.disabled = true;
+          regToken.style.borderColor = '#ff4444';
+          regToken.style.background = 'rgba(255,68,68,0.05)';
+          
+          tokenLockTimer = setTimeout(() => {
+            isTokenLocked = false;
+            regToken.disabled = false;
+            regToken.style.borderColor = '';
+            regToken.style.background = '';
+            tokenAttempts = 0;
+            showTokenAlert('🔓 Token system UNLOCKED. You can try again.', 'success');
+            showToast('🔓 Token system unlocked.', false);
+          }, 10000);
+        }
+        return false;
+      }
+    }
+
+    regToken.addEventListener('input', function() {
+      if (this.value.length > 5 && !isTokenLocked) {
+        const isValid = VALID_TOKENS.some(t => t.toUpperCase() === this.value.toUpperCase().trim());
+        if (isValid) {
+          this.style.borderColor = '#4ade80';
+          this.style.background = 'rgba(74,222,128,0.03)';
+        } else {
+          this.style.borderColor = '';
+          this.style.background = '';
+        }
+      } else {
+        this.style.borderColor = '';
+        this.style.background = '';
+      }
+    });
+
+    // ========== REGISTRATION ==========
+    let users = [];
+    try { users = JSON.parse(localStorage.getItem('pcs_ai_users') || '[]'); } catch(e) { users = []; }
+
+    function saveUsers() { localStorage.setItem('pcs_ai_users', JSON.stringify(users)); }
+
+    const regUsername = document.getElementById('regUsername');
+    const regEmail = document.getElementById('regEmail');
+    const regPassword = document.getElementById('regPassword');
+    const regConfirm = document.getElementById('regConfirm');
+    const registerBtn = document.getElementById('registerBtn');
+    const statusDiv = document.getElementById('statusMessage');
+
+    function showMessage(msg, isError = false, isSuccess = false) {
+      statusDiv.innerHTML = isSuccess ? `<i class="fas fa-check-circle"></i> ${msg}` : (isError ? `<i class="fas fa-exclamation-triangle"></i> ${msg}` : `<i class="fas fa-info-circle"></i> ${msg}`);
+      statusDiv.style.color = isSuccess ? "#66ff88" : (isError ? "#ff6666" : "#aabbcc");
+    }
+
+    function registerUser(username, email, password, token) {
+      if (!username || username.trim().length < 3) return { success: false, msg: "Username must be at least 3 characters." };
+      if (!email || !email.includes('@') || !email.includes('.')) return { success: false, msg: "Please enter a valid email address." };
+      if (password.length < 6) return { success: false, msg: "Password must be at least 6 characters." };
+      if (!token || token.trim().length < 5) return { success: false, msg: "Please enter a valid Corporate Identity Token." };
+      
+      if (!validateToken(token)) return { success: false, msg: "Invalid Corporate Token. Registration requires a valid token." };
+      
+      if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) return { success: false, msg: "Username already exists." };
+      if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) return { success: false, msg: "Email already registered." };
+      
+      users.push({
+        username: username.trim(),
+        email: email.trim().toLowerCase(),
+        password: password,
+        corporateToken: token.trim().toUpperCase(),
+        module: "PCS-AI · Phoenix Core Shield",
+        registeredAt: new Date().toISOString()
+      });
+      saveUsers();
+      return { success: true, msg: "✅ Registration successful! Welcome to PCS-AI · Phoenix Core Shield" };
+    }
+
+    function handleRegistration(e) {
+      e.preventDefault();
+      if (isTokenLocked) {
+        showMessage("🔒 Token system is LOCKED. Please wait 10 seconds.", true);
+        return;
+      }
+      const username = regUsername.value.trim();
+      const email = regEmail.value.trim();
+      const password = regPassword.value.trim();
+      const confirm = regConfirm.value.trim();
+      const token = regToken.value.trim();
+      
+      if (password !== confirm) { showMessage("Passwords do not match.", true); return; }
+      
+      const result = registerUser(username, email, password, token);
+      if (result.success) {
+        showMessage(result.msg, false, true);
+        showToast("✅ Registration successful!", false);
+        registerBtn.innerHTML = '<i class="fas fa-check"></i> ACTIVATED!';
+        setTimeout(() => { registerBtn.innerHTML = '<i class="fas fa-robot"></i> REGISTER & ACTIVATE'; }, 3000);
+        regUsername.value = "";
+        regEmail.value = "";
+        regPassword.value = "";
+        regConfirm.value = "";
+        regToken.value = "";
+        regToken.style.borderColor = '';
+        regToken.style.background = '';
+      } else {
+        showMessage(result.msg, true);
+        showToast(result.msg, true);
+      }
+    }
+
+    registerBtn.addEventListener('click', handleRegistration);
+    
+    document.querySelectorAll('#regUsername, #regEmail, #regPassword, #regConfirm, #regToken').forEach(input => {
+      input.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleRegistration(e); });
+    });
+
+    // ========== NAVIGATION CONFIRMATION ==========
+    document.querySelectorAll('a[href="index.html"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        // Just navigate normally - index.html should exist
+        console.log('Navigating to NexusAR Dashboard...');
+      });
+    });
+
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 't' || e.key === 'T') {
+        document.getElementById('tokenBtn').click();
+      }
+      // Press 'D' for Dashboard
+      if (e.key === 'd' || e.key === 'D') {
+        window.location.href = 'index.html';
+      }
+    });
+
+    console.log('🔵 PCS-AI Registration Page loaded.');
+    console.log('📌 Press "D" to go to NexusAR Dashboard');
+    console.log('📌 Press "T" to generate a Corporate Token');
+  </script>
+</body>
+</html>

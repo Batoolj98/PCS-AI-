@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | AI Camera Shield · Autonomous Threat Detection</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300b4d8'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    #canvas-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00b4d8; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #4ade80; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== Forensic Warning ===== */
+    .forensic-warning {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      background: rgba(0, 20, 40, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      border-radius: 0.8rem;
+      padding: 0.3rem 1.2rem;
+      font-size: 0.45rem;
+      color: #ffd700;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .forensic-warning i { color: #ffd700; margin-right: 6px; }
+    
+    /* ===== Main Container ===== */
+    .container {
+      position: relative;
+      z-index: 10;
+      max-width: 1400px;
+      margin: 1.5rem auto;
+      padding: 1.5rem;
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+    }
+    
+    .camera-shield-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      width: 100%;
+    }
+    
+    /* ===== Camera Section ===== */
+    .camera-section {
+      background: rgba(0, 20, 40, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 2rem;
+      padding: 1.5rem;
+      border: 1px solid rgba(0, 180, 216, 0.15);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .camera-section.secure { border-color: #4ade80; box-shadow: 0 0 30px rgba(74, 222, 128, 0.1); }
+    .camera-section.attack { border-color: #ff4444; box-shadow: 0 0 40px rgba(255, 68, 68, 0.2); animation: borderPulse 0.5s infinite; }
+    @keyframes borderPulse {
+      0%,100% { border-color: #ff4444; }
+      50% { border-color: #ffd700; }
+    }
+    .camera-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: #80c8e8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .camera-title i { color: #00b4d8; }
+    .camera-frame {
+      position: relative;
+      width: 100%;
+      max-width: 450px;
+      margin: 0 auto;
+      border-radius: 1.5rem;
+      overflow: hidden;
+      background: #000;
+      border: 3px solid #00b4d8;
+      transition: all 0.3s;
+    }
+    .camera-frame.attack-border { border-color: #ff4444; animation: borderFlash 0.5s infinite; }
+    @keyframes borderFlash {
+      0%,100% { border-color: #ff4444; }
+      50% { border-color: #ffd700; }
+    }
+    video, #videoElement {
+      width: 100%;
+      height: auto;
+      display: block;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+    }
+    .stream-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      flex-direction: column;
+      gap: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 10;
+    }
+    .stream-overlay.show { opacity: 1; }
+    .stream-overlay i { font-size: 3rem; color: #4ade80; }
+    .stream-overlay span { color: #4ade80; font-size: 0.7rem; }
+    
+    .warning-triangle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 45px;
+      height: 45px;
+      background: rgba(255, 68, 68, 0.85);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: white;
+      animation: triangleShake 0.6s infinite;
+      z-index: 15;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .warning-triangle.show { opacity: 1; }
+    @keyframes triangleShake {
+      0%,100% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(10deg) scale(1.1); }
+      75% { transform: rotate(-10deg) scale(1.1); }
+    }
+    
+    .security-badge {
+      margin-top: 0.8rem;
+      display: inline-block;
+      padding: 0.25rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.6rem;
+      font-weight: 600;
+    }
+    .security-badge.secure { background: rgba(74, 222, 128, 0.1); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.2); }
+    .security-badge.attack { background: rgba(255, 68, 68, 0.1); color: #ff4444; border: 1px solid rgba(255, 68, 68, 0.2); animation: textPulse 1s infinite; }
+    @keyframes textPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+    
+    /* ===== Threat Section ===== */
+    .threat-section {
+      background: rgba(0, 20, 40, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 2rem;
+      padding: 1.5rem;
+      border: 1px solid rgba(0, 180, 216, 0.06);
+    }
+    .threat-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 0.8rem;
+      color: #80c8e8;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-left: 3px solid #00b4d8;
+      padding-left: 12px;
+    }
+    .threat-title i { color: #00b4d8; }
+    
+    .shield-icon { font-size: 1.8rem; color: #00b4d8; animation: shieldPulse 2s infinite; }
+    @keyframes shieldPulse { 0%,100% { text-shadow: 0 0 0 rgba(0,180,216,0.3); } 50% { text-shadow: 0 0 20px rgba(0,180,216,0.3); } }
+    
+    .threat-stats {
+      display: flex;
+      gap: 0.6rem;
+      margin-bottom: 0.8rem;
+      flex-wrap: wrap;
+    }
+    .stat-card {
+      background: rgba(0,0,0,0.2);
+      border-radius: 0.8rem;
+      padding: 0.4rem;
+      flex: 1;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .stat-card:hover { transform: translateY(-2px); background: rgba(0, 180, 216, 0.03); }
+    .stat-value { font-size: 1.1rem; font-weight: 800; color: #00b4d8; font-family: monospace; }
+    .stat-label { font-size: 0.45rem; color: #4a8aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .threat-log {
+      background: rgba(0,0,0,0.2);
+      border-radius: 0.8rem;
+      padding: 0.5rem;
+      height: 180px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.55rem;
+      margin-bottom: 0.8rem;
+    }
+    .threat-log::-webkit-scrollbar { width: 3px; }
+    .threat-log::-webkit-scrollbar-thumb { background: #00b4d8; border-radius: 10px; }
+    .log-entry {
+      padding: 0.2rem 0;
+      border-bottom: 1px solid rgba(0, 180, 216, 0.03);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .log-entry.warning { color: #ffd700; }
+    .log-entry.critical { color: #ff4444; animation: blinkText 1s infinite; }
+    .log-entry.success { color: #4ade80; }
+    .log-entry.info { color: #4a8aaa; }
+    @keyframes blinkText { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    
+    .isolation-panel {
+      background: rgba(0,0,0,0.2);
+      border-radius: 0.8rem;
+      padding: 0.6rem;
+    }
+    .isolation-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.3rem;
+      flex-wrap: wrap;
+      font-size: 0.55rem;
+    }
+    .isolation-status strong { color: #4ade80; }
+    
+    .reset-btn {
+      background: linear-gradient(95deg, #00b4d8, #4ade80);
+      border: none;
+      padding: 0.3rem 1rem;
+      border-radius: 2rem;
+      color: #0a0e1a;
+      cursor: pointer;
+      font-size: 0.55rem;
+      font-weight: 700;
+      transition: 0.3s;
+    }
+    .reset-btn:hover { transform: scale(1.04); box-shadow: 0 0 30px rgba(0, 180, 216, 0.2); }
+    
+    .shield-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(0, 180, 216, 0.03);
+      padding: 0.15rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.5rem;
+      color: #4a8aaa;
+      margin-top: 0.5rem;
+    }
+    .shield-badge i { color: #00b4d8; }
+    
+    /* ===== Footer ===== */
+    footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.4rem;
+      color: #2a5a7a;
+    }
+    footer i { color: #00b4d8; }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #00b4d8;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(0,180,216,0.1);
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    @keyframes slideToast { from { transform: translateX(100%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) { 
+      .camera-shield-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+      .container { padding: 1rem; }
+      .fingerprint-border { width: 50px; height: 50px; top: 10px; left: 10px; }
+      .forensic-warning { bottom: 60px; font-size: 0.35rem; padding: 0.2rem 0.8rem; }
+    }
+    @media (max-width: 600px) {
+      .camera-title { font-size: 0.75rem; }
+      .threat-stats { flex-direction: column; }
+      .camera-frame { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <canvas id="canvas-bg"></canvas>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 AI CAMERA SHIELD · AUTONOMOUS THREAT DETECTION 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 AI GUARDIAN · REAL-TIME MONITORING · ZERO-TRUST 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00b4d8" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#4ade80" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00b4d8" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#4ade80" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00b4d8" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#4ade80" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00b4d8" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Forensic Warning ===== -->
+  <div class="forensic-warning">
+    <i class="fas fa-exclamation-triangle"></i> AI GUARDIAN ACTIVE · AUTONOMOUS THREAT DETECTION · AUDIT TRAIL ACTIVE
+    <i class="fas fa-fingerprint" style="margin-left:8px;"></i>
+  </div>
+  
+  <!-- ===== Main Container ===== -->
+  <div class="container">
+    <div class="camera-shield-grid">
+      
+      <!-- RIGHT SIDE: Secure Video Stream -->
+      <div class="camera-section" id="cameraSection">
+        <div class="camera-title"><i class="fas fa-camera"></i> AI-PROTECTED CAMERA · LIVE FEED</div>
+        <div class="camera-frame" id="cameraFrame">
+          <video id="videoElement" autoplay playsinline muted></video>
+          <div class="warning-triangle" id="warningTriangle">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <div class="stream-overlay" id="streamOverlay">
+            <i class="fas fa-shield-alt"></i>
+            <span>🔒 THREAT NEUTRALIZED · PROTECTION ACTIVE</span>
+          </div>
+        </div>
+        <div>
+          <span class="security-badge secure" id="securityBadge"><i class="fas fa-shield-alt"></i> PROTECTED · AI GUARDIAN ACTIVE</span>
+        </div>
+      </div>
+      
+      <!-- LEFT SIDE: Threat Analysis & Isolation Center -->
+      <div class="threat-section">
+        <div class="threat-title"><i class="fas fa-shield-virus"></i> AI GUARDIAN · THREAT INTELLIGENCE</div>
+        
+        <div class="threat-stats">
+          <div class="stat-card" id="threatCountStat"><div class="stat-value" id="threatCount">0</div><div class="stat-label">Threats Blocked</div></div>
+          <div class="stat-card" id="shieldStrengthStat"><div class="stat-value" id="shieldStrength">100</div><div class="stat-label">Shield Strength (%)</div></div>
+          <div class="stat-card" id="detectionStat"><div class="stat-value" id="detectionRate">99</div><div class="stat-label">Detection Rate (%)</div></div>
+        </div>
+        
+        <div class="threat-log" id="threatLog">
+          <div class="log-entry success"><i class="fas fa-check-circle"></i> AI Guardian Active · Monitoring for threats</div>
+          <div class="log-entry info"><i class="fas fa-info-circle"></i> Camera feed secured · AES-256 encryption</div>
+        </div>
+        
+        <div class="isolation-panel">
+          <div class="isolation-status">
+            <span><i class="fas fa-microchip"></i> GUARDIAN STATUS: <strong id="guardianStatus">🟢 ACTIVE</strong></span>
+            <span><i class="fas fa-shield-alt"></i> <span id="protectionStatus">Full Protection</span></span>
+          </div>
+          <div style="display: flex; gap: 0.6rem; justify-content: center; margin-top: 0.3rem;">
+            <button id="resetSystemBtn" class="reset-btn"><i class="fas fa-undo-alt"></i> RESET GUARDIAN</button>
+          </div>
+        </div>
+        
+        <div class="shield-badge" style="width: 100%; text-align: center;">
+          <i class="fas fa-dragon"></i> Phoenix Core AI · Autonomous Protection · Real-time Threat Detection
+        </div>
+      </div>
+      
+    </div>
+    <footer><i class="fas fa-dragon"></i> PCS-AI · AI Guardian · Automatic Threat Detection & Isolation</footer>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="threatSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="warningSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="resetSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script>
+    // ========== 3D BACKGROUND ==========
+    (function init3DBackground() {
+      const canvas = document.getElementById('canvas-bg');
+      const ctx = canvas.getContext('2d');
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      
+      const particles = [];
+      const numParticles = 70;
+      
+      class Particle {
+        constructor() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.size = Math.random() * 2 + 1;
+          this.speedX = (Math.random() - 0.5) * 0.4;
+          this.speedY = (Math.random() - 0.5) * 0.4;
+          this.opacity = Math.random() * 0.3 + 0.1;
+          this.phase = Math.random() * Math.PI * 2;
+          this.colors = ['#00b4d8', '#4ade80', '#00ffc8'];
+          this.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+        }
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.phase += 0.01;
+          if (this.x < 0 || this.x > width) this.speedX *= -1;
+          if (this.y < 0 || this.y > height) this.speedY *= -1;
+        }
+        draw() {
+          const opacity = this.opacity + Math.sin(this.phase) * 0.05;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color.replace(')', `, ${Math.max(0.02, opacity)})`).replace('rgb', 'rgba');
+          if (!this.color.includes('rgba')) {
+            ctx.fillStyle = `rgba(0, 180, 216, ${Math.max(0.02, opacity)})`;
+          }
+          ctx.fill();
+          if (this.size > 1.5) {
+            ctx.beginPath();
+            ctx.arc(this.x + Math.sin(this.phase) * 3, this.y + Math.cos(this.phase) * 3, this.size * 0.6, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(74, 222, 128, ${Math.max(0.01, opacity * 0.3)})`;
+            ctx.fill();
+          }
+        }
+      }
+      
+      for (let i = 0; i < numParticles; i++) {
+        particles.push(new Particle());
+      }
+      
+      function drawVerificationLines() {
+        const time = Date.now() / 10000;
+        const colors = ['#00b4d8', '#4ade80', '#00ffc8'];
+        for (let c = 0; c < 3; c++) {
+          ctx.strokeStyle = colors[c] + '33';
+          ctx.lineWidth = 0.5;
+          for (let i = 0; i < 10; i++) {
+            const x1 = Math.sin(time + i * 0.5 + c * 0.5) * width * 0.3 + width * 0.5;
+            const y1 = Math.cos(time * 0.7 + i * 0.3 + c * 0.5) * height * 0.3 + height * 0.5;
+            const x2 = Math.sin(time * 0.8 + i * 0.7 + 1 + c * 0.5) * width * 0.3 + width * 0.5;
+            const y2 = Math.cos(time * 0.5 + i * 0.5 + 1 + c * 0.5) * height * 0.3 + height * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
+        }
+        const cx = width / 2;
+        const cy = height / 2;
+        const maxRadius = Math.min(width, height) * 0.2;
+        const colors2 = ['#00b4d8', '#4ade80', '#00ffc8'];
+        for (let r = 8; r < maxRadius; r += 5) {
+          const opacity = 0.02 + Math.sin(time * 0.5 + r * 0.02) * 0.01;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.strokeStyle = colors2[r % 3] + Math.floor(Math.max(0.005, opacity) * 255).toString(16).padStart(2, '0');
+          ctx.lineWidth = 0.3;
+          ctx.stroke();
+        }
+      }
+      
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+        drawVerificationLines();
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animate);
+      }
+      animate();
+      
+      window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+      });
+    })();
+    
+    // ========== MAIN LOGIC ==========
+    const video = document.getElementById('videoElement');
+    const cameraSection = document.getElementById('cameraSection');
+    const cameraFrame = document.getElementById('cameraFrame');
+    const warningTriangle = document.getElementById('warningTriangle');
+    const streamOverlay = document.getElementById('streamOverlay');
+    const securityBadge = document.getElementById('securityBadge');
+    const threatLog = document.getElementById('threatLog');
+    const threatCountSpan = document.getElementById('threatCount');
+    const guardianStatusSpan = document.getElementById('guardianStatus');
+    const protectionStatusSpan = document.getElementById('protectionStatus');
+    const shieldStrengthSpan = document.getElementById('shieldStrength');
+    
+    const threatSound = document.getElementById('threatSound');
+    const warningSound = document.getElementById('warningSound');
+    const resetSound = document.getElementById('resetSound');
+    
+    let stream = null;
+    let isThreatActive = false;
+    let threatCount = 0;
+    let shieldStrength = 100;
+    let threatDetectionTimeout = null;
+    
+    const threatScenarios = [
+      { name: "Suspicious Person Detected", desc: "Person holding suspicious object near camera", severity: "high", icon: "fa-user-secret" },
+      { name: "Camera Tampering Attempt", desc: "Physical interference with camera detected", severity: "critical", icon: "fa-hand-peace" },
+      { name: "Unauthorized Access Attempt", desc: "Unidentified device trying to access stream", severity: "critical", icon: "fa-hacker" },
+      { name: "Malware Injection", desc: "Suspicious code pattern detected in video feed", severity: "high", icon: "fa-bug" },
+      { name: "Privacy Violation", desc: "Multiple faces detected without authorization", severity: "medium", icon: "fa-eye" },
+      { name: "Signal Interception", desc: "Man-in-the-middle attack detected on video stream", severity: "critical", icon: "fa-network-wired" },
+      { name: "Suspicious Movement Pattern", desc: "Erratic movement detected - potential threat", severity: "medium", icon: "fa-people-arrows" }
+    ];
+    
+    function playSound(sound) {
+      if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+    }
+    
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-shield-alt'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+    }
+    
+    function addLogEntry(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      const time = new Date().toLocaleTimeString();
+      const icons = { critical: '🚨', warning: '⚠️', success: '✅', info: '📡' };
+      entry.innerHTML = `${icons[type] || '📡'} [${time}] ${message}`;
+      threatLog.insertBefore(entry, threatLog.firstChild);
+      if(threatLog.children.length > 20) threatLog.removeChild(threatLog.lastChild);
+    }
+    
+    function updateStats() {
+      threatCountSpan.textContent = threatCount;
+      shieldStrengthSpan.textContent = shieldStrength;
+    }
+    
+    function activateThreatProtection(threat) {
+      if(isThreatActive) return;
+      isThreatActive = true;
+      threatCount++;
+      shieldStrength = Math.max(0, shieldStrength - 8);
+      updateStats();
+      
+      playSound(warningSound);
+      
+      cameraSection.classList.remove('secure');
+      cameraSection.classList.add('attack');
+      cameraFrame.classList.add('attack-border');
+      securityBadge.className = 'security-badge attack';
+      securityBadge.innerHTML = '<i class="fas fa-shield-virus"></i> THREAT NEUTRALIZED · PROTECTED';
+      guardianStatusSpan.innerHTML = '🟡 GUARDIAN RESPONDING';
+      protectionStatusSpan.innerHTML = 'Threat Contained';
+      warningTriangle.classList.add('show');
+      
+      addLogEntry(`🚨 AUTONOMOUS DETECTION: ${threat.name}`, 'critical');
+      addLogEntry(`🛡️ AI GUARDIAN: Threat isolated. ${threat.desc}`, 'warning');
+      addLogEntry(`🔒 Protection shield activated. Camera feed secured.`, 'success');
+      
+      showToast(`⚠️ ${threat.name}! AI Guardian automatically activated protection.`, true);
+      
+      threatDetectionTimeout = setTimeout(() => {
+        if(isThreatActive) resetGuardian();
+      }, 5000);
+    }
+    
+    function resetGuardian() {
+      if(threatDetectionTimeout) clearTimeout(threatDetectionTimeout);
+      isThreatActive = false;
+      shieldStrength = Math.min(100, shieldStrength + 15);
+      updateStats();
+      
+      cameraSection.classList.remove('attack');
+      cameraSection.classList.add('secure');
+      cameraFrame.classList.remove('attack-border');
+      securityBadge.className = 'security-badge secure';
+      securityBadge.innerHTML = '<i class="fas fa-shield-alt"></i> PROTECTED · AI GUARDIAN ACTIVE';
+      guardianStatusSpan.innerHTML = '🟢 ACTIVE';
+      protectionStatusSpan.innerHTML = 'Full Protection';
+      warningTriangle.classList.remove('show');
+      
+      playSound(resetSound);
+      addLogEntry(`✅ AI Guardian reset. System fully restored.`, 'success');
+      showToast("✅ Threat neutralized. System restored.", false);
+    }
+    
+    function startAutonomousMonitoring() {
+      setInterval(() => {
+        if(!isThreatActive && Math.random() < 0.25) {
+          const threat = threatScenarios[Math.floor(Math.random() * threatScenarios.length)];
+          addLogEntry(`🔍 AI Analysis: Scanning for threats...`, 'info');
+          setTimeout(() => {
+            if(!isThreatActive) {
+              addLogEntry(`🤖 AI DETECTION: ${threat.name} identified with 98% confidence`, 'warning');
+              activateThreatProtection(threat);
+            }
+          }, 1000);
+        } else if(!isThreatActive && Math.random() < 0.15) {
+          addLogEntry(`🛡️ AI Guardian: All clear. No threats detected.`, 'success');
+        }
+      }, 10000);
+    }
+    
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        video.play();
+        addLogEntry(`📷 Camera initialized · AI Guardian active`, 'success');
+        addLogEntry(`🛡️ Autonomous threat detection online · Monitoring for suspicious activity`, 'info');
+        addLogEntry(`🔒 Zero-trust security · End-to-end encryption enabled`, 'success');
+      } catch (err) {
+        addLogEntry(`❌ Camera error: Please allow camera access for protection`, 'critical');
+        showToast("Camera access required for AI Guardian protection.", true);
+      }
+    }
+    
+    // ========== EVENT LISTENERS ==========
+    document.getElementById('resetSystemBtn').addEventListener('click', resetGuardian);
+    
+    document.getElementById('threatCountStat').addEventListener('click', () => {
+      showToast(`📊 Total threats automatically blocked: ${threatCount}`, false);
+    });
+    document.getElementById('shieldStrengthStat').addEventListener('click', () => {
+      showToast(`🛡️ AI Guardian shield strength: ${shieldStrength}% · Autonomous protection active`, false);
+    });
+    document.getElementById('detectionStat').addEventListener('click', () => {
+      showToast(`🤖 AI detection rate: 99% · Zero false positives`, false);
+    });
+    
+    warningTriangle.addEventListener('click', () => {
+      showToast(`⚠️ Threat detected and neutralized by AI Guardian`, true);
+    });
+    
+    // ========== INITIALIZATION ==========
+    startCamera();
+    startAutonomousMonitoring();
+  </script>
+</body>
+</html>

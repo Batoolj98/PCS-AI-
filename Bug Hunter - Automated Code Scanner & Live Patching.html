@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Bug Hunter · Automated Code Scanner & Live Patching</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00d4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #0088ff; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== App Wrapper ===== */
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3rem;
+      min-height: 100vh;
+    }
+    
+    /* ===== Header ===== */
+    .header {
+      text-align: center;
+      padding: 1rem 0 1.5rem;
+      position: relative;
+    }
+    .header .logo-icon {
+      font-size: 3rem;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8, #0088ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: logoPulse 3s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes logoPulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(0,212,255,0.3)); }
+      50% { transform: scale(1.05); filter: drop-shadow(0 0 30px rgba(0,212,255,0.6)); }
+    }
+    .header h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8, #0088ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: 2px;
+      margin-top: 4px;
+    }
+    .header .sub {
+      font-size: 0.65rem;
+      color: #4a8aaa;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .header .badge {
+      display: inline-block;
+      border: 1px solid rgba(0,212,255,0.2);
+      padding: 0.15rem 1rem;
+      border-radius: 30px;
+      font-size: 0.45rem;
+      color: #00d4ff;
+      background: rgba(0,212,255,0.05);
+      margin-top: 6px;
+      letter-spacing: 2px;
+    }
+    
+    /* ===== Divider ===== */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #00d4ff, #00ffc8, #00d4ff, transparent);
+      margin: 0.5rem 0 1.5rem;
+      opacity: 0.3;
+    }
+    
+    /* ===== Stats Bar ===== */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+    .stat-item {
+      background: rgba(0, 20, 40, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 1rem;
+      padding: 0.6rem;
+      text-align: center;
+      border: 1px solid rgba(0,212,255,0.08);
+      transition: 0.3s;
+      cursor: pointer;
+    }
+    .stat-item:hover { border-color: rgba(0,212,255,0.3); transform: translateY(-2px); box-shadow: 0 0 30px rgba(0,212,255,0.05); }
+    .stat-item .stat-value {
+      font-size: 1.3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: monospace;
+    }
+    .stat-item .stat-label {
+      font-size: 0.45rem;
+      color: #4a8aaa;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+    .stat-item .stat-icon {
+      font-size: 0.8rem;
+      color: #00d4ff;
+      display: block;
+      margin-bottom: 2px;
+    }
+    
+    /* ===== Glass Panels ===== */
+    .glass-panel {
+      background: rgba(0, 20, 40, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 1.2rem;
+      padding: 1rem;
+      border: 1px solid rgba(0,212,255,0.06);
+      transition: 0.3s;
+    }
+    .glass-panel:hover { border-color: rgba(0,212,255,0.15); box-shadow: 0 0 40px rgba(0,212,255,0.02); }
+    .panel-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid #00d4ff;
+      padding-left: 10px;
+      color: #80c8e8;
+    }
+    .panel-title i { color: #00d4ff; }
+    .panel-title .badge-count {
+      font-size: 0.4rem;
+      background: rgba(0,212,255,0.1);
+      padding: 0.1rem 0.5rem;
+      border-radius: 30px;
+      color: #00d4ff;
+      margin-left: auto;
+    }
+    
+    /* ===== Code Scanner ===== */
+    .code-scanner {
+      background: rgba(0,0,0,0.3);
+      border-radius: 0.8rem;
+      padding: 0.6rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.55rem;
+      height: 200px;
+      overflow-y: auto;
+      margin: 0.3rem 0;
+    }
+    .code-scanner::-webkit-scrollbar { width: 3px; }
+    .code-scanner::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 10px; }
+    .code-line {
+      color: #4ade80;
+      padding: 0.15rem 0;
+      border-bottom: 1px solid rgba(0,212,255,0.02);
+    }
+    .code-line.vulnerable { color: #ff4444; background: rgba(255,68,68,0.05); }
+    .code-line.fixed { color: #4ade80; text-decoration: line-through; opacity: 0.5; }
+    .code-line .severity-tag { color: #ffd700; }
+    
+    .scan-progress {
+      background: rgba(0,0,0,0.3);
+      border-radius: 30px;
+      height: 4px;
+      overflow: hidden;
+      margin: 0.3rem 0;
+    }
+    .scan-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #00d4ff, #00ffc8);
+      border-radius: 30px;
+      transition: width 0.3s;
+    }
+    
+    /* ===== Patch Circle ===== */
+    .patching-monitor { text-align: center; margin: 0.3rem 0; }
+    .patch-circle {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .patch-percent {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00d4ff, #00ffc8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: monospace;
+    }
+    .patch-history {
+      margin-top: 0.5rem;
+      max-height: 80px;
+      overflow-y: auto;
+      font-size: 0.5rem;
+    }
+    .patch-history::-webkit-scrollbar { width: 3px; }
+    .patch-history::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 10px; }
+    .patch-entry {
+      padding: 0.15rem;
+      border-bottom: 1px solid rgba(0,212,255,0.02);
+    }
+    .patch-entry.success { color: #4ade80; }
+    .patch-entry.critical { color: #ff4444; }
+    
+    /* ===== Scripts Grid ===== */
+    .scripts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.6rem;
+      margin: 0.3rem 0;
+    }
+    .script-card {
+      background: rgba(0,0,0,0.2);
+      border-radius: 0.8rem;
+      padding: 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s;
+      border: 1px solid rgba(0,212,255,0.04);
+    }
+    .script-card:hover { transform: scale(1.04); border-color: #00d4ff; background: rgba(0,212,255,0.03); }
+    .script-icon { font-size: 1.2rem; color: #00d4ff; margin-bottom: 0.2rem; }
+    .script-name { font-size: 0.55rem; font-weight: 600; color: #80c8e8; }
+    .script-desc { font-size: 0.45rem; opacity: 0.6; color: #4a8aaa; margin-top: 0.1rem; }
+    
+    /* ===== Buttons ===== */
+    .control-buttons {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      background: linear-gradient(95deg, #00d4ff, #0088ff);
+      border: none;
+      padding: 0.4rem 1.2rem;
+      border-radius: 2rem;
+      color: white;
+      cursor: pointer;
+      font-size: 0.6rem;
+      font-weight: 700;
+      transition: 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .action-btn:hover { transform: scale(1.04); box-shadow: 0 0 30px rgba(0,212,255,0.3); }
+    .action-btn.reset { background: rgba(255,255,255,0.05); border: 1px solid rgba(0,212,255,0.15); }
+    .action-btn.reset:hover { background: rgba(0,212,255,0.1); }
+    .action-btn.danger { background: linear-gradient(95deg, #ff4444, #dc2626); }
+    .action-btn.danger:hover { box-shadow: 0 0 30px rgba(255,68,68,0.3); }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #00d4ff;
+      border-radius: 1rem;
+      padding: 0.5rem 1.5rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      font-size: 0.65rem;
+      border: 1px solid rgba(0,212,255,0.1);
+      max-width: 90%;
+      text-align: center;
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    @keyframes slideToast { from { transform: translateX(-50%) translateY(20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+    
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      font-size: 0.4rem;
+      color: #2a5a7a;
+      padding-top: 0.8rem;
+      border-top: 1px solid rgba(0,212,255,0.05);
+      margin-top: 0.5rem;
+      letter-spacing: 2px;
+    }
+    .footer i { color: #00d4ff; }
+    .footer .highlight { color: #00d4ff; }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) { .stats-bar { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 600px) { .stats-bar { grid-template-columns: 1fr; } .app-wrapper { padding: 1rem; } .scripts-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <div class="bg-canvas"></div>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 BUG HUNTER · CODE SCANNER · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 AUTOMATED VULNERABILITY SCANNER · LIVE PATCHING 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00d4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#00d4ff" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00d4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#00d4ff" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Main Content ===== -->
+  <div class="app-wrapper">
+    
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-icon"><i class="fas fa-bug"></i></div>
+      <h1 class="glitch-text">Bug Hunter · Automated Security Scanner</h1>
+      <div class="sub">Code Vulnerability Detection · Live Patching · Python Security Scripts Vault</div>
+      <div class="badge"><i class="fas fa-shield-alt"></i> AI-POWERED · ZERO-DAY PROTECTION · AUTONOMOUS PATCHING</div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-item" id="vulnStat" onclick="showToast('📊 Vulnerabilities currently detected in the system', false)">
+        <span class="stat-icon"><i class="fas fa-exclamation-triangle"></i></span>
+        <div class="stat-value" id="vulnCount">0</div>
+        <div class="stat-label">Vulnerabilities</div>
+      </div>
+      <div class="stat-item" id="fixedStat" onclick="showToast('✅ Vulnerabilities patched automatically', false)">
+        <span class="stat-icon"><i class="fas fa-check-circle"></i></span>
+        <div class="stat-value" id="fixedCount">0</div>
+        <div class="stat-label">Patched</div>
+      </div>
+      <div class="stat-item" id="scriptsStat" onclick="showToast('📚 Security scripts available in the vault', false)">
+        <span class="stat-icon"><i class="fas fa-code"></i></span>
+        <div class="stat-value" id="scriptsCount">6</div>
+        <div class="stat-label">Security Scripts</div>
+      </div>
+    </div>
+    
+    <!-- Main Grid -->
+    <div class="glass-panel">
+      <div class="panel-title">
+        <i class="fas fa-code"></i> Automated Code Scanner
+        <span class="badge-count">🔴 SCANNING</span>
+      </div>
+      <div class="code-scanner" id="codeScanner">
+        <div class="code-line">📁 Scanning /etc/network/routes.conf...</div>
+        <div class="code-line">📁 Analyzing firewall_rules.py...</div>
+        <div class="code-line">📁 Checking authentication_module.py...</div>
+      </div>
+      <div class="scan-progress"><div class="scan-fill" id="scanFill" style="width: 0%;"></div></div>
+      <div style="font-size:0.45rem; color:#4a8aaa; margin-top:0.2rem;">
+        <i class="fas fa-robot"></i> AI-Powered Static Analysis · Real-time Vulnerability Detection
+      </div>
+    </div>
+    
+    <!-- Automated Live Patching -->
+    <div class="glass-panel" style="margin-top:1.2rem;">
+      <div class="panel-title">
+        <i class="fas fa-syringe"></i> Automated Live Patching
+        <span class="badge-count">🔧 PATCHING</span>
+      </div>
+      <div class="patching-monitor">
+        <div class="patch-circle">
+          <svg width="100" height="100" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="5"/>
+            <circle id="patchCircle" cx="50" cy="50" r="45" fill="none" stroke="url(#patchGrad)" stroke-width="5" stroke-dasharray="283" stroke-dashoffset="283" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+            <defs><linearGradient id="patchGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#00d4ff"/><stop offset="100%" style="stop-color:#00ffc8"/></linearGradient></defs>
+          </svg>
+          <div class="patch-percent" id="patchPercent">0%</div>
+        </div>
+        <div class="patch-history" id="patchHistory">
+          <div class="patch-entry success">✅ System ready · No patches pending</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Python Security Scripts Vault -->
+    <div class="glass-panel" style="margin-top:1.2rem;">
+      <div class="panel-title">
+        <i class="fas fa-database"></i> Python Security Scripts Vault
+        <span class="badge-count">📂 READY</span>
+      </div>
+      <div class="scripts-grid" id="scriptsGrid">
+        <div class="script-card" data-script="vuln_scanner" onclick="executeScript('vuln_scanner')">
+          <div class="script-icon"><i class="fas fa-search"></i></div>
+          <div class="script-name">vuln_scanner.py</div>
+          <div class="script-desc">Auto vulnerability detection</div>
+        </div>
+        <div class="script-card" data-script="patch_manager" onclick="executeScript('patch_manager')">
+          <div class="script-icon"><i class="fas fa-syringe"></i></div>
+          <div class="script-name">patch_manager.py</div>
+          <div class="script-desc">Automated patch deployment</div>
+        </div>
+        <div class="script-card" data-script="code_audit" onclick="executeScript('code_audit')">
+          <div class="script-icon"><i class="fas fa-code-branch"></i></div>
+          <div class="script-name">code_audit.py</div>
+          <div class="script-desc">Static code analysis</div>
+        </div>
+        <div class="script-card" data-script="firewall_hardening" onclick="executeScript('firewall_hardening')">
+          <div class="script-icon"><i class="fas fa-shield-alt"></i></div>
+          <div class="script-name">firewall_hardening.py</div>
+          <div class="script-desc">Firewall rule optimizer</div>
+        </div>
+        <div class="script-card" data-script="log_analyzer" onclick="executeScript('log_analyzer')">
+          <div class="script-icon"><i class="fas fa-chart-line"></i></div>
+          <div class="script-name">log_analyzer.py</div>
+          <div class="script-desc">Anomaly detection</div>
+        </div>
+        <div class="script-card" data-script="encryption_tool" onclick="executeScript('encryption_tool')">
+          <div class="script-icon"><i class="fas fa-lock"></i></div>
+          <div class="script-name">encryption_tool.py</div>
+          <div class="script-desc">AES-256 encryption</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Control Buttons -->
+    <div class="control-buttons">
+      <button class="action-btn" id="startScanBtn"><i class="fas fa-play"></i> START FULL SCAN</button>
+      <button class="action-btn" id="applyPatchBtn"><i class="fas fa-syringe"></i> APPLY ALL PATCHES</button>
+      <button class="action-btn reset" id="resetBtn"><i class="fas fa-undo-alt"></i> RESET SYSTEM</button>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <i class="fas fa-shield-haltered"></i> PCS-AI · Bug Hunter · 
+      <span class="highlight">Automated Vulnerability Scanner · Live Patching · Zero-Day Protection</span>
+    </div>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="scanStartSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="vulnFoundSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="patchSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="successSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="scriptSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2124/2124-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script>
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError) {
+        const sound = document.getElementById('vulnFoundSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('successSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    function playSound(sound) {
+      if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+    }
+    
+    // ========== BUG HUNTER STATE ==========
+    let vulnerabilities = [
+      { id: 1, name: "SQL Injection in login form", severity: "critical", fixed: false, code: "def login(username, password):\n    query = f\"SELECT * FROM users WHERE name='{username}' AND pass='{password}'\"\n    return execute(query)" },
+      { id: 2, name: "Hardcoded API Key in config.py", severity: "high", fixed: false, code: "API_KEY = 'sk-1234567890abcdef'\nSECRET_TOKEN = 'super_secret_123'" },
+      { id: 3, name: "Cross-Site Scripting (XSS)", severity: "medium", fixed: false, code: "return f'<h1>Welcome {user_input}</h1>'" },
+      { id: 4, name: "Weak SSL/TLS Configuration", severity: "medium", fixed: false, code: "ssl_version = 'TLSv1.0'\ncipher_suite = 'RC4-SHA'" },
+      { id: 5, name: "Command Injection", severity: "critical", fixed: false, code: "os.system(f'ping {user_host}')" }
+    ];
+    
+    let vulnCount = vulnerabilities.length;
+    let fixedCount = 0;
+    let isScanning = false;
+    let scanProgress = 0;
+    let patchPercent = 0;
+    
+    // ========== DOM REFS ==========
+    const scanFill = document.getElementById('scanFill');
+    const patchCircle = document.getElementById('patchCircle');
+    const patchPercentSpan = document.getElementById('patchPercent');
+    const vulnCountSpan = document.getElementById('vulnCount');
+    const fixedCountSpan = document.getElementById('fixedCount');
+    const codeScanner = document.getElementById('codeScanner');
+    const patchHistory = document.getElementById('patchHistory');
+    
+    const circumference = 2 * Math.PI * 45;
+    
+    function updatePatchCircle() {
+      const offset = circumference - (patchPercent / 100) * circumference;
+      patchCircle.setAttribute('stroke-dashoffset', offset);
+      patchPercentSpan.textContent = patchPercent + '%';
+    }
+    
+    function addToPatchHistory(message, isSuccess = true) {
+      const entry = document.createElement('div');
+      entry.className = `patch-entry ${isSuccess ? 'success' : 'critical'}`;
+      entry.textContent = `${isSuccess ? '✅' : '⚠️'} ${new Date().toLocaleTimeString()} - ${message}`;
+      patchHistory.insertBefore(entry, patchHistory.firstChild);
+      if (patchHistory.children.length > 8) patchHistory.removeChild(patchHistory.lastChild);
+    }
+    
+    function updateCodeScanner() {
+      codeScanner.innerHTML = '';
+      vulnerabilities.forEach(vuln => {
+        const line = document.createElement('div');
+        line.className = `code-line ${vuln.fixed ? 'fixed' : 'vulnerable'}`;
+        if (!vuln.fixed) {
+          const severityColor = vuln.severity === 'critical' ? '#ff4444' : vuln.severity === 'high' ? '#ffd700' : '#00d4ff';
+          line.innerHTML = `⚠️ ${vuln.name} - <span style="color:${severityColor};font-weight:700;">${vuln.severity.toUpperCase()}</span><br><span style="font-size:0.45rem; color:#4a8aaa;">${vuln.code.substring(0, 80)}...</span>`;
+        } else {
+          line.innerHTML = `✅ FIXED: ${vuln.name} - Patch applied successfully`;
+        }
+        codeScanner.appendChild(line);
+      });
+      if (vulnerabilities.length === 0) {
+        codeScanner.innerHTML = '<div class="code-line" style="color:#4ade80;">✅ No vulnerabilities found! System is secure.</div>';
+      }
+    }
+    
+    function executeScript(scriptName) {
+      playSound(document.getElementById('scriptSound'));
+      const messages = {
+        vuln_scanner: "🔍 Running vulnerability scanner... Found 0 new vulnerabilities",
+        patch_manager: "🔧 Patch manager: Applying security updates to all modules",
+        code_audit: "📋 Code audit: Analyzing 1,284 files for security issues",
+        firewall_hardening: "🛡️ Firewall hardening: Optimizing 47 firewall rules",
+        log_analyzer: "📊 Log analyzer: Detected 2 anomalous patterns",
+        encryption_tool: "🔐 Encryption tool: Securing 143 sensitive files with AES-256"
+      };
+      const msg = messages[scriptName] || `🐍 Executed ${scriptName}.py security script`;
+      showToast(`🐍 ${msg}`, false);
+      addToPatchHistory(`Executed ${scriptName}.py security script`, true);
+    }
+    
+    function startFullScan() {
+      if (isScanning) {
+        showToast("⚠️ Scan already in progress", true);
+        playSound(document.getElementById('vulnFoundSound'));
+        return;
+      }
+      
+      isScanning = true;
+      scanProgress = 0;
+      scanFill.style.width = '0%';
+      
+      playSound(document.getElementById('scanStartSound'));
+      showToast("🔍 Full system scan initiated...", false);
+      
+      codeScanner.innerHTML = '<div class="code-line">🔍 Initializing scan engine...</div><div class="code-line">📂 Loading security rulesets...</div><div class="code-line">⚡ AI analysis active...</div>';
+      
+      const scanInterval = setInterval(() => {
+        scanProgress += Math.random() * 10 + 5;
+        if (scanProgress >= 100) {
+          scanProgress = 100;
+          clearInterval(scanInterval);
+          scanFill.style.width = '100%';
+          
+          vulnerabilities.forEach(vuln => {
+            if (!vuln.fixed) {
+              playSound(document.getElementById('vulnFoundSound'));
+            }
+          });
+          updateCodeScanner();
+          vulnCountSpan.textContent = vulnerabilities.filter(v => !v.fixed).length;
+          
+          showToast(`✅ Scan complete! Found ${vulnerabilities.filter(v => !v.fixed).length} vulnerabilities`, false);
+          isScanning = false;
+        }
+        scanFill.style.width = scanProgress + '%';
+      }, 200);
+    }
+    
+    function applyAllPatches() {
+      let patchesApplied = 0;
+      const pendingVulns = vulnerabilities.filter(v => !v.fixed);
+      
+      if (pendingVulns.length === 0) {
+        showToast("✅ No pending patches! System is already secure", false);
+        playSound(document.getElementById('successSound'));
+        return;
+      }
+      
+      playSound(document.getElementById('patchSound'));
+      showToast(`🔧 Applying patches to ${pendingVulns.length} vulnerabilities...`, false);
+      
+      let progress = 0;
+      const patchInterval = setInterval(() => {
+        progress += Math.random() * 15 + 10;
+        if (progress >= 100) {
+          progress = 100;
+          clearInterval(patchInterval);
+          
+          vulnerabilities.forEach(vuln => {
+            if (!vuln.fixed) {
+              vuln.fixed = true;
+              patchesApplied++;
+              addToPatchHistory(`Patched: ${vuln.name} (${vuln.severity})`, true);
+            }
+          });
+          
+          fixedCount += patchesApplied;
+          patchPercent = Math.min(100, (fixedCount / vulnCount) * 100);
+          updatePatchCircle();
+          vulnCountSpan.textContent = vulnerabilities.filter(v => !v.fixed).length;
+          fixedCountSpan.textContent = fixedCount;
+          updateCodeScanner();
+          
+          playSound(document.getElementById('successSound'));
+          showToast(`✅ Successfully applied ${patchesApplied} security patches!`, false);
+        }
+        patchPercent = Math.min(100, (fixedCount / vulnCount) * 100 + (progress / 100) * (pendingVulns.length / vulnCount) * 100);
+        updatePatchCircle();
+      }, 150);
+    }
+    
+    function resetSystem() {
+      vulnerabilities.forEach(vuln => vuln.fixed = false);
+      fixedCount = 0;
+      patchPercent = 0;
+      scanProgress = 0;
+      updatePatchCircle();
+      scanFill.style.width = '0%';
+      vulnCountSpan.textContent = vulnCount;
+      fixedCountSpan.textContent = 0;
+      updateCodeScanner();
+      patchHistory.innerHTML = '<div class="patch-entry success">✅ System reset · All vulnerabilities restored for testing</div>';
+      playSound(document.getElementById('scanStartSound'));
+      showToast("🔄 System reset · All vulnerabilities restored", false);
+    }
+    
+    // ========== EVENT LISTENERS ==========
+    document.getElementById('startScanBtn').addEventListener('click', startFullScan);
+    document.getElementById('applyPatchBtn').addEventListener('click', applyAllPatches);
+    document.getElementById('resetBtn').addEventListener('click', resetSystem);
+    
+    // Stat card clicks
+    document.getElementById('vulnStat').addEventListener('click', () => {
+      playSound(document.getElementById('scriptSound'));
+      showToast(`📊 ${vulnerabilities.filter(v => !v.fixed).length} vulnerabilities currently active`, false);
+    });
+    document.getElementById('fixedStat').addEventListener('click', () => {
+      playSound(document.getElementById('successSound'));
+      showToast(`✅ ${fixedCount} vulnerabilities have been patched automatically`, false);
+    });
+    document.getElementById('scriptsStat').addEventListener('click', () => {
+      playSound(document.getElementById('scriptSound'));
+      showToast(`📚 6 Python security scripts available in vault`, false);
+    });
+    
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 's' || e.key === 'S') {
+        document.getElementById('startScanBtn').click();
+      }
+      if (e.key === 'p' || e.key === 'P') {
+        document.getElementById('applyPatchBtn').click();
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        document.getElementById('resetBtn').click();
+      }
+    });
+    
+    // ========== INITIALIZATION ==========
+    updateCodeScanner();
+    vulnCountSpan.textContent = vulnCount;
+    fixedCountSpan.textContent = 0;
+    updatePatchCircle();
+  </script>
+</body>
+</html>

@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Electronic Warfare Command Center</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2340c4ff'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Blue Forensic Background ===== */
+    .bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      background: radial-gradient(ellipse at 20% 50%, #0a1a2e 0%, #050a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #40c4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #4ade80; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #0a0e1a 20px,
+        #0a0e1a 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #0a0e1a 20px,
+        #0a0e1a 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(10, 14, 26, 0.85);
+      padding: 0.1rem 1.2rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      border-bottom: 2px solid #ffd700;
+      backdrop-filter: blur(8px);
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(10, 14, 26, 0.85);
+      padding: 0.1rem 1.2rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      border-top: 2px solid #ffd700;
+      backdrop-filter: blur(8px);
+    }
+    
+    /* ===== Main Container ===== */
+    .app-wrapper {
+      position: relative;
+      z-index: 10;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3rem;
+      min-height: 100vh;
+    }
+    
+    /* ===== Header ===== */
+    .header {
+      text-align: center;
+      padding: 1rem 0 1.5rem;
+      position: relative;
+    }
+    .header .logo-icon {
+      font-size: 3rem;
+      background: linear-gradient(135deg, #40c4ff, #00ffc8, #7dd3fc);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: logoPulse 3s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes logoPulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(64,196,255,0.3)); }
+      50% { transform: scale(1.05); filter: drop-shadow(0 0 30px rgba(64,196,255,0.6)); }
+    }
+    .header h1 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #40c4ff, #00ffc8, #7dd3fc);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: 2px;
+      margin-top: 4px;
+    }
+    .header .sub {
+      font-size: 0.65rem;
+      color: #4a8aaa;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .header .badge {
+      display: inline-block;
+      border: 1px solid rgba(64,196,255,0.2);
+      padding: 0.15rem 1rem;
+      border-radius: 30px;
+      font-size: 0.45rem;
+      color: #40c4ff;
+      background: rgba(64,196,255,0.05);
+      margin-top: 6px;
+      letter-spacing: 2px;
+    }
+    
+    /* ===== Futuristic Divider ===== */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #40c4ff, #00ffc8, #40c4ff, transparent);
+      margin: 0.5rem 0 1.5rem;
+      opacity: 0.3;
+    }
+    
+    /* ===== Stats Bar ===== */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-item {
+      background: rgba(10, 14, 26, 0.6);
+      backdrop-filter: blur(10px);
+      border-radius: 1rem;
+      padding: 0.6rem;
+      text-align: center;
+      border: 1px solid rgba(64,196,255,0.08);
+      transition: 0.3s;
+      cursor: pointer;
+    }
+    .stat-item:hover { border-color: rgba(64,196,255,0.3); transform: translateY(-2px); box-shadow: 0 0 30px rgba(64,196,255,0.05); }
+    .stat-item .stat-value {
+      font-size: 1.3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #40c4ff, #00ffc8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: monospace;
+    }
+    .stat-item .stat-label {
+      font-size: 0.45rem;
+      color: #4a8aaa;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+    .stat-item .stat-icon {
+      font-size: 0.8rem;
+      color: #40c4ff;
+      display: block;
+      margin-bottom: 2px;
+    }
+    
+    /* ===== Main Grid ===== */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      margin-bottom: 1.2rem;
+    }
+    
+    /* ===== Glass Panels ===== */
+    .glass-panel {
+      background: rgba(10, 14, 26, 0.5);
+      backdrop-filter: blur(16px);
+      border-radius: 1.2rem;
+      padding: 1rem;
+      border: 1px solid rgba(64,196,255,0.06);
+      transition: 0.3s;
+    }
+    .glass-panel:hover { border-color: rgba(64,196,255,0.15); box-shadow: 0 0 40px rgba(64,196,255,0.02); }
+    .panel-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid #40c4ff;
+      padding-left: 10px;
+      color: #80c8e8;
+    }
+    .panel-title i { color: #40c4ff; }
+    .panel-title .badge-count {
+      font-size: 0.4rem;
+      background: rgba(64,196,255,0.1);
+      padding: 0.1rem 0.5rem;
+      border-radius: 30px;
+      color: #40c4ff;
+      margin-left: auto;
+    }
+    
+    /* ===== 1. RF Spectrum Analyzer ===== */
+    .spectrum-container {
+      background: rgba(0,0,0,0.3);
+      border-radius: 0.8rem;
+      padding: 0.3rem;
+      height: 120px;
+      position: relative;
+      overflow: hidden;
+    }
+    .spectrum-container canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .spectrum-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.35rem;
+      color: #4a8aaa;
+      margin-top: 2px;
+      padding: 0 4px;
+    }
+    .spectrum-alert {
+      position: absolute;
+      top: 6px;
+      right: 10px;
+      font-size: 0.4rem;
+      padding: 0.1rem 0.5rem;
+      border-radius: 30px;
+      background: rgba(74,222,128,0.1);
+      border: 1px solid rgba(74,222,128,0.2);
+      color: #4ade80;
+    }
+    .spectrum-alert.warning { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.2); color: #f59e0b; }
+    .spectrum-alert.critical { background: rgba(220,38,38,0.1); border-color: rgba(220,38,38,0.2); color: #dc2626; animation: pulseAlert 1s infinite; }
+    @keyframes pulseAlert { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+    
+    /* ===== 2. Rogue Tower Detector ===== */
+    .tower-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.5rem;
+    }
+    .tower-item {
+      background: rgba(0,0,0,0.3);
+      border-radius: 0.8rem;
+      padding: 0.4rem;
+      text-align: center;
+      border: 1px solid rgba(64,196,255,0.06);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .tower-item:hover { border-color: #40c4ff; transform: scale(1.03); background: rgba(64,196,255,0.05); }
+    .tower-item .tower-icon { font-size: 1.2rem; color: #40c4ff; }
+    .tower-item .tower-name { font-size: 0.5rem; font-weight: 700; color: #80c8e8; }
+    .tower-item .tower-status { font-size: 0.4rem; }
+    .tower-status.secure { color: #4ade80; }
+    .tower-status.warning { color: #f59e0b; }
+    .tower-status.critical { color: #dc2626; animation: pulseAlert 1s infinite; }
+    .tower-item .tower-loc { font-size: 0.35rem; color: #4a8aaa; }
+    
+    /* ===== 3. Frequency Hopping Anti-Jamming ===== */
+    .hopping-container {
+      background: rgba(0,0,0,0.2);
+      border-radius: 0.8rem;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    .hopping-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      height: 50px;
+    }
+    .hopping-bar {
+      width: 10px;
+      background: #40c4ff;
+      border-radius: 4px;
+      transition: height 0.1s, background 0.3s;
+      animation: hopBar 0.6s infinite alternate;
+    }
+    .hopping-bar:nth-child(1) { animation-delay: 0s; height: 20px; }
+    .hopping-bar:nth-child(2) { animation-delay: 0.05s; height: 35px; }
+    .hopping-bar:nth-child(3) { animation-delay: 0.10s; height: 50px; }
+    .hopping-bar:nth-child(4) { animation-delay: 0.15s; height: 40px; }
+    .hopping-bar:nth-child(5) { animation-delay: 0.20s; height: 55px; }
+    .hopping-bar:nth-child(6) { animation-delay: 0.25s; height: 30px; }
+    .hopping-bar:nth-child(7) { animation-delay: 0.30s; height: 45px; }
+    .hopping-bar:nth-child(8) { animation-delay: 0.35s; height: 25px; }
+    .hopping-bar:nth-child(9) { animation-delay: 0.40s; height: 60px; }
+    .hopping-bar:nth-child(10) { animation-delay: 0.45s; height: 35px; }
+    .hopping-bar:nth-child(11) { animation-delay: 0.50s; height: 50px; }
+    .hopping-bar:nth-child(12) { animation-delay: 0.55s; height: 20px; }
+    .hopping-bar:nth-child(13) { animation-delay: 0.60s; height: 40px; }
+    .hopping-bar:nth-child(14) { animation-delay: 0.65s; height: 55px; }
+    .hopping-bar:nth-child(15) { animation-delay: 0.70s; height: 30px; }
+    @keyframes hopBar {
+      0% { height: 15px; background: #40c4ff; opacity: 0.6; }
+      25% { height: 50px; background: #00ffc8; opacity: 1; }
+      50% { height: 30px; background: #7dd3fc; opacity: 0.8; }
+      75% { height: 60px; background: #40c4ff; opacity: 1; }
+      100% { height: 20px; background: #00ffc8; opacity: 0.6; }
+    }
+    .hopping-status {
+      font-size: 0.5rem;
+      margin-top: 0.3rem;
+      color: #80c8e8;
+    }
+    .hopping-status .hop-count {
+      color: #40c4ff;
+      font-weight: 700;
+      font-family: monospace;
+    }
+    .hopping-status .hop-frequency {
+      color: #00ffc8;
+      font-weight: 700;
+    }
+    
+    /* ===== 4. Signal Intelligence ===== */
+    .sigint-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.5rem;
+    }
+    .sigint-item {
+      background: rgba(0,0,0,0.3);
+      border-radius: 0.8rem;
+      padding: 0.4rem;
+      text-align: center;
+      border: 1px solid rgba(64,196,255,0.06);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .sigint-item:hover { border-color: #40c4ff; transform: scale(1.03); background: rgba(64,196,255,0.05); }
+    .sigint-item .sig-icon { font-size: 1rem; color: #40c4ff; }
+    .sigint-item .sig-value { font-size: 0.7rem; font-weight: 800; font-family: monospace; color: #d0f0ff; }
+    .sigint-item .sig-label { font-size: 0.35rem; color: #4a8aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+    .sigint-item .sig-status { font-size: 0.35rem; }
+    .sig-status.secure { color: #4ade80; }
+    .sig-status.warning { color: #f59e0b; }
+    .sig-status.critical { color: #dc2626; }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(10, 14, 26, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #40c4ff;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(64,196,255,0.1);
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    .toast-notification.warning { border-left-color: #ffd700; }
+    @keyframes slideToast { from { transform: translateX(100%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
+    
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      font-size: 0.4rem;
+      color: #2a5a7a;
+      padding-top: 0.8rem;
+      border-top: 1px solid rgba(64,196,255,0.05);
+      margin-top: 0.5rem;
+      letter-spacing: 2px;
+    }
+    .footer i { color: #40c4ff; }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) { .main-grid { grid-template-columns: 1fr; } .stats-bar { grid-template-columns: repeat(3, 1fr); } .tower-grid { grid-template-columns: 1fr 1fr; } .sigint-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 600px) { .stats-bar { grid-template-columns: 1fr 1fr; } .tower-grid { grid-template-columns: 1fr; } .sigint-grid { grid-template-columns: 1fr; } .app-wrapper { padding: 1rem; } }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <div class="bg-canvas"></div>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 ELECTRONIC WARFARE · SPECTRUM DOMINANCE · CLASSIFIED 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 EW COMMAND · ANTI-JAMMING · SIGNAL INTELLIGENCE 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#40c4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#40c4ff" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#40c4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#40c4ff" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#40c4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#40c4ff" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#40c4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Main Content ===== -->
+  <div class="app-wrapper">
+    
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-icon"><i class="fas fa-satellite-dish"></i></div>
+      <h1 class="glitch-text">Electronic Warfare Command Center</h1>
+      <div class="sub">Spectrum Dominance · AI Anti-Jamming · Signal Intelligence · Rogue Tower Detection</div>
+      <div class="badge"><i class="fas fa-shield-alt"></i> EW COMMAND · SPECTRUM CONTROL · QUANTUM SECURE</div>
+    </div>
+    
+    <div class="divider"></div>
+    
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-item" onclick="showToast('📡 Total RF signals monitored in real-time', false)">
+        <span class="stat-icon"><i class="fas fa-wave-square"></i></span>
+        <div class="stat-value" id="totalSignals">12,847</div>
+        <div class="stat-label">Signals Monitored</div>
+      </div>
+      <div class="stat-item" onclick="showToast('🔴 Active jamming attempts detected and blocked', false)">
+        <span class="stat-icon"><i class="fas fa-exclamation-triangle"></i></span>
+        <div class="stat-value" id="jammingAttempts">143</div>
+        <div class="stat-label">Jamming Blocked</div>
+      </div>
+      <div class="stat-item" onclick="showToast('🛰️ Rogue towers detected and neutralized', false)">
+        <span class="stat-icon"><i class="fas fa-tower-broadcast"></i></span>
+        <div class="stat-value" id="rogueTowers">11</div>
+        <div class="stat-label">Rogue Towers</div>
+      </div>
+      <div class="stat-item" onclick="showToast('✅ Secure communication channels protected', false)">
+        <span class="stat-icon"><i class="fas fa-lock"></i></span>
+        <div class="stat-value" id="secureChannels">2,341</div>
+        <div class="stat-label">Secure Channels</div>
+      </div>
+      <div class="stat-item" onclick="showToast('⚡ AI frequency hopping speed in operations', false)">
+        <span class="stat-icon"><i class="fas fa-bolt"></i></span>
+        <div class="stat-value" id="hoppingSpeed">2.4M</div>
+        <div class="stat-label">Hops / Second</div>
+      </div>
+    </div>
+    
+    <!-- Main Grid -->
+    <div class="main-grid">
+      
+      <!-- Left Column: RF Spectrum Analyzer + Rogue Tower Detector -->
+      <div class="glass-panel">
+        <div class="panel-title">
+          <i class="fas fa-chart-line"></i> Live RF Spectrum Analyzer
+          <span class="badge-count">REAL-TIME</span>
+        </div>
+        
+        <!-- Spectrum Canvas -->
+        <div class="spectrum-container" id="spectrumContainer">
+          <canvas id="spectrumCanvas"></canvas>
+          <div class="spectrum-alert secure" id="spectrumAlert">🟢 Spectrum Clear</div>
+        </div>
+        <div class="spectrum-labels">
+          <span>30 MHz</span>
+          <span>100 MHz</span>
+          <span>300 MHz</span>
+          <span>1 GHz</span>
+          <span>3 GHz</span>
+        </div>
+        
+        <!-- Rogue Tower Detector -->
+        <div style="margin-top:0.6rem;">
+          <div style="font-size:0.5rem;color:#4a8aaa;margin-bottom:0.3rem;display:flex;justify-content:space-between;">
+            <span><i class="fas fa-tower-broadcast"></i> Rogue Tower Detector</span>
+            <span style="font-size:0.35rem;">🔴 ACTIVE</span>
+          </div>
+          <div class="tower-grid">
+            <div class="tower-item" onclick="showToast('📍 Tower A-01 · Secure · Signal verified', false)">
+              <div class="tower-icon"><i class="fas fa-tower-cell"></i></div>
+              <div class="tower-name">Tower A-01</div>
+              <div class="tower-status secure">🟢 Secure</div>
+              <div class="tower-loc">📍 Sector 7</div>
+            </div>
+            <div class="tower-item" onclick="showToast('📍 Tower B-03 · Secure · Signal verified', false)">
+              <div class="tower-icon"><i class="fas fa-tower-cell"></i></div>
+              <div class="tower-name">Tower B-03</div>
+              <div class="tower-status secure">🟢 Secure</div>
+              <div class="tower-loc">📍 Sector 12</div>
+            </div>
+            <div class="tower-item" style="border-color:rgba(220,38,38,0.3);" onclick="showToast('🚨 ROGUE TOWER DETECTED! Tower C-07 · Intercepting signals · Neutralizing...', true)">
+              <div class="tower-icon"><i class="fas fa-tower-cell"></i></div>
+              <div class="tower-name">Tower C-07</div>
+              <div class="tower-status critical">🔴 ROGUE</div>
+              <div class="tower-loc">📍 Sector 9 ⚠️</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right Column: Frequency Hopping + Signal Intelligence -->
+      <div class="glass-panel">
+        <div class="panel-title">
+          <i class="fas fa-bolt"></i> AI Frequency Hopping Anti-Jamming
+          <span class="badge-count">ACTIVE</span>
+        </div>
+        
+        <!-- Frequency Hopping Visual -->
+        <div class="hopping-container">
+          <div class="hopping-visual" id="hoppingVisual">
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+            <div class="hopping-bar"></div>
+          </div>
+          <div class="hopping-status">
+            <span class="hop-count" id="hopCount">2,847,392</span> hops/sec · 
+            <span class="hop-frequency" id="hopFrequency">2.4 GHz</span> · 
+            <span id="hopStatus" style="color:#4ade80;">🟢 Secure</span>
+          </div>
+        </div>
+        
+        <!-- Signal Intelligence -->
+        <div style="margin-top:0.6rem;">
+          <div style="font-size:0.5rem;color:#4a8aaa;margin-bottom:0.3rem;display:flex;justify-content:space-between;">
+            <span><i class="fas fa-brain"></i> Signal Intelligence</span>
+            <span style="font-size:0.35rem;">📊 LIVE</span>
+          </div>
+          <div class="sigint-grid">
+            <div class="sigint-item" onclick="showToast('📶 Signal strength: 98% · Optimal', false)">
+              <div class="sig-icon"><i class="fas fa-signal"></i></div>
+              <div class="sig-value" id="sigStrength">98%</div>
+              <div class="sig-label">Signal Strength</div>
+              <div class="sig-status secure">✅ Optimal</div>
+            </div>
+            <div class="sigint-item" onclick="showToast('📡 Interference level: 12% · Acceptable', false)">
+              <div class="sig-icon"><i class="fas fa-wave-square"></i></div>
+              <div class="sig-value" id="sigInterference">12%</div>
+              <div class="sig-label">Interference</div>
+              <div class="sig-status secure">🟢 Low</div>
+            </div>
+            <div class="sigint-item" onclick="showToast('🛡️ Security status: Protected · Quantum encrypted', false)">
+              <div class="sig-icon"><i class="fas fa-shield-alt"></i></div>
+              <div class="sig-value" id="sigSecurity">100%</div>
+              <div class="sig-label">Security Level</div>
+              <div class="sig-status secure">🔒 Protected</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <i class="fas fa-shield-haltered"></i> PCS-AI · Electronic Warfare Command Center · 
+      <span style="color:#40c4ff;">Spectrum Dominance · AI Anti-Jamming · Rogue Tower Detection</span>
+    </div>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="successSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="alertSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="scanSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script>
+    // ========== TOAST ==========
+    function showToast(msg, isError = false, isWarning = false) {
+      const toast = document.createElement('div');
+      let className = 'toast-notification';
+      if (isError) className += ' error';
+      if (isWarning) className += ' warning';
+      toast.className = className;
+      const icon = isError ? 'fa-exclamation-triangle' : isWarning ? 'fa-exclamation-circle' : 'fa-check-circle';
+      toast.innerHTML = `<i class="fas ${icon}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError || isWarning) {
+        const sound = document.getElementById('alertSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('successSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    // ========== STATS AUTO-UPDATE ==========
+    let signals = 12847;
+    let jamming = 143;
+    let rogue = 11;
+    let channels = 2341;
+    let hops = 2847392;
+    
+    setInterval(() => {
+      signals += Math.floor(Math.random() * 5) + 1;
+      jamming += Math.floor(Math.random() * 2);
+      rogue += Math.floor(Math.random() * 2) - 1;
+      channels += Math.floor(Math.random() * 4);
+      hops += Math.floor(Math.random() * 5000) + 1000;
+      
+      document.getElementById('totalSignals').textContent = signals.toLocaleString();
+      document.getElementById('jammingAttempts').textContent = jamming;
+      document.getElementById('rogueTowers').textContent = Math.max(0, rogue);
+      document.getElementById('secureChannels').textContent = channels.toLocaleString();
+      document.getElementById('hoppingSpeed').textContent = (hops / 1000000).toFixed(1) + 'M';
+    }, 4000);
+    
+    // ========== SPECTRUM ANALYZER ==========
+    const spectrumCanvas = document.getElementById('spectrumCanvas');
+    const ctx = spectrumCanvas.getContext('2d');
+    let spectrumWidth = 0;
+    let spectrumHeight = 0;
+    
+    function resizeSpectrum() {
+      const container = document.getElementById('spectrumContainer');
+      spectrumWidth = container.clientWidth - 6;
+      spectrumHeight = container.clientHeight - 6;
+      spectrumCanvas.width = spectrumWidth;
+      spectrumCanvas.height = spectrumHeight;
+    }
+    resizeSpectrum();
+    window.addEventListener('resize', resizeSpectrum);
+    
+    let spectrumData = [];
+    let spectrumIndex = 0;
+    
+    function updateSpectrum() {
+      const width = spectrumCanvas.width;
+      const height = spectrumCanvas.height;
+      ctx.clearRect(0, 0, width, height);
+      
+      // Generate new data point
+      const baseValue = 30 + Math.random() * 40;
+      const spike = Math.random() > 0.92 ? 80 + Math.random() * 50 : 0;
+      const value = Math.min(100, baseValue + spike);
+      spectrumData.push(value);
+      if (spectrumData.length > width) spectrumData.shift();
+      
+      // Draw spectrum
+      const gradient = ctx.createLinearGradient(0, 0, 0, height);
+      gradient.addColorStop(0, 'rgba(64, 196, 255, 0.8)');
+      gradient.addColorStop(0.4, 'rgba(64, 196, 255, 0.5)');
+      gradient.addColorStop(0.7, 'rgba(0, 255, 200, 0.3)');
+      gradient.addColorStop(1, 'rgba(64, 196, 255, 0.05)');
+      
+      // Draw fill
+      ctx.beginPath();
+      ctx.moveTo(0, height);
+      for (let i = 0; i < spectrumData.length; i++) {
+        const x = i;
+        const y = height - (spectrumData[i] / 100) * height;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(spectrumData.length - 1, height);
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      
+      // Draw line
+      ctx.beginPath();
+      for (let i = 0; i < spectrumData.length; i++) {
+        const x = i;
+        const y = height - (spectrumData[i] / 100) * height;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = '#40c4ff';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#40c4ff';
+      ctx.shadowBlur = 10;
+      ctx.stroke();
+      
+      // Draw grid lines
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(64, 196, 255, 0.05)';
+      ctx.lineWidth = 0.5;
+      for (let i = 0; i < 10; i++) {
+        const y = (i / 10) * height;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+      
+      // Check for spikes
+      const alertEl = document.getElementById('spectrumAlert');
+      const maxValue = Math.max(...spectrumData.slice(-20));
+      if (maxValue > 85) {
+        alertEl.className = 'spectrum-alert critical';
+        alertEl.textContent = '🔴 JAMMING DETECTED!';
+        if (spectrumIndex % 5 === 0) {
+          showToast('🚨 JAMMING DETECTED! Frequency interference spike detected', true);
+        }
+      } else if (maxValue > 70) {
+        alertEl.className = 'spectrum-alert warning';
+        alertEl.textContent = '🟡 Interference Detected';
+      } else {
+        alertEl.className = 'spectrum-alert secure';
+        alertEl.textContent = '🟢 Spectrum Clear';
+      }
+      
+      spectrumIndex++;
+      requestAnimationFrame(updateSpectrum);
+    }
+    updateSpectrum();
+    
+    // ========== HOPPING COUNTER ==========
+    setInterval(() => {
+      const hopCount = document.getElementById('hopCount');
+      const currentHops = parseInt(hopCount.textContent.replace(/,/g, ''));
+      const newHops = currentHops + Math.floor(Math.random() * 5000) + 1000;
+      hopCount.textContent = newHops.toLocaleString();
+      
+      const frequencies = ['2.4 GHz', '5.8 GHz', '1.2 GHz', '3.6 GHz', '900 MHz', '6.2 GHz'];
+      document.getElementById('hopFrequency').textContent = frequencies[Math.floor(Math.random() * frequencies.length)];
+      
+      // Random jamming simulation
+      if (Math.random() > 0.92) {
+        document.getElementById('hopStatus').textContent = '🟡 Jamming Detected!';
+        document.getElementById('hopStatus').style.color = '#f59e0b';
+        showToast('⚠️ Jamming detected! AI Frequency Hopping activated', false, true);
+        setTimeout(() => {
+          document.getElementById('hopStatus').textContent = '🟢 Secure';
+          document.getElementById('hopStatus').style.color = '#4ade80';
+          showToast('✅ Jamming neutralized · Frequency hopping successful', false);
+        }, 2000);
+      }
+    }, 3000);
+    
+    // ========== SIGNAL INTELLIGENCE ==========
+    setInterval(() => {
+      const strength = 92 + Math.random() * 8;
+      const interference = 5 + Math.random() * 20;
+      const security = 98 + Math.random() * 2;
+      
+      document.getElementById('sigStrength').textContent = strength.toFixed(1) + '%';
+      document.getElementById('sigInterference').textContent = interference.toFixed(1) + '%';
+      document.getElementById('sigSecurity').textContent = security.toFixed(1) + '%';
+      
+      // Update status based on values
+      const strengthStatus = document.querySelector('.sigint-item:nth-child(1) .sig-status');
+      const interferenceStatus = document.querySelector('.sigint-item:nth-child(2) .sig-status');
+      const securityStatus = document.querySelector('.sigint-item:nth-child(3) .sig-status');
+      
+      if (strength > 90) {
+        strengthStatus.className = 'sig-status secure';
+        strengthStatus.textContent = '✅ Optimal';
+      } else if (strength > 70) {
+        strengthStatus.className = 'sig-status warning';
+        strengthStatus.textContent = '⚠️ Moderate';
+      } else {
+        strengthStatus.className = 'sig-status critical';
+        strengthStatus.textContent = '🔴 Weak';
+      }
+      
+      if (interference < 15) {
+        interferenceStatus.className = 'sig-status secure';
+        interferenceStatus.textContent = '🟢 Low';
+      } else if (interference < 30) {
+        interferenceStatus.className = 'sig-status warning';
+        interferenceStatus.textContent = '🟡 Moderate';
+      } else {
+        interferenceStatus.className = 'sig-status critical';
+        interferenceStatus.textContent = '🔴 High';
+      }
+      
+      if (security > 99) {
+        securityStatus.className = 'sig-status secure';
+        securityStatus.textContent = '🔒 Protected';
+      } else if (security > 95) {
+        securityStatus.className = 'sig-status warning';
+        securityStatus.textContent = '⚠️ Warning';
+      } else {
+        securityStatus.className = 'sig-status critical';
+        securityStatus.textContent = '🔴 Critical';
+      }
+    }, 4000);
+    
+    // ========== ROGUE TOWER AUTO-ROTATION ==========
+    const towerStatuses = [
+      { name: 'Tower A-01', status: 'secure', label: '🟢 Secure', loc: '📍 Sector 7' },
+      { name: 'Tower B-03', status: 'secure', label: '🟢 Secure', loc: '📍 Sector 12' },
+      { name: 'Tower C-07', status: 'critical', label: '🔴 ROGUE', loc: '📍 Sector 9 ⚠️' },
+    ];
+    let towerIndex = 0;
+    
+    setInterval(() => {
+      const towers = document.querySelectorAll('.tower-item');
+      const statuses = [
+        ['secure', 'secure', 'critical'],
+        ['secure', 'warning', 'secure'],
+        ['warning', 'secure', 'secure'],
+        ['secure', 'secure', 'secure'],
+      ];
+      const labels = {
+        secure: '🟢 Secure',
+        warning: '🟡 Warning',
+        critical: '🔴 ROGUE'
+      };
+      const locs = {
+        secure: '📍 Sector 7',
+        warning: '📍 Sector 12 ⚠️',
+        critical: '📍 Sector 9 ⚠️'
+      };
+      
+      const currentStatus = statuses[towerIndex % statuses.length];
+      towers.forEach((tower, idx) => {
+        const status = currentStatus[idx] || 'secure';
+        const statusEl = tower.querySelector('.tower-status');
+        const locEl = tower.querySelector('.tower-loc');
+        if (statusEl) {
+          statusEl.className = `tower-status ${status}`;
+          statusEl.textContent = labels[status] || '🟢 Secure';
+        }
+        if (locEl) {
+          locEl.textContent = locs[status] || '📍 Sector 7';
+        }
+        if (status === 'critical') {
+          tower.style.borderColor = 'rgba(220,38,38,0.3)';
+        } else if (status === 'warning') {
+          tower.style.borderColor = 'rgba(245,158,11,0.3)';
+        } else {
+          tower.style.borderColor = 'rgba(64,196,255,0.06)';
+        }
+      });
+      towerIndex++;
+      
+      // Check if any critical towers
+      if (currentStatus.includes('critical')) {
+        showToast('🚨 ROGUE TOWER DETECTED! Automatic neutralization initiated', true);
+      }
+    }, 8000);
+  </script>
+</body>
+</html>

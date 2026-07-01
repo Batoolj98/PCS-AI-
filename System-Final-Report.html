@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>PCS-AI | Phoenix Core · Final Executive Report</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300d4ff'%3E%3Cpath d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0e1a;
+      color: #d0f0ff;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Futuristic Background ===== */
+    #canvas-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+      background: radial-gradient(ellipse at 20% 50%, #0d1a2e 0%, #060a14 70%, #020408 100%);
+    }
+    .grid-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background-image: 
+        linear-gradient(rgba(0, 200, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 200, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .glow-orbs {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .glow-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: orbFloat 20s infinite alternate ease-in-out;
+    }
+    .glow-orb:nth-child(1) { width: 400px; height: 400px; background: #00d4ff; top: -100px; left: -100px; animation-delay: 0s; }
+    .glow-orb:nth-child(2) { width: 300px; height: 300px; background: #4ade80; bottom: -50px; right: -50px; animation-delay: 5s; }
+    .glow-orb:nth-child(3) { width: 250px; height: 250px; background: #00ffc8; top: 50%; left: 50%; animation-delay: 10s; }
+    @keyframes orbFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.1); }
+      50% { transform: translate(-20px, 20px) scale(0.9); }
+      75% { transform: translate(40px, 30px) scale(1.05); }
+      100% { transform: translate(-30px, -20px) scale(1); }
+    }
+    
+    /* ===== Scan Lines ===== */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 200, 255, 0.02) 2px,
+        rgba(0, 200, 255, 0.02) 4px
+      );
+    }
+    
+    /* ===== Fingerprint Border ===== */
+    .fingerprint-border {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: 80px;
+      height: 80px;
+      z-index: 5;
+      opacity: 0.15;
+      pointer-events: none;
+      animation: fingerprintPulse 4s infinite ease-in-out;
+    }
+    .fingerprint-border svg {
+      width: 100%;
+      height: 100%;
+    }
+    @keyframes fingerprintPulse {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(1.05); }
+    }
+    
+    /* ===== Crime Tape ===== */
+    .crime-tape {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    .crime-tape-bottom {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      z-index: 20;
+      background: repeating-linear-gradient(
+        90deg,
+        #ffd700 0px,
+        #ffd700 20px,
+        #000 20px,
+        #000 40px
+      );
+      animation: tapeMove 3s linear infinite reverse;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+    }
+    @keyframes tapeMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 60px 0; }
+    }
+    .crime-tape-label {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 0 0 8px 8px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-bottom: 2px solid #ffd700;
+    }
+    .crime-tape-label-bottom {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 21;
+      font-size: 0.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: rgba(0,0,0,0.7);
+      padding: 0.1rem 1rem;
+      border-radius: 8px 8px 0 0;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      border-top: 2px solid #ffd700;
+    }
+    
+    /* ===== Forensic Warning ===== */
+    .forensic-warning {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 15;
+      background: rgba(0, 20, 40, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      border-radius: 0.8rem;
+      padding: 0.3rem 1.2rem;
+      font-size: 0.45rem;
+      color: #ffd700;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .forensic-warning i { color: #ffd700; margin-right: 6px; }
+    
+    /* ===== Main Container ===== */
+    .container {
+      position: relative;
+      z-index: 10;
+      max-width: 1400px;
+      margin: 1.5rem auto;
+      padding: 1rem 1.5rem;
+      background: rgba(5, 12, 22, 0.55);
+      backdrop-filter: blur(4px);
+      border-radius: 2rem;
+      border: 1px solid rgba(0, 212, 255, 0.15);
+    }
+    
+    /* ===== Header ===== */
+    .report-header {
+      text-align: center;
+      margin-bottom: 1.8rem;
+      animation: fadeInDown 0.6s ease;
+    }
+    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    .logo-stack {
+      display: flex;
+      justify-content: center;
+      gap: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+    .logo-stack i {
+      font-size: 2rem;
+      filter: drop-shadow(0 0 6px #00d4ff);
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .logo-stack i:hover { transform: scale(1.15); filter: drop-shadow(0 0 15px #00d4ff); }
+    .fa-dragon { color: #00d4ff; }
+    .fa-shield-haltered { color: #4ade80; }
+    .fa-stethoscope { color: #00ffc8; }
+    
+    .report-header h1 {
+      font-size: 1.8rem;
+      background: linear-gradient(125deg, #00d4ff, #4ade80, #00ffc8);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .report-sub {
+      color: #4a8aaa;
+      font-size: 0.65rem;
+      font-weight: 500;
+      border-top: 1px dashed rgba(0, 212, 255, 0.2);
+      display: inline-block;
+      padding-top: 5px;
+      letter-spacing: 2px;
+    }
+    
+    /* ===== Stats Grid ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: rgba(8, 18, 28, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 1.2rem;
+      padding: 0.8rem 0.5rem;
+      text-align: center;
+      border: 1px solid rgba(0, 212, 255, 0.15);
+      transition: all 0.25s;
+      cursor: pointer;
+    }
+    .stat-card:hover { transform: translateY(-4px); border-color: #4ade80; box-shadow: 0 12px 24px -12px rgba(0, 212, 255, 0.2); }
+    .stat-card i { font-size: 1.5rem; color: #00d4ff; margin-bottom: 4px; display: block; }
+    .stat-card .value { font-size: 1.5rem; font-weight: 800; color: #4ade80; line-height: 1.2; }
+    .stat-card .label { font-size: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; color: #4a8aaa; }
+    
+    /* ===== Two Columns ===== */
+    .two-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 0.9fr;
+      gap: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+    .glass-panel {
+      background: linear-gradient(115deg, rgba(12, 22, 35, 0.65), rgba(5, 12, 22, 0.7));
+      backdrop-filter: blur(14px);
+      border-radius: 1.3rem;
+      padding: 1rem;
+      border: 1px solid rgba(0, 212, 255, 0.1);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .panel-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 3px solid #00d4ff;
+      padding-left: 10px;
+      color: #80c8e8;
+    }
+    .panel-title i { color: #00d4ff; }
+    .panel-title .badge-count {
+      font-size: 0.35rem;
+      background: rgba(74,222,128,0.1);
+      padding: 0.1rem 0.4rem;
+      border-radius: 30px;
+      color: #4ade80;
+      margin-left: auto;
+    }
+    
+    /* ===== Timeline Table ===== */
+    .timeline-wrap {
+      max-height: 370px;
+      overflow-y: auto;
+      border-radius: 1rem;
+    }
+    .timeline-wrap::-webkit-scrollbar { width: 3px; }
+    .timeline-wrap::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 10px; }
+    .timeline-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.6rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .timeline-table th {
+      text-align: left;
+      padding: 0.4rem 0.3rem;
+      background: rgba(0, 212, 255, 0.06);
+      color: #00d4ff;
+      position: sticky;
+      top: 0;
+      font-weight: 600;
+      font-size: 0.55rem;
+    }
+    .timeline-table td {
+      padding: 0.35rem 0.3rem;
+      border-bottom: 1px solid rgba(0, 212, 255, 0.03);
+      color: #80c8e8;
+      font-size: 0.55rem;
+    }
+    .status-badge {
+      font-weight: 600;
+      display: inline-block;
+      padding: 1px 8px;
+      border-radius: 20px;
+      font-size: 0.5rem;
+    }
+    .badge-critical { background: rgba(255,68,68,0.1); color: #ff4444; border-left: 2px solid #ff4444; }
+    .badge-warning { background: rgba(255,215,0,0.1); color: #ffd700; border-left: 2px solid #ffd700; }
+    .badge-success { background: rgba(74,222,128,0.1); color: #4ade80; border-left: 2px solid #4ade80; }
+    .badge-info { background: rgba(0,212,255,0.1); color: #00d4ff; border-left: 2px solid #00d4ff; }
+    
+    /* ===== Summary Grid ===== */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      margin-bottom: 0.8rem;
+    }
+    .metric-tile {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 0.8rem;
+      padding: 0.5rem;
+      text-align: center;
+      transition: 0.2s;
+      border: 1px solid rgba(0, 212, 255, 0.06);
+      cursor: pointer;
+    }
+    .metric-tile:hover { border-color: rgba(74,222,128,0.2); background: rgba(0,212,255,0.02); }
+    .metric-value {
+      font-size: 1.1rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #4ade80, #00d4ff);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: monospace;
+    }
+    .metric-label { font-size: 0.45rem; color: #4a8aaa; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    /* ===== Verdict Box ===== */
+    .verdict-box {
+      background: rgba(74,222,128,0.05);
+      border: 1px solid rgba(74,222,128,0.15);
+      border-radius: 0.8rem;
+      padding: 0.6rem;
+      text-align: center;
+      margin-top: 0.3rem;
+    }
+    .verdict-box strong { color: #4ade80; }
+    .verdict-box span { font-size: 0.55rem; color: #4a8aaa; }
+    
+    /* ===== Medical/Forensic Tools ===== */
+    .forensic-tools {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+      justify-content: center;
+    }
+    .forensic-tool {
+      background: rgba(0, 212, 255, 0.03);
+      border: 1px solid rgba(0, 212, 255, 0.06);
+      border-radius: 2rem;
+      padding: 0.15rem 0.7rem;
+      font-size: 0.45rem;
+      color: #4a8aaa;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .forensic-tool:hover { border-color: #4ade80; color: #4ade80; background: rgba(74,222,128,0.03); }
+    .forensic-tool i { color: #00d4ff; font-size: 0.6rem; }
+    
+    /* ===== Medical Icon ===== */
+    .medical-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 255, 200, 0.03);
+      border: 1px solid rgba(0, 255, 200, 0.08);
+      border-radius: 2rem;
+      padding: 0.15rem 0.8rem;
+      font-size: 0.5rem;
+      color: #00ffc8;
+    }
+    
+    /* ===== Buttons ===== */
+    .action-buttons {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      margin: 0.8rem 0 0.2rem;
+      flex-wrap: wrap;
+    }
+    .action-btn {
+      background: linear-gradient(105deg, rgba(0, 212, 255, 0.05), rgba(0, 212, 255, 0.02));
+      border: 1px solid rgba(0, 212, 255, 0.1);
+      padding: 0.4rem 1rem;
+      border-radius: 2rem;
+      color: #80c8e8;
+      cursor: pointer;
+      font-size: 0.55rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.3s;
+    }
+    .action-btn:hover { transform: scale(1.03); border-color: #00d4ff; box-shadow: 0 0 20px rgba(0, 212, 255, 0.05); color: #d0f0ff; }
+    .action-btn.primary { background: linear-gradient(95deg, #00d4ff, #4ade80); border: none; color: #0a0e1a; }
+    .action-btn.primary:hover { box-shadow: 0 0 30px rgba(0, 212, 255, 0.2); }
+    .action-btn.danger { border-color: rgba(255,68,68,0.2); }
+    .action-btn.danger:hover { border-color: #ff4444; color: #ff4444; }
+    
+    /* ===== Navigation Buttons ===== */
+    .nav-buttons {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 0.5rem;
+    }
+    .nav-btn {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(0, 212, 255, 0.06);
+      padding: 0.2rem 0.8rem;
+      border-radius: 2rem;
+      color: #4a8aaa;
+      cursor: pointer;
+      font-size: 0.5rem;
+      transition: 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      text-decoration: none;
+    }
+    .nav-btn:hover { border-color: #00d4ff; color: #80c8e8; background: rgba(0,212,255,0.03); }
+    .nav-btn i { font-size: 0.6rem; color: #00d4ff; }
+    
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      margin-top: 0.8rem;
+      font-size: 0.4rem;
+      color: #2a5a7a;
+      letter-spacing: 2px;
+    }
+    .footer i { color: #00d4ff; }
+    
+    /* ===== Toast ===== */
+    .toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: rgba(0, 20, 40, 0.95);
+      backdrop-filter: blur(16px);
+      border-left: 4px solid #4ade80;
+      border-radius: 1rem;
+      padding: 0.5rem 1rem;
+      color: #d0f0ff;
+      z-index: 1000;
+      animation: slideToast 0.3s ease;
+      max-width: 350px;
+      font-size: 0.6rem;
+      border: 1px solid rgba(0,212,255,0.1);
+    }
+    .toast-notification.error { border-left-color: #ff4444; }
+    @keyframes slideToast { from { transform: translateX(100%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
+    
+    /* ===== Responsive ===== */
+    @media (max-width: 1000px) {
+      .two-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .container { padding: 0.8rem; }
+      .fingerprint-border { width: 50px; height: 50px; top: 10px; left: 10px; }
+      .forensic-warning { bottom: 60px; font-size: 0.35rem; padding: 0.2rem 0.8rem; }
+    }
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .action-buttons { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== Background ===== -->
+  <canvas id="canvas-bg"></canvas>
+  <div class="grid-overlay"></div>
+  <div class="glow-orbs">
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+    <div class="glow-orb"></div>
+  </div>
+  <div class="scanlines"></div>
+  
+  <!-- ===== Crime Tape ===== -->
+  <div class="crime-tape"></div>
+  <div class="crime-tape-label">🔒 FINAL EXECUTIVE REPORT · COMPLETE SYSTEM AUDIT 🔒</div>
+  <div class="crime-tape-bottom"></div>
+  <div class="crime-tape-label-bottom">🔒 ALL SYSTEMS VERIFIED · PHOENIX CORE · ZERO FALSE POSITIVES 🔒</div>
+  
+  <!-- ===== Fingerprint Border ===== -->
+  <div class="fingerprint-border">
+    <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" stroke="#00d4ff" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="50" cy="50" r="35" stroke="#4ade80" stroke-width="1" opacity="0.2"/>
+      <circle cx="50" cy="50" r="25" stroke="#00d4ff" stroke-width="0.8" opacity="0.15"/>
+      <circle cx="50" cy="50" r="15" stroke="#4ade80" stroke-width="0.5" opacity="0.1"/>
+      <path d="M50 10 L50 90 M10 50 L90 50" stroke="#00d4ff" stroke-width="0.3" opacity="0.1"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#4ade80" stroke-width="0.5" opacity="0.08" transform="rotate(45 50 50)"/>
+      <ellipse cx="50" cy="50" rx="20" ry="30" stroke="#00d4ff" stroke-width="0.5" opacity="0.08" transform="rotate(-45 50 50)"/>
+    </svg>
+  </div>
+  
+  <!-- ===== Forensic Warning ===== -->
+  <div class="forensic-warning">
+    <i class="fas fa-exclamation-triangle"></i> FINAL REPORT · COMPLETE SYSTEM AUDIT · IMMUTABLE EVIDENCE
+    <i class="fas fa-fingerprint" style="margin-left:8px;"></i>
+  </div>
+  
+  <!-- ===== Main Container ===== -->
+  <div class="container">
+    
+    <!-- Header -->
+    <div class="report-header">
+      <div class="logo-stack">
+        <i class="fas fa-dragon" onclick="window.location.href='Phoenix Dashboard.html'" title="Go to Dashboard"></i>
+        <i class="fas fa-shield-haltered" onclick="showToast('🛡️ System Shield: Active · 100% Protection', false)" title="System Shield Status"></i>
+        <i class="fas fa-stethoscope" onclick="showToast('🏥 Medical Forensics: System Health 100% · All Systems Verified', false)" title="Medical Forensics"></i>
+        <i class="fas fa-fingerprint" onclick="showToast('🔍 Biometric verification complete · 100% match', false)" title="Biometric Verified"></i>
+        <i class="fas fa-microscope" onclick="showToast('🔬 Digital Forensics: Evidence chain verified · Immutable', false)" title="Digital Forensics"></i>
+      </div>
+      <h1><i class="fas fa-file-contract"></i> PHOENIX CORE · FINAL REPORT</h1>
+      <div class="report-sub">AI Cyber Shield · Predictive Neutralization · Self-Healing Verified</div>
+    </div>
+    
+    <!-- Medical / Forensic Tools Badge -->
+    <div style="display:flex; justify-content:center; gap:0.8rem; flex-wrap:wrap; margin-bottom:1rem;">
+      <span class="medical-badge"><i class="fas fa-heartbeat"></i> System Health: 100%</span>
+      <span class="medical-badge"><i class="fas fa-dna"></i> DNA Verified</span>
+      <span class="medical-badge"><i class="fas fa-fingerprint"></i> Biometric Match</span>
+      <span class="medical-badge"><i class="fas fa-vial"></i> Toxicity: 0%</span>
+    </div>
+    
+    <!-- KPI Stats -->
+    <div class="stats-grid">
+      <div class="stat-card" id="totalThreatCard" onclick="showToast('📊 Total threats neutralized by Phoenix Core', false)">
+        <i class="fas fa-skull-crosswalk"></i>
+        <div class="value" id="totalThreats">0</div>
+        <div class="label">THREATS NEUTRALIZED</div>
+      </div>
+      <div class="stat-card" id="healCard" onclick="showToast('❤️ Self-heal rate: 100% · All systems restored', false)">
+        <i class="fas fa-heartbeat"></i>
+        <div class="value" id="healRate">100</div>
+        <div class="label">SELF-HEAL RATE (%)</div>
+      </div>
+      <div class="stat-card" id="avgResponseCard" onclick="showToast('⚡ Average response time: 24ms · Real-time protection', false)">
+        <i class="fas fa-stopwatch"></i>
+        <div class="value" id="avgResponse">0</div>
+        <div class="label">AVG RESPONSE (ms)</div>
+      </div>
+      <div class="stat-card" id="successCard" onclick="showToast('✅ Success rate: 100% · Zero false positives', false)">
+        <i class="fas fa-check-double"></i>
+        <div class="value" id="successRate">100</div>
+        <div class="label">SUCCESS RATE (%)</div>
+      </div>
+    </div>
+    
+    <!-- Two Columns -->
+    <div class="two-grid">
+      
+      <!-- LEFT PANEL: Timeline -->
+      <div class="glass-panel">
+        <div class="panel-title">
+          <i class="fas fa-timeline"></i> Comprehensive Event Timeline
+          <span class="badge-count">🔴 LIVE</span>
+        </div>
+        <div class="timeline-wrap">
+          <table class="timeline-table" id="timelineTable">
+            <thead>
+              <tr><th>TIMESTAMP</th><th>EVENT TYPE</th><th>DESCRIPTION</th><th>STATUS</th></tr>
+            </thead>
+            <tbody id="timelineBody"></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- RIGHT PANEL: Executive Summary -->
+      <div class="glass-panel">
+        <div class="panel-title"><i class="fas fa-chart-line"></i> Executive Summary</div>
+        
+        <div class="summary-grid">
+          <div class="metric-tile" onclick="showToast('📊 Total attacks blocked: ' + document.getElementById('summaryThreats').textContent, false)">
+            <div class="metric-value" id="summaryThreats">0</div>
+            <div class="metric-label">Total Attacks Blocked</div>
+          </div>
+          <div class="metric-tile" onclick="showToast('🔄 Self-heal triggers: ' + document.getElementById('summaryHeals').textContent, false)">
+            <div class="metric-value" id="summaryHeals">0</div>
+            <div class="metric-label">Self-Heal Triggers</div>
+          </div>
+          <div class="metric-tile" onclick="showToast('🔒 Zero-day isolations: ' + document.getElementById('summaryIsolations').textContent, false)">
+            <div class="metric-value" id="summaryIsolations">0</div>
+            <div class="metric-label">Zero-Day Isolations</div>
+          </div>
+          <div class="metric-tile" onclick="showToast('📀 Clean clones deployed: ' + document.getElementById('summaryClones').textContent, false)">
+            <div class="metric-value" id="summaryClones">0</div>
+            <div class="metric-label">Clean Clones Deployed</div>
+          </div>
+        </div>
+        
+        <div class="panel-title"><i class="fas fa-microchip"></i> AI Performance Metrics</div>
+        <div class="summary-grid">
+          <div class="metric-tile" onclick="showToast('🎯 Detection accuracy: 99.98% · AI optimized', false)">
+            <div class="metric-value">99.98%</div>
+            <div class="metric-label">Detection Accuracy</div>
+          </div>
+          <div class="metric-tile" onclick="showToast('✅ False positive rate: 0.00% · Zero false alarms', false)">
+            <div class="metric-value">0.00%</div>
+            <div class="metric-label">False Positive Rate</div>
+          </div>
+          <div class="metric-tile" onclick="showToast('🔄 Auto-recovery rate: 100% · Full system resilience', false)">
+            <div class="metric-value">100%</div>
+            <div class="metric-label">Auto-Recovery Rate</div>
+          </div>
+          <div class="metric-tile" onclick="showToast('🕒 Active monitoring: 24/7/365 · Always protected', false)">
+            <div class="metric-value">24/7/365</div>
+            <div class="metric-label">Active Monitoring</div>
+          </div>
+        </div>
+        
+        <div class="verdict-box">
+          <i class="fas fa-certificate" style="color:#4ade80;"></i>
+          <strong style="color:#4ade80;">PHOENIX VERDICT: SECURE</strong><br>
+          <span>All attack vectors neutralized · Self-healing protocol fully operational · Zero data loss</span>
+        </div>
+        
+        <!-- Medical/Forensic Tools -->
+        <div class="forensic-tools">
+          <span class="forensic-tool" onclick="showToast('🔬 Digital Forensics: Evidence chain verified · 100% intact', false)"><i class="fas fa-microscope"></i> Digital Forensics</span>
+          <span class="forensic-tool" onclick="showToast('🧬 DNA Analysis: System integrity verified · No corruption', false)"><i class="fas fa-dna"></i> DNA Analysis</span>
+          <span class="forensic-tool" onclick="showToast('🔍 Biometric Scan: All identities verified · 100% match', false)"><i class="fas fa-fingerprint"></i> Biometric Scan</span>
+          <span class="forensic-tool" onclick="showToast('📋 Medical Report: System health 100% · All vitals normal', false)"><i class="fas fa-heartbeat"></i> Medical Report</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Navigation Buttons -->
+    <div class="nav-buttons">
+      <a href="Phoenix Dashboard.html" class="nav-btn"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="System-Final-Report.html" class="nav-btn"><i class="fas fa-file-alt"></i> System Report</a>
+      <a href="Cyber-Simulation-Lab.html" class="nav-btn"><i class="fas fa-flask"></i> Simulation Lab</a>
+      <a href="active-defense.html" class="nav-btn"><i class="fas fa-shield-virus"></i> Active Defense</a>
+      <a href="Forensic Agent.html" class="nav-btn"><i class="fas fa-search"></i> Forensic Agent</a>
+      <a href="login.html" class="nav-btn"><i class="fas fa-sign-in-alt"></i> Login</a>
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button class="action-btn primary" id="downloadPdfBtn"><i class="fas fa-file-pdf"></i> DOWNLOAD PDF</button>
+      <button class="action-btn" id="printReportBtn"><i class="fas fa-print"></i> PRINT / EXPORT</button>
+      <button class="action-btn" id="simulateEventBtn"><i class="fas fa-bolt"></i> SIMULATE INCIDENT</button>
+      <button class="action-btn danger" id="resetReportBtn"><i class="fas fa-sync-alt"></i> RESET DATA</button>
+    </div>
+    
+    <div class="footer">
+      <i class="fas fa-dragon"></i> PCS-AI · Immutable Log · Blockchain Timestamp Ready · Executive Summary
+    </div>
+  </div>
+  
+  <!-- ===== Audio ===== -->
+  <audio id="eventSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2124/2124-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="criticalSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg"></audio>
+  <audio id="successSound" preload="auto"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+  
+  <script>
+    // ========== 3D BACKGROUND ==========
+    (function init3DBackground() {
+      const canvas = document.getElementById('canvas-bg');
+      const ctx = canvas.getContext('2d');
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      
+      const particles = [];
+      const numParticles = 80;
+      
+      class Particle {
+        constructor() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.size = Math.random() * 2.5 + 0.5;
+          this.speedX = (Math.random() - 0.5) * 0.5;
+          this.speedY = (Math.random() - 0.5) * 0.5;
+          this.opacity = Math.random() * 0.3 + 0.1;
+          this.phase = Math.random() * Math.PI * 2;
+          this.colors = ['#00d4ff', '#4ade80', '#00ffc8'];
+          this.color = this.colors[Math.floor(Math.random() * this.colors.length)];
+        }
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.phase += 0.015;
+          if (this.x < 0 || this.x > width) this.speedX *= -1;
+          if (this.y < 0 || this.y > height) this.speedY *= -1;
+        }
+        draw() {
+          const opacity = this.opacity + Math.sin(this.phase) * 0.05;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color.replace(')', `, ${Math.max(0.02, opacity)})`).replace('rgb', 'rgba');
+          if (!this.color.includes('rgba')) {
+            ctx.fillStyle = `rgba(0, 212, 255, ${Math.max(0.02, opacity)})`;
+          }
+          ctx.fill();
+          if (this.size > 1.8) {
+            ctx.beginPath();
+            ctx.arc(this.x + Math.sin(this.phase) * 4, this.y + Math.cos(this.phase) * 4, this.size * 0.5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(74, 222, 128, ${Math.max(0.01, opacity * 0.3)})`;
+            ctx.fill();
+          }
+        }
+      }
+      
+      for (let i = 0; i < numParticles; i++) {
+        particles.push(new Particle());
+      }
+      
+      function drawVerificationLines() {
+        const time = Date.now() / 10000;
+        const colors = ['#00d4ff', '#4ade80', '#00ffc8'];
+        for (let c = 0; c < 3; c++) {
+          ctx.strokeStyle = colors[c] + '33';
+          ctx.lineWidth = 0.5;
+          for (let i = 0; i < 12; i++) {
+            const x1 = Math.sin(time + i * 0.5 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y1 = Math.cos(time * 0.7 + i * 0.3 + c * 0.5) * height * 0.35 + height * 0.5;
+            const x2 = Math.sin(time * 0.8 + i * 0.7 + 1 + c * 0.5) * width * 0.35 + width * 0.5;
+            const y2 = Math.cos(time * 0.5 + i * 0.5 + 1 + c * 0.5) * height * 0.35 + height * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+          }
+        }
+        const cx = width / 2;
+        const cy = height / 2;
+        const maxRadius = Math.min(width, height) * 0.22;
+        const colors2 = ['#00d4ff', '#4ade80', '#00ffc8'];
+        for (let r = 6; r < maxRadius; r += 5) {
+          const opacity = 0.02 + Math.sin(time * 0.5 + r * 0.025) * 0.01;
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.strokeStyle = colors2[r % 3] + Math.floor(Math.max(0.005, opacity) * 255).toString(16).padStart(2, '0');
+          ctx.lineWidth = 0.3;
+          ctx.stroke();
+        }
+      }
+      
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+        drawVerificationLines();
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animate);
+      }
+      animate();
+      
+      window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+      });
+    })();
+    
+    // ========== TOAST ==========
+    function showToast(msg, isError = false) {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-triangle' : 'fa-check-circle'}"></i> ${msg}`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'slideToast 0.3s reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+      if (isError) {
+        const sound = document.getElementById('criticalSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      } else {
+        const sound = document.getElementById('successSound');
+        if(sound) { sound.currentTime = 0; sound.play().catch(()=>{}); }
+      }
+    }
+    
+    function playSound(snd) {
+      if (snd) { snd.currentTime = 0; snd.play().catch(()=>{}); }
+    }
+    
+    // ========== REPORT DATA ==========
+    let eventLog = [
+      { time: "14:23:45", type: "AI Threat Prediction", desc: "Ransomware pattern detected with 94% confidence", status: "warning" },
+      { time: "14:24:12", type: "Live Simulation", desc: "Ransomware attack launched on primary vault", status: "critical" },
+      { time: "14:24:18", type: "Deep Detection", desc: "Encryption behavior confirmed · AI kernel trigger", status: "critical" },
+      { time: "14:24:26", type: "Isolation", desc: "Affected segment isolated to quarantine zone", status: "warning" },
+      { time: "14:24:34", type: "Self-Healing", desc: "Phoenix Core deployed clean system clone (instant)", status: "success" },
+      { time: "14:24:42", type: "Recovery", desc: "System integrity restored · Zero data corruption", status: "success" },
+      { time: "14:25:10", type: "Forensic Lock", desc: "Attack vector logged · Attacker IP blacklisted", status: "info" }
+    ];
+    
+    let totalThreats = 7;
+    let healEvents = 1;
+    let isolationEvents = 1;
+    let cloneDeployments = 1;
+    let avgResponseMs = 24;
+    
+    const totalThreatsSpan = document.getElementById('totalThreats');
+    const healRateSpan = document.getElementById('healRate');
+    const avgResponseSpan = document.getElementById('avgResponse');
+    const successRateSpan = document.getElementById('successRate');
+    const summaryThreatsSpan = document.getElementById('summaryThreats');
+    const summaryHealsSpan = document.getElementById('summaryHeals');
+    const summaryIsolationsSpan = document.getElementById('summaryIsolations');
+    const summaryClonesSpan = document.getElementById('summaryClones');
+    const timelineBody = document.getElementById('timelineBody');
+    
+    function updateStatsUI() {
+      totalThreatsSpan.textContent = totalThreats;
+      healRateSpan.textContent = "100";
+      avgResponseSpan.textContent = avgResponseMs;
+      successRateSpan.textContent = "100";
+      summaryThreatsSpan.textContent = totalThreats;
+      summaryHealsSpan.textContent = healEvents;
+      summaryIsolationsSpan.textContent = isolationEvents;
+      summaryClonesSpan.textContent = cloneDeployments;
+    }
+    
+    function getStatusBadgeHtml(status) {
+      if (status === 'critical') return '<span class="status-badge badge-critical">⚠️ CRITICAL</span>';
+      if (status === 'warning') return '<span class="status-badge badge-warning">⚠️ WARNING</span>';
+      if (status === 'success') return '<span class="status-badge badge-success">✅ SUCCESS</span>';
+      return '<span class="status-badge badge-info">ℹ️ INFO</span>';
+    }
+    
+    function renderTimeline() {
+      timelineBody.innerHTML = '';
+      eventLog.forEach(ev => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td style="white-space: nowrap; color:#4a8aaa;">${ev.time}</td>
+          <td><strong style="color:#80c8e8;">${ev.type}</strong></td>
+          <td style="color:#80c8e8;">${ev.desc}</td>
+          <td>${getStatusBadgeHtml(ev.status)}</td>
+        `;
+        timelineBody.appendChild(row);
+      });
+    }
+    
+    function addNewSimulatedEvent() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const eventTypes = [
+        { type: "AI Radar", desc: "Suspicious lateral movement detected", status: "warning" },
+        { type: "Zero-Day Exploit", desc: "Signature-less attack neutralized via behavioral AI", status: "critical" },
+        { type: "Auto-Heal", desc: "Phoenix Core instantiated backup replica", status: "success" },
+        { type: "Quarantine", desc: "Malicious process isolated and terminated", status: "success" },
+        { type: "Threat Block", desc: "Malware injection blocked at kernel level", status: "success" },
+        { type: "Prediction", desc: "AI predicted DDoS attempt & pre-emptively filtered", status: "info" }
+      ];
+      const randomEv = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      let newEvent = { time: timeStr, type: randomEv.type, desc: randomEv.desc, status: randomEv.status };
+      eventLog.unshift(newEvent);
+      if (eventLog.length > 14) eventLog.pop();
+      
+      totalThreats++;
+      if (randomEv.status === 'critical') totalThreats += 0.5;
+      totalThreats = Math.floor(totalThreats);
+      if (randomEv.type.includes("Auto-Heal") || randomEv.desc.includes("clone") || randomEv.desc.includes("Heal")) {
+        healEvents++;
+        cloneDeployments++;
+      }
+      if (randomEv.type.includes("Quarantine") || randomEv.desc.includes("isolated")) isolationEvents++;
+      if (randomEv.type === "Zero-Day Exploit") isolationEvents++;
+      
+      avgResponseMs = Math.max(12, Math.floor(avgResponseMs * 0.95 + Math.random() * 5 - 2));
+      if (avgResponseMs > 32) avgResponseMs = 28;
+      
+      updateStatsUI();
+      renderTimeline();
+      
+      if (randomEv.status === 'critical') playSound(document.getElementById('criticalSound'));
+      else if (randomEv.status === 'success') playSound(document.getElementById('successSound'));
+      else playSound(document.getElementById('eventSound'));
+      
+      showToast(`🔄 New event: ${randomEv.type} · ${randomEv.desc}`, false);
+    }
+    
+    function resetFullReport() {
+      eventLog = [
+        { time: "14:23:45", type: "AI Threat Prediction", desc: "Ransomware pattern detected with 94% confidence", status: "warning" },
+        { time: "14:24:12", type: "Live Simulation", desc: "Ransomware attack launched on primary vault", status: "critical" },
+        { time: "14:24:18", type: "Deep Detection", desc: "Encryption behavior confirmed · AI kernel trigger", status: "critical" },
+        { time: "14:24:26", type: "Isolation", desc: "Affected segment isolated to quarantine zone", status: "warning" },
+        { time: "14:24:34", type: "Self-Healing", desc: "Phoenix Core deployed clean system clone (instant)", status: "success" },
+        { time: "14:24:42", type: "Recovery", desc: "System integrity restored · Zero data corruption", status: "success" },
+        { time: "14:25:10", type: "Forensic Lock", desc: "Attack vector logged · Attacker IP blacklisted", status: "info" }
+      ];
+      totalThreats = 7;
+      healEvents = 1;
+      isolationEvents = 1;
+      cloneDeployments = 1;
+      avgResponseMs = 24;
+      updateStatsUI();
+      renderTimeline();
+      playSound(document.getElementById('successSound'));
+      showToast("🔄 Report reset to baseline", false);
+    }
+    
+    function downloadAsPDF() {
+      window.print();
+      playSound(document.getElementById('successSound'));
+      showToast("📄 Print/PDF export initiated", false);
+    }
+    
+    function printReportDirect() {
+      window.print();
+      playSound(document.getElementById('successSound'));
+      showToast("🖨️ Print dialog opened", false);
+    }
+    
+    // ========== EVENT LISTENERS ==========
+    document.getElementById('downloadPdfBtn').addEventListener('click', downloadAsPDF);
+    document.getElementById('printReportBtn').addEventListener('click', printReportDirect);
+    document.getElementById('simulateEventBtn').addEventListener('click', addNewSimulatedEvent);
+    document.getElementById('resetReportBtn').addEventListener('click', resetFullReport);
+    
+    // ========== KEYBOARD SHORTCUTS ==========
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 's' || e.key === 'S') document.getElementById('simulateEventBtn').click();
+      if (e.key === 'r' || e.key === 'R') document.getElementById('resetReportBtn').click();
+      if (e.key === 'p' || e.key === 'P') document.getElementById('printReportBtn').click();
+    });
+    
+    // ========== INITIALIZATION ==========
+    renderTimeline();
+    updateStatsUI();
+    showToast("📊 Final Report loaded · All systems verified", false);
+  </script>
+</body>
+</html>
